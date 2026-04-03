@@ -2,49 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Patient;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 class AuthRegisterController extends Controller
 {
-    public function showRegister()
+
+    public function index()
     {
-        return view('auth.register');
+        return view('pasien.auth.register');
     }
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+
+        $data = $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6'
         ]);
 
-        // simpan ke users
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'role'     => 'pasien',
+        User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password'])
         ]);
 
-        // simpan ke patients
-        Patient::create([
-            'user_id'        => $user->id,
-            'nik'            => '-',
-            'tanggal_lahir'  => now(),
-            'jenis_kelamin'  => 'L',
-            'alamat'         => '-',
-            'no_hp'          => '-',
-        ]);
-
-        Auth::login($user);
-        // pastikan session benar-benar aktif
-        $request->session()->regenerate();
-        return redirect()->route('pendaftaran.online');
-
+        return redirect()->route('login')
+            ->with('success','Registrasi berhasil silakan login');
     }
 }

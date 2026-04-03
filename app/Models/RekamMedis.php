@@ -20,19 +20,13 @@ class RekamMedis extends Model
         'resep',
     ];
 
-    /**
-     * Rekam Medis milik satu pendaftaran poli
-     */
     public function pendaftaran()
     {
-        return $this->belongsTo(PendaftaranPoli::class, 'pendaftaran_id');
+        return $this->belongsTo(PendaftaranPoli::class,'pendaftaran_id');
     }
 
-    /**
-     * Rekam Medis dibuat oleh dokter
-     */
     public function dokter()
     {
-        return $this->belongsTo(User::class, 'dokter_id');
+        return $this->belongsTo(User::class,'dokter_id');
     }
 }

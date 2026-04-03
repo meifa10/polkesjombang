@@ -7,74 +7,88 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthPasienController extends Controller
 {
-    /**
-     * Tampilkan form login pasien
-     */
-    public function showLogin(Request $request)
-    {
-        return view('auth.login');
-    }
 
     /**
-     * Proses login pasien
+     * ======================================================
+     * HALAMAN LOGIN
+     * ======================================================
+     * Ketika halaman login dibuka, user akan dipaksa logout
+     * agar setiap klik "UMUM & NON JKN" selalu login ulang.
+     */
+    public function index(Request $request)
+    {
+        // Jika ada session login sebelumnya, logout terlebih dahulu
+        if (Auth::check()) {
+
+            Auth::logout();
+
+            $request->session()->invalidate();
+
+            $request->session()->regenerateToken();
+        }
+
+        return view('pasien.auth.login');
+    }
+
+
+    /**
+     * ======================================================
+     * PROSES LOGIN PASIEN
+     * ======================================================
      */
     public function login(Request $request)
     {
-        // validasi input
+
+        // Validasi input login
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
+            'email' => ['required','email'],
+            'password' => ['required']
         ]);
 
-        // proses login
+
+        /**
+         * Attempt login
+         */
         if (Auth::attempt($credentials)) {
 
-            // regenerasi session (WAJIB Laravel 12)
+            // Regenerate session untuk keamanan
             $request->session()->regenerate();
 
-            // pastikan role adalah pasien
-            if (auth()->user()->role !== 'pasien') {
-                Auth::logout();
-
-                return back()->withErrors([
-                    'email' => 'Akun ini bukan akun pasien.',
-                ]);
-            }
-
-            /**
-             * ============================
-             * LOGIKA REDIRECT CERDAS
-             * ============================
-             * - Jika login karena klik "Pendaftaran Poliklinik"
-             *   → kembali ke form pendaftaran poliklinik
-             * - Jika login biasa
-             *   → dashboard pendaftaran online
-             */
-            $redirectTo = session()->pull('redirect_to');
-
-            if ($redirectTo === 'pendaftaran-poliklinik') {
-                return redirect()->route('pendaftaran.poliklinik');
-            }
-
-            return redirect()->route('pendaftaran.online');
+            // Redirect ke dashboard pasien
+            return redirect()
+                ->route('dashboard')
+                ->with('success','Login berhasil. Selamat datang!');
         }
 
-        // login gagal
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ]);
+
+        /**
+         * Jika login gagal
+         */
+        return back()
+            ->withInput($request->only('email'))
+            ->with('error','Email atau password salah.');
     }
 
+
     /**
-     * Logout pasien
+     * ======================================================
+     * LOGOUT PASIEN
+     * ======================================================
      */
     public function logout(Request $request)
     {
+
+        // Logout user
         Auth::logout();
 
+        // Hapus session
         $request->session()->invalidate();
+
+        // Regenerate token CSRF
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Redirect ke halaman utama
+        return redirect('/')
+            ->with('success','Anda berhasil logout.');
     }
 }

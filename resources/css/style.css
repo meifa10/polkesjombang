@@ -11,10 +11,34 @@
     justify-content:space-between;
     align-items:center;
 }
-.logo { height:45px; }
+.logo{
+height:65px;
+width:auto;
+}
 .nav-menu { list-style:none; display:flex; gap:20px; }
-.login { color:#4CAF50; font-weight:bold; }
+.login{
+background:#16a34a;
+color:white !important;
+padding:10px 20px;
+border-radius:25px;
+font-weight:600;
+transition:0.3s;
+}
 
+.nav-menu a{
+font-size:16px;
+font-weight:600;
+color:#065f46;
+text-decoration:none;
+}
+
+.nav-menu a:hover{
+color:#16a34a;
+}
+
+.login:hover{
+background:#065f46;
+}
 .hero {
     height:350px;
     background:url('/images/hero.jpg') center/cover;

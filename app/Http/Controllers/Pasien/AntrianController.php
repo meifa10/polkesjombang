@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Pasien;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PendaftaranPoli;
 
 class AntrianController extends Controller
 {
     public function index()
     {
-        $id = session('antrian_id');
+        $user = Auth::user();
 
-        if (!$id) {
-            return redirect('/')->with('error', 'Antrian tidak ditemukan.');
-        }
+        $pendaftaran = PendaftaranPoli::latest()->first();
 
-        $data = PendaftaranPoli::findOrFail($id);
-
-        return view('pasien.antrian', compact('data'));
+        return view('pasien.antrian', [
+            'data' => $pendaftaran
+        ]);
     }
 }

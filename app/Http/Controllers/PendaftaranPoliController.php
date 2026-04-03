@@ -4,94 +4,113 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PendaftaranPoli;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use Illuminate\Support\Str; 
 
 class PendaftaranPoliController extends Controller
 {
+
     /**
-     * ===============================
-     * SIMPAN PASIEN JKN
-     * ===============================
+     * ===================================================
+     * SIMPAN PENDAFTARAN PASIEN JKN
+     * ===================================================
      */
     public function storeJkn(Request $request)
     {
         $request->validate([
-            'nama_pasien'   => 'required|string|max:100',
-            'no_identitas'  => 'required|string|max:30',
-            'tanggal_lahir' => 'required|date',
-            'poli'          => 'required|string|max:100',
+            'nama_pasien' => 'required',
+            'no_identitas' => 'required',
+            'tanggal_lahir' => 'required',
+            'poli' => 'required'
         ]);
 
-        // 🔥 TANGGAL HARI INI
+        /**
+         * Ambil tanggal hari ini
+         */
         $today = Carbon::today();
 
-        // 🔥 HITUNG NOMOR ANTRIAN PER HARI & PER POLI
+        /**
+         * Ambil nomor antrian terakhir hari ini di poli yang sama
+         */
         $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
             ->where('poli', $request->poli)
             ->max('nomor_antrian');
 
+        /**
+         * Hitung nomor antrian berikutnya
+         */
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
-        $token = 'RM-' . strtoupper(Str::random(10));
-        // 🔥 SIMPAN DATA
-        $data = PendaftaranPoli::create([
-            'jenis_pasien'  => 'jkn',
-            'nama_pasien'   => $request->nama_pasien,
-            'no_identitas'  => $request->no_identitas,
-            'tanggal_lahir' => $request->tanggal_lahir,
-            'poli'          => $request->poli,
-            'nomor_antrian' => $nomorAntrian,
-            'status'        => 'menunggu',
-            'token_akses'   => $token,
 
+        /**
+         * Simpan pendaftaran
+         */
+        $pendaftaran = PendaftaranPoli::create([
+            'jenis_pasien' => 'JKN',
+            'nama_pasien' => $request->nama_pasien,
+            'no_identitas' => Auth::user()->no_identitas,
+            'tanggal_lahir' => $request->tanggal_lahir,
+            'poli' => $request->poli,
+            'nomor_antrian' => $nomorAntrian,
+            'status' => 'menunggu'
         ]);
 
-        // 🔥 SIMPAN ID KE SESSION (WAJIB)
-        session(['antrian_id' => $data->id]);
-
-        // 🔥 ARAHKAN KE HALAMAN ANTRIAN
-        return redirect()->route('pasien.antrian');
+        /**
+         * Redirect ke halaman antrian
+         */
+        return redirect()->route('pasien.antrian')
+            ->with('success', 'Pendaftaran berhasil. Nomor antrian Anda: ' . $nomorAntrian);
     }
 
+
+
     /**
-     * ===============================
-     * SIMPAN PASIEN UMUM
-     * ===============================
+     * ===================================================
+     * SIMPAN PENDAFTARAN PASIEN UMUM
+     * ===================================================
      */
     public function storeUmum(Request $request)
     {
         $request->validate([
-            'nama_pasien'   => 'required|string|max:100',
-            'no_identitas'  => 'required|string|max:30',
-            'tanggal_lahir' => 'required|date',
-            'poli'          => 'required|string|max:100',
+            'nama_pasien' => 'required',
+            'no_identitas' => 'required',
+            'tanggal_lahir' => 'required',
+            'poli' => 'required'
         ]);
 
-        // 🔥 TANGGAL HARI INI
+        /**
+         * Ambil tanggal hari ini
+         */
         $today = Carbon::today();
 
-        // 🔥 HITUNG NOMOR ANTRIAN PER HARI & PER POLI
+        /**
+         * Ambil nomor antrian terakhir hari ini di poli yang sama
+         */
         $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
             ->where('poli', $request->poli)
             ->max('nomor_antrian');
 
+        /**
+         * Hitung nomor antrian berikutnya
+         */
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
-        $token = 'RM-' . strtoupper(Str::random(10));
-        // 🔥 SIMPAN DATA
-        $data = PendaftaranPoli::create([
-            'jenis_pasien'  => 'umum',
-            'nama_pasien'   => $request->nama_pasien,
-            'no_identitas'  => $request->no_identitas,
+
+        /**
+         * Simpan data pendaftaran
+         */
+        $pendaftaran = PendaftaranPoli::create([
+            'jenis_pasien' => 'UMUM',
+            'nama_pasien' => $request->nama_pasien,
+            'no_identitas' => Auth::user()->no_identitas,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'poli'          => $request->poli,
+            'poli' => $request->poli,
             'nomor_antrian' => $nomorAntrian,
-            'status'        => 'menunggu',
-            'token_akses'   => $token,
+            'status' => 'menunggu'
         ]);
 
-        // 🔥 SIMPAN ID KE SESSION
-        session(['antrian_id' => $data->id]);
-
-        return redirect()->route('pasien.antrian');
+        /**
+         * Redirect ke halaman antrian pasien
+         */
+        return redirect()->route('pasien.antrian')
+            ->with('success', 'Pendaftaran berhasil. Nomor antrian Anda: ' . $nomorAntrian);
     }
 }

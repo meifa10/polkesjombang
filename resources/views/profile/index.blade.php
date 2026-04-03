@@ -3,110 +3,300 @@
 @section('content')
 
 <style>
-/* ================= PREVIEW JADWAL DOKTER ================= */
-.jadwal-preview {
+/* ================= GLOBAL & RESET ================= */
+:root {
+    --primary-green: #065f46;
+    --accent-green: #16a34a;
+}
+
+/* ================= HERO REVISI (BIAR TIDAK MENUTUP LOGO) ================= */
+.hero {
     position: relative;
-    background: url('{{ asset('images/banner/green-bg.jpg') }}') center/cover no-repeat;
-    padding: 90px 20px;
-    margin: 0;
-}
-
-.jadwal-preview::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(20, 120, 80, 0.78);
-}
-
-/* FADE HALUS KE BAWAH */
-.jadwal-preview::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 90px;
-    background: linear-gradient(
-        to bottom,
-        rgba(20,120,80,0),
-        #f8fafc
-    );
-}
-
-.jadwal-preview .container {
-    position: relative;
-    max-width: 1200px;
-    margin: auto;
+    height: 100vh;
+    min-height: 600px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 40px;
+    background: url('{{ asset('images/banner/green-bg.jpg') }}') center/cover no-repeat;
+    overflow: hidden;
+    padding-top: 80px;
+}
+
+.hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:rgba(255,255,255,0.75); /* tingkat samar */
+    backdrop-filter: blur(3px);
+    z-index:1;
+}
+
+.hero-bg-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 65%;
+    height: 100%;
+    /* Clip-path gaya RS Pondok Indah */
+    clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+    z-index: 1;
+}
+
+.hero-bg-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-content {
+    position: relative;
     z-index: 2;
-    color: #ecfdf5;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-.jadwal-text h2 {
-    font-size: 34px;
-    font-weight: 700;
+.hero-text-box {
+    max-width: 550px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 50px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
 }
 
-.jadwal-text h3 {
-    margin-top: 6px;
+.hero-text-box h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--primary-green);
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.hero-text-box p {
     font-size: 18px;
-    font-weight: 500;
-    opacity: .95;
+    color: #64748b;
+    line-height: 1.6;
 }
 
-.jadwal-text p {
-    margin-top: 14px;
-    max-width: 420px;
-    font-size: 14px;
-    line-height: 1.7;
-    opacity: .9;
+/* ================= JADWAL PREVIEW REVISI ================= */
+.jadwal-preview {
+    padding: 100px 20px;
+    background: #ffffff;
+    position: relative;
+}
+
+.jadwal-container {
+    max-width: 1200px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.jadwal-main-img {
+    width: 100%;
+    border-radius: 30px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+.jadwal-content h2 {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--primary-green);
+    margin-bottom: 20px;
 }
 
 .btn-jadwal {
     display: inline-block;
     margin-top: 24px;
-    padding: 13px 34px;
-    border-radius: 999px;
-    background: rgba(34, 197, 94, 0.9);
+    padding: 16px 40px;
+    border-radius: 50px;
+    background: var(--primary-green);
     color: #fff;
     font-weight: 600;
     text-decoration: none;
     transition: .3s;
-    box-shadow: 0 10px 25px rgba(0,0,0,.25);
 }
 
 .btn-jadwal:hover {
-    background: rgba(22, 163, 74, 1);
+    background: var(--accent-green);
     transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(22, 163, 74, 0.2);
 }
 
-.jadwal-image img {
-    max-width: 400px;
-    filter: drop-shadow(0 15px 35px rgba(0,0,0,.35));
+/* ================= GALERI ================= */
+.gallery {
+    padding: 100px 20px;
+    background: linear-gradient(
+        135deg,
+        #f1f5f9 0%,
+        #e2f3ec 50%,
+        #d9f2e6 100%
+    );
+}
+
+.gallery h2 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #065f46;
+    margin-bottom: 50px;
+}
+
+/* GRID RAPI & PROPORSIONAL */
+.gallery-grid {
+    max-width: 1200px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+/* GAMBAR PROPORSIONAL (TIDAK GEDE BERLEBIHAN) */
+.gallery-grid img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    border-radius: 16px;
 }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-    .jadwal-preview .container {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .jadwal-image img {
-        max-width: 280px;
+@media (max-width: 992px) {
+    .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
+
+@media (max-width: 768px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ================= HUBUNGI KAMI (CLEAN VERSION) ================= */
+.contact-section {
+    padding: 80px 20px;
+    background: #f8fafc; /* clean putih soft */
+}
+
+/* Judul */
+.contact-section .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #065f46;
+    margin-bottom: 50px;
+}
+
+/* Card lebih elegan */
+.contact-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+.contact-section {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* HILANGKAN JARAK ANTAR SECTION */
+.contact-section {
+    margin-bottom: 0 !important;
+}
+
+footer {
+    margin-top: 0 !important;
+}
+
+/* ================= LAYANAN UNGGULAN RAPIII ================= */
+.services {
+    padding: 60px 20px;   /* sebelumnya 90px, ini bikin terlalu tinggi */
+    margin: 0;            /* hilangkan jarak putih */
+    text-align: center;
+    background: linear-gradient(
+        135deg,
+        #f1f5f9 0%,
+        #e2f3ec 50%,
+        #d9f2e6 100%
+    );
+}
+
+.services h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #065f46;
+    margin-bottom: 35px;  /* lebih compact */
+}
+
+.service-list {
+    max-width: 1100px;
+    margin: auto;
+    display: flex;
+    flex-wrap: nowrap;      /* supaya tidak turun ke bawah */
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;        /* tetap responsif */
+}
+
+.service-list span {
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 2px solid #16a34a;
+    background: #ffffff;
+    color: #065f46;
+    font-size: 14px;
+    white-space: nowrap;    /* supaya tidak pecah */
+    transition: .3s ease;
+}
+
+.service-list span:hover {
+    background: #16a34a;
+    color: white;
+}
+/* HILANGKAN JARAK DARI SECTION SEBELUMNYA */
+.basic-services {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Pastikan services nempel */
+.services {
+    margin-top: 0 !important;
+}
+
+/* tulisan selamat datang polkes */
+.hero-overlay h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
 </style>
 
-<!-- ================= HERO ================= -->
+
+<!-- ================= HERO BARU ================= -->
 <section class="hero">
-    <div class="hero-blur"></div>
-    <div class="hero-overlay">
-        <h1>Selamat Datang di Polkes 05.09.15 Jombang</h1>
-    </div>
+
+<div class="hero-bg-wrapper">
+<img src="{{ asset('images/banner/green-bg.jpg') }}">
+</div>
+
+<div class="hero-content">
+<div class="hero-text-box">
+
+<h1>Selamat Datang di Polkes 05.09.15 Jombang</h1>
+
+<p>
+Memberikan pelayanan kesehatan yang unggul,
+profesional, dan humanis bagi prajurit serta
+masyarakat umum di wilayah Jombang.
+</p>
+
+</div>
+</div>
+
 </section>
 
 <!-- ================= TENTANG KAMI ================= -->
@@ -270,26 +460,32 @@
     </div>
 </section>
 
-<!-- ================= JADWAL DOKTER (DITAMBAHKAN DI SINI) ================= -->
+<!-- ================= JADWAL DOKTER BARU ================= -->
+
 <section class="jadwal-preview">
-    <div class="container">
-        <div class="jadwal-text">
-            <h2>Jadwal Dokter</h2>
-            <h3>Polkes 05.09.15 Jombang</h3>
-            <p>
-                Lihat jadwal praktik dokter secara lengkap dan terbaru
-                untuk pelayanan kesehatan Anda.
-            </p>
 
-            <a href="{{ route('profil.jadwal_dokter') }}" class="btn-jadwal">
-                Lihat Jadwal
-            </a>
-        </div>
+<div class="jadwal-container">
 
-        <div class="jadwal-image">
-            <img src="{{ asset('images/dokter/dokter-group.png') }}" alt="Dokter Polkes">
-        </div>
-    </div>
+<img src="{{ asset('images/dokter/dokter-group.png') }}" class="jadwal-main-img">
+
+<div class="jadwal-content">
+
+<h2>Temukan Jadwal Dokter Kami</h2>
+
+<p>
+Atur waktu kunjungan Anda dengan lebih mudah.
+Kami menyediakan tenaga medis profesional
+yang siap melayani konsultasi kesehatan Anda.
+</p>
+
+<a href="{{ route('profil.jadwal_dokter') }}" class="btn-jadwal">
+Lihat Semua Jadwal
+</a>
+
+</div>
+
+</div>
+
 </section>
 
 <!-- ================= HUBUNGI KAMI ================= -->
