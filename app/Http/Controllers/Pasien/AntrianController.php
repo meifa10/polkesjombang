@@ -30,7 +30,7 @@ class AntrianController extends Controller
          */
         $pendaftaran = PendaftaranPoli::where('user_id', $user->id)
             ->where('status', '!=', 'selesai') 
-            ->where('created_at', '>=', Carbon::now()->subDay()) 
+            // ->where('created_at', '>=', Carbon::now()->subDay()) 
             ->latest('created_at') // Urutkan berdasarkan waktu pendaftaran terbaru
             ->first();
 
