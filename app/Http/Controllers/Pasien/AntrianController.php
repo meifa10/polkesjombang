@@ -11,32 +11,32 @@ class AntrianController extends Controller
 {
     /**
      * Menampilkan halaman nomor antrian pasien.
-     * Kriteria: Milik user login, belum selesai, dan belum lewat 24 jam.
+     * Logika: Mencari pendaftaran terbaru milik user yang belum diselesaikan.
      */
     public function index()
     {
-        // 1. Pastikan user sudah login (Safety Check)
-        if (!Auth::check()) {
+        // 1. Ambil data user yang sedang login
+        $user = Auth::user();
+
+        // Jika karena suatu alasan session hilang, arahkan ke login
+        if (!$user) {
             return redirect()->route('login');
         }
 
-        $user = Auth::user();
-
         /**
-         * 2. Cari data pendaftaran dengan kriteria ketat:
-         * - 'user_id'    : Mencocokkan dengan ID user yang sedang login.
-         * - 'status'     : Menggunakan tanda kutip 'selesai' agar tidak terbaca sebagai kolom.
-         * - 'created_at' : Menggunakan Carbon untuk limitasi waktu 24 jam (subDay).
+         * 2. Ambil pendaftaran TERAKHIR milik user ini.
+         * Kita filter berdasarkan user_id dan status.
+         * Kita gunakan 'selesai' sebagai string agar database tidak bingung.
          */
         $pendaftaran = PendaftaranPoli::where('user_id', $user->id)
-            ->where('status', '!=', 'selesai') 
-            // ->where('created_at', '>=', Carbon::now()->subDay()) 
-            ->latest('created_at') // Urutkan berdasarkan waktu pendaftaran terbaru
+            ->where('status', '!=', 'selesai')
+            ->latest('created_at')
             ->first();
 
         /**
-         * 3. Kirim data ke view 'pasien.antrian'.
-         * Variabel 'data' akan berisi NULL jika tidak ada antrian yang memenuhi syarat.
+         * 3. Kirim ke View.
+         * Tips: Jika di browser tetap muncul "Tidak Tersedia", 
+         * coba buka tab baru atau hapus cache browser.
          */
         return view('pasien.antrian', [
             'data' => $pendaftaran
