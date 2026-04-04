@@ -7,6 +7,7 @@
         --polkes-dark: #064e3b;
         --polkes-light: #f0fdf4;
         --soft-gray: #f9fafb;
+        --error-red: #dc2626;
     }
 
     body {
@@ -32,6 +33,15 @@
         border: 1px solid rgba(255, 255, 255, 0.7);
         padding: 50px;
         position: relative;
+    }
+
+    /* Menangani tampilan di HP agar tetap di tengah dan suportif */
+    @media (max-width: 640px) {
+        .reg-card {
+            padding: 30px 20px;
+            border-radius: 24px;
+        }
+        .reg-header h2 { font-size: 24px; }
     }
 
     .reg-header {
@@ -82,16 +92,9 @@
         padding-left: 5px;
     }
 
-    /* Input Wrapper & Icon Styling */
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
     .form-control {
         width: 100%;
-        padding: 14px 50px 14px 18px; /* Tambah padding kanan untuk icon */
+        padding: 14px 18px;
         background: #ffffff;
         border: 2px solid #e5e7eb;
         border-radius: 16px;
@@ -99,11 +102,36 @@
         transition: all 0.3s ease;
     }
 
+    /* Style untuk input yang error */
+    .form-control.is-invalid {
+        border-color: var(--error-red);
+        background-color: #fef2f2;
+    }
+
+    .error-feedback {
+        color: var(--error-red);
+        font-size: 12px;
+        margin-top: 6px;
+        display: block;
+        font-weight: 600;
+        padding-left: 5px;
+    }
+
     .form-control:focus {
         outline: none;
         border-color: var(--polkes-green);
         box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.1);
         background: #fdfdfd;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input {
+        padding-right: 50px !important;
     }
 
     .toggle-password {
@@ -114,10 +142,6 @@
         font-size: 18px;
         transition: all 0.3s ease;
         user-select: none;
-    }
-
-    .toggle-password:hover {
-        color: var(--polkes-green);
     }
 
     .btn-register {
@@ -131,7 +155,7 @@
         font-weight: 700;
         cursor: pointer;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        margin-top: 30px;
+        margin-top: 10px;
         box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.3);
     }
 
@@ -178,40 +202,54 @@
             
             <div class="form-group">
                 <label>Nama Lengkap</label>
-                <input type="text" name="name" placeholder="Masukkan nama sesuai KTP" required class="form-control">
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Masukkan nama sesuai KTP" required class="form-control @error('name') is-invalid @enderror">
+                @error('name') <span class="error-feedback">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
                     <label>Nomor NIK / KTP</label>
-                    <input type="text" name="no_identitas" placeholder="16 digit NIK" required class="form-control">
+                    <input type="text" 
+                           name="no_identitas" 
+                           value="{{ old('no_identitas') }}"
+                           placeholder="16 digit NIK" 
+                           required 
+                           maxlength="16"
+                           minlength="16"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                           class="form-control @error('no_identitas') is-invalid @enderror">
+                    @error('no_identitas') <span class="error-feedback">{{ $message }}</span> @enderror
                 </div>
+
                 <div class="form-group">
                     <label>Tanggal Lahir</label>
-                    <input type="date" name="tanggal_lahir" required class="form-control">
+                    <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required class="form-control @error('tanggal_lahir') is-invalid @enderror">
+                    @error('tanggal_lahir') <span class="error-feedback">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="form-group">
                 <label>Email Aktif</label>
-                <input type="email" name="email" placeholder="contoh: pasien@email.com" required class="form-control">
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="contoh: pasien@email.com" required class="form-control @error('email') is-invalid @enderror">
+                @error('email') <span class="error-feedback">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
                     <label>Kata Sandi</label>
                     <div class="input-wrapper">
-                        <input type="password" name="password" id="password" placeholder="Minimal 8 karakter" required class="form-control">
+                        <input type="password" name="password" id="password" placeholder="Minimal 8 karakter" required class="form-control password-input @error('password') is-invalid @enderror">
                         <span class="toggle-password" onclick="togglePassword('password', this)">
                             <i class="fa-regular fa-eye"></i>
                         </span>
                     </div>
+                    @error('password') <span class="error-feedback">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="form-group">
                     <label>Konfirmasi Sandi</label>
                     <div class="input-wrapper">
-                        <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Ulangi sandi" required class="form-control">
+                        <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Ulangi sandi" required class="form-control password-input">
                         <span class="toggle-password" onclick="togglePassword('password_confirmation', this)">
                             <i class="fa-regular fa-eye"></i>
                         </span>
@@ -231,6 +269,7 @@
 </div>
 
 <script>
+    // Fungsi Toggle Password
     function togglePassword(inputId, el) {
         const input = document.getElementById(inputId);
         const icon = el.querySelector('i');
@@ -244,12 +283,13 @@
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
-        
-        // Sedikit feedback visual saat diklik
-        el.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            el.style.transform = 'scale(1)';
-        }, 100);
     }
+
+    // Feedback visual sederhana saat tombol submit diklik
+    document.querySelector('form').onsubmit = function() {
+        const btn = document.querySelector('.btn-register');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MEMPROSES...';
+        btn.style.opacity = '0.8';
+    };
 </script>
 @endsection
