@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Pembayaran;
 use App\Models\RekamMedis;
+use App\Models\User;
 
 class PendaftaranPoli extends Model
 {
     /**
-     * Nama tabel
+     * Nama tabel sesuai database hosting
      */
     protected $table = 'pendaftaran_poli';
 
     /**
-     * Field yang boleh diisi
+     * Field yang boleh diisi (Mass Assignment)
      */
     protected $fillable = [
         'user_id',
@@ -29,10 +30,17 @@ class PendaftaranPoli extends Model
     ];
 
     /**
-     * Pastikan timestamps aktif
-     * agar created_at tersimpan otomatis
+     * Timestamps aktif untuk created_at & updated_at
      */
     public $timestamps = true;
+
+    /**
+     * Relasi ke User (Pemilik Antrian)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     /**
      * Relasi ke tabel pembayaran
