@@ -30,35 +30,50 @@ class PaymentController extends Controller
 
         /**
          * =========================================
-         * 2. AMBIL DATA PEMBAYARAN
-         * =========================================
+         * 2. AMBIL DATA PEMBAYARAN (TANPA FILTER STATUS DULU)
          */
-        $pembayaran = Pembayaran::with('pendaftaran')
-            ->where('id', $id)
-            ->where('status', 'belum_lunas')
-            ->first();
+        $pembayaran = Pembayaran::with('pendaftaran')->find($id);
 
         if (!$pembayaran) {
             return redirect()->route('dashboard')
-                ->with('error', 'Data pembayaran tidak ditemukan atau sudah lunas');
+                ->with('error', 'Data pembayaran tidak ditemukan');
         }
 
         /**
          * =========================================
-         * 3. LOG DEBUG (OPTIONAL)
+         * 3. JIKA SUDAH LUNAS → STOP
+         */
+        if ($pembayaran->status === 'lunas') {
+            return redirect()->route('dashboard')
+                ->with('success', 'Pembayaran sudah lunas');
+        }
+
+        /**
          * =========================================
+         * 4. LOG DEBUG
          */
         Log::info('PAYMENT REQUEST', [
-            'user_id'        => $user->id,
-            'pembayaran_id'  => $pembayaran->id,
-            'nama_pasien'    => optional($pembayaran->pendaftaran)->nama_pasien,
-            'total_biaya'    => $pembayaran->total_biaya,
+            'user_id'       => $user->id,
+            'pembayaran_id' => $pembayaran->id,
+            'payment_ref'   => $pembayaran->payment_ref,
+            'snap_token'    => $pembayaran->snap_token,
         ]);
 
         /**
          * =========================================
-         * 4. BUAT TRANSAKSI MIDTRANS
+         * 5. JIKA SUDAH ADA SNAP TOKEN → PAKAI ULANG
+         */
+        if ($pembayaran->snap_token) {
+
+            return view('payment.pay', [
+                'snapToken' => $pembayaran->snap_token,
+                'pembayaran'=> $pembayaran
+            ]);
+        }
+
+        /**
          * =========================================
+         * 6. BUAT TRANSAKSI BARU KE MIDTRANS
          */
         try {
 
@@ -66,24 +81,23 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
 
-            // 🔥 tampilkan error asli (JANGAN DISEMBUNYIKAN DULU)
-            dd('MIDTRANS ERROR: ' . $e->getMessage());
+            Log::error('MIDTRANS ERROR: ' . $e->getMessage());
+
+            return redirect()->route('dashboard')
+                ->with('error', 'Gagal membuat transaksi pembayaran');
         }
 
         /**
          * =========================================
-         * 5. SIMPAN PAYMENT REF (ANTI OVERWRITE)
-         * =========================================
+         * 7. SIMPAN ORDER ID & SNAP TOKEN
          */
-        if (!$pembayaran->payment_ref) {
-            $pembayaran->payment_ref = $result['order_id'];
-            $pembayaran->save();
-        }
+        $pembayaran->payment_ref = $result['order_id'];
+        $pembayaran->snap_token  = $result['snap_token'];
+        $pembayaran->save();
 
         /**
          * =========================================
-         * 6. TAMPILKAN HALAMAN SNAP
-         * =========================================
+         * 8. TAMPILKAN SNAP
          */
         return view('payment.pay', [
             'snapToken' => $result['snap_token'],

@@ -23,15 +23,10 @@ class PaymentService
 
         /**
          * =========================================
-         * 2. CEK JIKA SUDAH ADA ORDER ID
+         * 2. GENERATE ORDER ID (WAJIB SELALU BARU)
          * =========================================
          */
-        if ($pembayaran->payment_ref) {
-            $order_id = $pembayaran->payment_ref;
-        } else {
-            // 🔥 pakai UUID biar 100% unik
-            $order_id = 'PAY-' . $pembayaran->id . '-' . Str::uuid();
-        }
+        $order_id = 'PAY-' . $pembayaran->id . '-' . Str::uuid();
 
         /**
          * =========================================
@@ -43,19 +38,30 @@ class PaymentService
                 'order_id'     => $order_id,
                 'gross_amount' => (int) $pembayaran->total_biaya,
             ],
+
             'customer_details' => [
                 'first_name' => optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien',
+            ],
+
+            // 🔥 OPTIONAL (TAPI DISARANKAN)
+            'callbacks' => [
+                'finish' => url('/payment/finish'),
             ],
         ];
 
         /**
          * =========================================
-         * 4. REQUEST KE MIDTRANS
+         * 4. REQUEST SNAP TOKEN
          * =========================================
          */
         try {
 
             $snapToken = Snap::getSnapToken($params);
+
+            Log::info('MIDTRANS CREATE SUCCESS', [
+                'order_id' => $order_id,
+                'snap'     => $snapToken,
+            ]);
 
             return [
                 'order_id'   => $order_id,
