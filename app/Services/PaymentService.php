@@ -61,7 +61,7 @@ class PaymentService
 
             // (OPSIONAL) DETAIL CUSTOMER
             'customer_details' => [
-                'first_name' => $pembayaran->pendaftaran->nama_pasien ?? 'Pasien',
+                'first_name' => optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien',
             ],
 
             // (OPSIONAL) ITEM DETAIL
@@ -93,9 +93,9 @@ class PaymentService
 
         } catch (\Exception $e) {
 
-            Log::error("❌ MIDTRANS ERROR: " . $e->getMessage());
+            Log::error("❌ MIDTRANS ERROR DETAIL: " . $e->getMessage());
 
-            throw new \Exception('Gagal membuat transaksi Midtrans');
+            throw $e; // sementara biar kelihatan error asli
         }
     }
 }
