@@ -47,7 +47,7 @@
             <div class="bg-slate-50 rounded-[2rem] p-6 mb-8 border border-gray-100/50">
                 <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200/50">
                     <span class="text-gray-400 text-sm font-medium">Nama Pasien</span>
-                    <span class="text-slate-700 font-bold text-sm">{{ Auth::user()->name }}</span>
+                    <span class="text-slate-700 font-bold text-sm">{{ $pembayaran->pendaftaran->nama_pasien ?? Auth::user()->name }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400 text-sm font-medium">Status</span>
@@ -60,26 +60,24 @@
             {{-- Area Tombol / Status --}}
             <div class="space-y-4">
                 @if($pembayaran->status === 'lunas')
-                    {{-- TAMPILAN JIKA SUDAH LUNAS --}}
                     <div class="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl text-center">
                         <div class="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-200">
                             <i class="fa-solid fa-check text-xl"></i>
                         </div>
                         <p class="text-emerald-800 font-bold italic">Pembayaran Selesai</p>
-                        <p class="text-emerald-600 text-xs mt-1">Tagihan ini telah dilunasi pada {{ \Carbon\Carbon::parse($pembayaran->tanggal_bayar)->format('d M Y H:i') }}</p>
+                        <p class="text-emerald-600 text-xs mt-1">Lunas pada {{ \Carbon\Carbon::parse($pembayaran->tanggal_bayar)->format('d M Y H:i') }}</p>
                     </div>
                     
-                    <a href="/dashboard" class="w-full flex items-center justify-center py-4 bg-slate-800 text-white rounded-2xl font-bold shadow-lg hover:bg-slate-900 transition-all active:scale-95">
+                    <a href="/dashboard" class="w-full flex items-center justify-center py-4 bg-slate-800 text-white rounded-2xl font-bold shadow-lg hover:bg-slate-900 transition-all active:scale-95 text-center">
                         Kembali ke Dashboard
                     </a>
                 @else
-                    {{-- TAMPILAN JIKA BELUM LUNAS (TOMBOL SNAP) --}}
                     <button id="pay-button" class="group w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-5 rounded-2xl shadow-[0_15px_30px_-5px_rgba(16,185,129,0.4)] transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3">
                         <i class="fa-solid fa-credit-card group-hover:rotate-12 transition-transform"></i>
-                        <span class="text-lg text-white">Bayar Sekarang</span>
+                        <span class="text-lg">Bayar Sekarang</span>
                     </button>
                     
-                    <a href="/dashboard" class="w-full inline-flex items-center justify-center py-4 text-slate-400 hover:text-slate-600 font-semibold text-sm transition-colors uppercase tracking-widest">
+                    <a href="/dashboard" class="w-full inline-flex items-center justify-center py-4 text-slate-400 hover:text-slate-600 font-semibold text-sm transition-colors uppercase tracking-widest text-center">
                         Nanti Saja
                     </a>
                 @endif
@@ -104,16 +102,26 @@
         btn.onclick = function(e) {
             e.preventDefault();
             
+            const snapToken = '{{ $snapToken }}';
+            
+            // Validasi Token
+            if (!snapToken) {
+                alert("Error: Token pembayaran tidak ditemukan. Silakan refresh halaman.");
+                return;
+            }
+
             const originalContent = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Menghubungkan...';
             btn.disabled = true;
 
-            snap.pay('{{ $snapToken }}', {
+            // Gunakan window.snap untuk memastikan library terdeteksi
+            window.snap.pay(snapToken, {
                 onSuccess: function(result) {
-                    // Beri delay sedikit agar callback Midtrans sampai ke server dulu
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil!';
+                    // Tunggu Webhook Midtrans memproses database
                     setTimeout(() => {
                         window.location.reload(); 
-                    }, 2000);
+                    }, 2500);
                 },
                 onPending: function(result) {
                     alert("Menunggu pembayaran Anda.");
@@ -121,15 +129,15 @@
                 },
                 onError: function(result) {
                     alert("Pembayaran gagal, silakan coba lagi.");
-                    resetBtn();
+                    resetBtn(originalContent);
                 },
                 onClose: function() {
-                    resetBtn();
+                    resetBtn(originalContent);
                 }
             });
 
-            function resetBtn() {
-                btn.innerHTML = originalContent;
+            function resetBtn(content) {
+                btn.innerHTML = content;
                 btn.disabled = false;
             }
         };
