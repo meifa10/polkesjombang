@@ -62,10 +62,8 @@ class PaymentController extends Controller
              */
             $result = $paymentService->createTransaction($pembayaran);
 
-            // 6. Simpan Referensi Order ID Baru dan Snap Token ke Database
             $pembayaran->update([
-                'payment_ref' => $result['order_id'],
-                'snap_token'  => $result['snap_token'],
+                'snap_token' => $result['snap_token'],
             ]);
 
             Log::info('New Midtrans Transaction Created', [
