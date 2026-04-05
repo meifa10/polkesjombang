@@ -18,32 +18,41 @@ class PaymentController extends Controller
     {
         /**
          * =========================================
-         * 1. AMBIL USER LOGIN
+         * 1. CEK USER LOGIN
          * =========================================
          */
         $user = Auth::user();
 
+        if (!$user) {
+            return redirect()->route('login')
+                ->with('error', 'Silakan login terlebih dahulu');
+        }
+
         /**
          * =========================================
-         * 2. AMBIL DATA PEMBAYARAN + RELASI (WAJIB)
+         * 2. AMBIL DATA PEMBAYARAN
          * =========================================
          */
         $pembayaran = Pembayaran::with('pendaftaran')
             ->where('id', $id)
             ->where('status', 'belum_lunas')
-            // ->whereHas('pendaftaran', function ($q) use ($user) {
-            //     $q->where('nama_pasien', $user->name);
-            // })
-            ->firstOrFail();
+            ->first();
+
+        if (!$pembayaran) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Data pembayaran tidak ditemukan atau sudah lunas');
+        }
 
         /**
          * =========================================
-         * 3. DEBUG (OPSIONAL - BOLEH DIHAPUS NANTI)
+         * 3. LOG DEBUG (OPTIONAL)
          * =========================================
          */
-        Log::info('PAYMENT DIPANGGIL', [
-            'pembayaran_id' => $pembayaran->id,
-            'pasien'        => optional($pembayaran->pendaftaran)->nama_pasien,
+        Log::info('PAYMENT REQUEST', [
+            'user_id'        => $user->id,
+            'pembayaran_id'  => $pembayaran->id,
+            'nama_pasien'    => optional($pembayaran->pendaftaran)->nama_pasien,
+            'total_biaya'    => $pembayaran->total_biaya,
         ]);
 
         /**
@@ -57,14 +66,13 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
 
-            Log::error('GAGAL BUAT TRANSAKSI MIDTRANS: ' . $e->getMessage());
-
-            return back()->with('error', 'Gagal memproses pembayaran. Silakan coba lagi.');
+            // 🔥 tampilkan error asli (JANGAN DISEMBUNYIKAN DULU)
+            dd('MIDTRANS ERROR: ' . $e->getMessage());
         }
 
         /**
          * =========================================
-         * 5. SIMPAN PAYMENT REF (JAGA-JAGA)
+         * 5. SIMPAN PAYMENT REF (ANTI OVERWRITE)
          * =========================================
          */
         if (!$pembayaran->payment_ref) {
@@ -74,7 +82,7 @@ class PaymentController extends Controller
 
         /**
          * =========================================
-         * 6. TAMPILKAN HALAMAN PEMBAYARAN
+         * 6. TAMPILKAN HALAMAN SNAP
          * =========================================
          */
         return view('payment.pay', [
