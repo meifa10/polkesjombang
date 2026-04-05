@@ -31,9 +31,9 @@ class PaymentController extends Controller
         $pembayaran = Pembayaran::with('pendaftaran')
             ->where('id', $id)
             ->where('status', 'belum_lunas')
-            ->whereHas('pendaftaran', function ($q) use ($user) {
-                $q->where('nama_pasien', $user->name);
-            })
+            // ->whereHas('pendaftaran', function ($q) use ($user) {
+            //     $q->where('nama_pasien', $user->name);
+            // })
             ->firstOrFail();
 
         /**
