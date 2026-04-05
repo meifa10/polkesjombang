@@ -4,33 +4,98 @@ namespace App\Services;
 
 use Midtrans\Snap;
 use Midtrans\Config;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
-
+    /**
+     * =========================================
+     * CREATE MIDTRANS TRANSACTION (FIXED)
+     * =========================================
+     */
     public function createTransaction($pembayaran)
     {
+        /**
+         * =========================================
+         * 1. CONFIG MIDTRANS
+         * =========================================
+         */
+        Config::$serverKey    = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production', false);
+        Config::$isSanitized  = true;
+        Config::$is3ds        = true;
 
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false;
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        /**
+         * =========================================
+         * 2. GUNAKAN ORDER_ID YANG SAMA (PENTING!)
+         * =========================================
+         */
+        if (!$pembayaran->payment_ref) {
 
-        $order_id = 'PAY-'.$pembayaran->id.'-'.time();
+            // Generate hanya sekali
+            $orderId = 'PAY-' . $pembayaran->id . '-' . time();
 
+            $pembayaran->payment_ref = $orderId;
+            $pembayaran->save();
+
+            Log::info("🆕 GENERATE ORDER ID: " . $orderId);
+
+        } else {
+
+            // Pakai yang sudah ada (ANTI MISMATCH)
+            $orderId = $pembayaran->payment_ref;
+
+            Log::info("♻️ PAKAI ORDER ID LAMA: " . $orderId);
+        }
+
+        /**
+         * =========================================
+         * 3. PARAMETER MIDTRANS
+         * =========================================
+         */
         $params = [
             'transaction_details' => [
-                'order_id' => $order_id,
-                'gross_amount' => $pembayaran->total_biaya
-            ]
+                'order_id'     => $orderId,
+                'gross_amount' => (int) $pembayaran->total_biaya,
+            ],
+
+            // (OPSIONAL) DETAIL CUSTOMER
+            'customer_details' => [
+                'first_name' => $pembayaran->pendaftaran->nama_pasien ?? 'Pasien',
+            ],
+
+            // (OPSIONAL) ITEM DETAIL
+            'item_details' => [
+                [
+                    'id'       => $pembayaran->id,
+                    'price'    => (int) $pembayaran->total_biaya,
+                    'quantity' => 1,
+                    'name'     => 'Pembayaran Poli',
+                ]
+            ],
         ];
 
-        $snapToken = Snap::getSnapToken($params);
+        /**
+         * =========================================
+         * 4. REQUEST SNAP TOKEN
+         * =========================================
+         */
+        try {
 
-        return [
-            'order_id'=>$order_id,
-            'snap_token'=>$snapToken
-        ];
+            $snapToken = Snap::getSnapToken($params);
+
+            Log::info("✅ SNAP TOKEN BERHASIL: " . $orderId);
+
+            return [
+                'order_id'   => $orderId,
+                'snap_token' => $snapToken
+            ];
+
+        } catch (\Exception $e) {
+
+            Log::error("❌ MIDTRANS ERROR: " . $e->getMessage());
+
+            throw new \Exception('Gagal membuat transaksi Midtrans');
+        }
     }
-
 }
