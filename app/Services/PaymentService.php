@@ -11,49 +11,38 @@ class PaymentService
 {
     public function __construct()
     {
-        /**
-         * =========================================
-         * 1. KONFIGURASI GLOBAL
-         * =========================================
-         */
         Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized  = true;
-        Config::$is3ds         = true;
+        Config::$is3ds        = true;
 
         if (empty(Config::$serverKey)) {
-            Log::error("❌ MIDTRANS ERROR: Server Key tidak ditemukan di file .env");
+            Log::error("❌ MIDTRANS ERROR: Server Key kosong!");
         }
     }
 
-    /**
-     * =========================================
-     * 2. CREATE TRANSACTION (HIGH RELIABILITY)
-     * =========================================
-     */
     public function createTransaction($pembayaran)
     {
         /**
-         * -----------------------------------------
-         * 🔥 PENANGANAN ORDER ID (SINKRONISASI DB)
-         * -----------------------------------------
+         * =========================
+         * 1. PASTIKAN RELASI AMAN
+         * =========================
          */
-        if (!empty($pembayaran->payment_ref)) {
-            // Gunakan yang sudah ada di DB agar callback Midtrans tepat sasaran
-            $order_id = $pembayaran->payment_ref;
-        } else {
-            // Generate baru jika benar-benar kosong
-            // Gunakan random 10 digit agar total karakter aman dari limit 50 Midtrans
-            $order_id = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(10));
-            
-            // Langsung update database agar ID ini terkunci
-            $pembayaran->update(['payment_ref' => $order_id]);
-        }
+        $nama  = optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien';
+        $email = optional(optional($pembayaran->pendaftaran)->user)->email ?? 'pasien@mail.com';
+        $phone = optional($pembayaran->pendaftaran)->no_hp ?? '08123456789';
 
         /**
-         * -----------------------------------------
-         * 3. PENYUSUNAN PARAMETER (SAFE MODE)
-         * -----------------------------------------
+         * =========================
+         * 2. GENERATE ORDER ID BARU (SELALU FRESH)
+         * =========================
+         */
+        $order_id = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(8));
+
+        /**
+         * =========================
+         * 3. PARAMETER MIDTRANS
+         * =========================
          */
         $params = [
             'transaction_details' => [
@@ -62,10 +51,9 @@ class PaymentService
             ],
 
             'customer_details' => [
-                // Menggunakan data pendaftaran, jika null beri fallback string aman
-                'first_name' => $pembayaran->pendaftaran->nama_pasien ?? 'Pasien',
-                'email'      => $pembayaran->pendaftaran->user->email ?? 'pasien@polkes.tech',
-                'phone'      => $pembayaran->pendaftaran->no_hp ?? '08123456789',
+                'first_name' => $nama,
+                'email'      => $email,
+                'phone'      => $phone,
             ],
 
             'item_details' => [
@@ -73,30 +61,36 @@ class PaymentService
                     'id'       => 'PEMB-' . $pembayaran->id,
                     'price'    => (int) $pembayaran->total_biaya,
                     'quantity' => 1,
-                    'name'     => "Biaya Layanan Kesehatan #" . $pembayaran->id,
+                    'name'     => "Pembayaran #" . $pembayaran->id,
                 ]
-            ],
-
-            // Redirection Callbacks (Client Side)
-            'callbacks' => [
-                'finish'  => url('/payment/finish'),
-                'error'   => url('/payment/error'),
-                'pending' => url('/payment/pending'),
             ],
         ];
 
         /**
-         * -----------------------------------------
-         * 4. EKSEKUSI SNAP TOKEN
-         * -----------------------------------------
+         * =========================
+         * 4. REQUEST SNAP TOKEN
+         * =========================
          */
         try {
-            // Request Snap Token ke API Midtrans
+            Log::info('🔄 REQUEST SNAP...', [
+                'order_id' => $order_id
+            ]);
+
             $snapToken = Snap::getSnapToken($params);
 
-            Log::info('✅ MIDTRANS SNAP TOKEN GENERATED', [
-                'order_id'   => $order_id,
-                'pembayaran' => $pembayaran->id
+            /**
+             * =========================
+             * 5. SIMPAN KE DATABASE
+             * =========================
+             */
+            $pembayaran->update([
+                'payment_ref' => $order_id,
+                'snap_token'  => $snapToken,
+            ]);
+
+            Log::info('✅ SNAP TOKEN BERHASIL', [
+                'order_id' => $order_id,
+                'token' => $snapToken
             ]);
 
             return [
@@ -105,20 +99,17 @@ class PaymentService
             ];
 
         } catch (\Exception $e) {
-            // Jika gagal karena Order ID duplikat di server Midtrans
+
+            Log::error('❌ MIDTRANS ERROR: ' . $e->getMessage());
+
+            /**
+             * 🔥 HANDLE DUPLICATE ORDER ID
+             */
             if (str_contains($e->getMessage(), 'already been taken')) {
-                Log::warning("⚠️ ORDER ID TAKEN: Regenerating for ID " . $pembayaran->id);
-                
-                // Reset ID di database agar di percobaan berikutnya generate yang baru
-                $pembayaran->update(['payment_ref' => null, 'snap_token' => null]);
+                return $this->createTransaction($pembayaran); // retry otomatis
             }
 
-            Log::error("❌ MIDTRANS API FAIL: " . $e->getMessage(), [
-                'order_id' => $order_id,
-                'trace'    => $e->getTraceAsString()
-            ]);
-
-            throw new \Exception("Koneksi Midtrans Gagal: " . $e->getMessage());
+            throw new \Exception("Midtrans gagal: " . $e->getMessage());
         }
     }
 }
