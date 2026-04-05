@@ -101,12 +101,8 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function(){
-
 Route::get('/payment/{id}', [PaymentController::class,'pay'])
     ->name('payment.pay');
-
-});
 
 // Route::post('/payment/callback', [CallbackController::class, 'handle']);
 Route::get('/payment/finish', function () {
