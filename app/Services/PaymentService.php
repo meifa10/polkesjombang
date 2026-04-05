@@ -93,9 +93,9 @@ class PaymentService
 
         } catch (\Exception $e) {
 
-            Log::error("❌ MIDTRANS ERROR DETAIL: " . $e->getMessage());
+            Log::error("❌ MIDTRANS ERROR ASLI: " . $e->getMessage());
 
-            throw $e; // sementara biar kelihatan error asli
+            throw $e; // BIAR ERROR ASLI MUNCUL
         }
     }
 }
