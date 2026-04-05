@@ -13,50 +13,47 @@ class PaymentService
     {
         /**
          * =========================================
-         * 1. CONFIG MIDTRANS
+         * 1. KONFIGURASI GLOBAL
          * =========================================
          */
         Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized  = true;
-        Config::$is3ds        = true;
+        Config::$is3ds         = true;
 
         if (empty(Config::$serverKey)) {
-            Log::error("❌ MIDTRANS ERROR: Server Key tidak ditemukan di .env");
+            Log::error("❌ MIDTRANS ERROR: Server Key tidak ditemukan di file .env");
         }
     }
 
     /**
      * =========================================
-     * 2. CREATE TRANSACTION (FINAL FIX)
+     * 2. CREATE TRANSACTION (HIGH RELIABILITY)
      * =========================================
      */
     public function createTransaction($pembayaran)
     {
         /**
-         * =========================================
-         * 🔥 PENTING: JANGAN SELALU GENERATE BARU
-         * =========================================
+         * -----------------------------------------
+         * 🔥 PENANGANAN ORDER ID (SINKRONISASI DB)
+         * -----------------------------------------
          */
-        if ($pembayaran->payment_ref) {
-
-            // ✅ gunakan yang sudah ada (biar callback cocok)
+        if (!empty($pembayaran->payment_ref)) {
+            // Gunakan yang sudah ada di DB agar callback Midtrans tepat sasaran
             $order_id = $pembayaran->payment_ref;
-
         } else {
-
-            // ✅ generate SEKALI SAJA
+            // Generate baru jika benar-benar kosong
+            // Gunakan random 10 digit agar total karakter aman dari limit 50 Midtrans
             $order_id = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(10));
-
-            // simpan langsung ke DB
-            $pembayaran->payment_ref = $order_id;
-            $pembayaran->save();
+            
+            // Langsung update database agar ID ini terkunci
+            $pembayaran->update(['payment_ref' => $order_id]);
         }
 
         /**
-         * =========================================
-         * 3. PARAMETER MIDTRANS
-         * =========================================
+         * -----------------------------------------
+         * 3. PENYUSUNAN PARAMETER (SAFE MODE)
+         * -----------------------------------------
          */
         $params = [
             'transaction_details' => [
@@ -65,9 +62,10 @@ class PaymentService
             ],
 
             'customer_details' => [
-                'first_name' => optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien',
-                'email'      => optional($pembayaran->pendaftaran->user)->email ?? 'guest@email.com',
-                'phone'      => optional($pembayaran->pendaftaran)->no_hp ?? '08123456789',
+                // Menggunakan data pendaftaran, jika null beri fallback string aman
+                'first_name' => $pembayaran->pendaftaran->nama_pasien ?? 'Pasien',
+                'email'      => $pembayaran->pendaftaran->user->email ?? 'pasien@polkes.tech',
+                'phone'      => $pembayaran->pendaftaran->no_hp ?? '08123456789',
             ],
 
             'item_details' => [
@@ -75,10 +73,11 @@ class PaymentService
                     'id'       => 'PEMB-' . $pembayaran->id,
                     'price'    => (int) $pembayaran->total_biaya,
                     'quantity' => 1,
-                    'name'     => "Pembayaran Layanan #" . $pembayaran->id,
+                    'name'     => "Biaya Layanan Kesehatan #" . $pembayaran->id,
                 ]
             ],
 
+            // Redirection Callbacks (Client Side)
             'callbacks' => [
                 'finish'  => url('/payment/finish'),
                 'error'   => url('/payment/error'),
@@ -87,18 +86,17 @@ class PaymentService
         ];
 
         /**
-         * =========================================
-         * 4. REQUEST KE MIDTRANS
-         * =========================================
+         * -----------------------------------------
+         * 4. EKSEKUSI SNAP TOKEN
+         * -----------------------------------------
          */
         try {
-
+            // Request Snap Token ke API Midtrans
             $snapToken = Snap::getSnapToken($params);
 
-            Log::info('✅ MIDTRANS CREATED', [
-                'pembayaran_id' => $pembayaran->id,
-                'order_id'      => $order_id,
-                'snap_token'    => $snapToken,
+            Log::info('✅ MIDTRANS SNAP TOKEN GENERATED', [
+                'order_id'   => $order_id,
+                'pembayaran' => $pembayaran->id
             ]);
 
             return [
@@ -107,14 +105,20 @@ class PaymentService
             ];
 
         } catch (\Exception $e) {
+            // Jika gagal karena Order ID duplikat di server Midtrans
+            if (str_contains($e->getMessage(), 'already been taken')) {
+                Log::warning("⚠️ ORDER ID TAKEN: Regenerating for ID " . $pembayaran->id);
+                
+                // Reset ID di database agar di percobaan berikutnya generate yang baru
+                $pembayaran->update(['payment_ref' => null, 'snap_token' => null]);
+            }
 
-            Log::error("❌ MIDTRANS ERROR: " . $e->getMessage(), [
-                'pembayaran_id' => $pembayaran->id,
-                'order_id'      => $order_id ?? null,
-                'params'        => $params
+            Log::error("❌ MIDTRANS API FAIL: " . $e->getMessage(), [
+                'order_id' => $order_id,
+                'trace'    => $e->getTraceAsString()
             ]);
 
-            throw new \Exception("Midtrans gagal: " . $e->getMessage());
+            throw new \Exception("Koneksi Midtrans Gagal: " . $e->getMessage());
         }
     }
 }
