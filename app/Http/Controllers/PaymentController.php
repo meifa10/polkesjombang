@@ -25,10 +25,10 @@ class PaymentController extends Controller
         }
 
         // 2. Ambil Data Pembayaran dengan Eager Loading
-        // Menggunakan findOrFail agar otomatis 404 jika ID tidak valid
+        // Menggunakan findOrFail agar otomatis 404 jika ID tidak valid di URL
         $pembayaran = Pembayaran::with('pendaftaran')->findOrFail($id);
 
-        // 3. Cek Status Pembayaran
+        // 3. Cek Status Pembayaran (Jika sudah lunas, jangan diproses lagi)
         if ($pembayaran->status === 'lunas') {
             return redirect()->route('dashboard')
                 ->with('success', 'Pembayaran ini sudah lunas.');
@@ -36,16 +36,17 @@ class PaymentController extends Controller
 
         /**
          * =============================================================
-         * 4. LOGIKA SNAP TOKEN & ORDER ID (SOLUSI ERROR 400)
+         * 4. LOGIKA RE-USE SNAP TOKEN (EFISIENSI)
          * =============================================================
-         * Jika sudah ada snap_token, kita coba pakai. 
-         * Tapi jika Midtrans menolak karena order_id lama, 
-         * kita akan buat baru di dalam blok try-catch.
+         * Jika sudah ada snap_token DAN payment_ref di database, 
+         * kita gunakan yang sudah ada agar tidak terus-menerus membuat 
+         * transaksi baru di Midtrans untuk tagihan yang sama.
          */
-        
-        // Jika token sudah ada di database, langsung tampilkan
-        if ($pembayaran->snap_token) {
-            Log::info('Reusing existing Snap Token', ['payment_id' => $pembayaran->id]);
+        if ($pembayaran->snap_token && $pembayaran->payment_ref) {
+            Log::info('Reusing existing Snap Token', [
+                'pembayaran_id' => $pembayaran->id,
+                'order_id' => $pembayaran->payment_ref
+            ]);
             
             return view('payment.pay', [
                 'snapToken'  => $pembayaran->snap_token,
@@ -53,20 +54,27 @@ class PaymentController extends Controller
             ]);
         }
 
-        // 5. Buat Transaksi Baru ke Midtrans
+        // 5. Buat Transaksi Baru ke Midtrans jika belum ada token
         try {
             /**
-             * Tips: Di dalam PaymentService->createTransaction(), 
-             * pastikan Anda membuat order_id yang unik, misalnya:
-             * 'PAY-' . $pembayaran->id . '-' . time()
+             * Memanggil service untuk generate Snap Token.
+             * Service akan mengembalikan array ['snap_token' => ..., 'order_id' => ...]
              */
             $result = $paymentService->createTransaction($pembayaran);
 
+            /**
+             * =============================================================
+             * 6. UPDATE DATABASE (BAGIAN PALING KRUSIAL)
+             * =============================================================
+             * Kita WAJIB menyimpan 'payment_ref' (Order ID dari Midtrans)
+             * agar sama dengan yang tersimpan di server Midtrans.
+             */
             $pembayaran->update([
-                'snap_token' => $result['snap_token'],
+                'payment_ref' => $result['order_id'], // HARUS DISIMPAN!
+                'snap_token'  => $result['snap_token'],
             ]);
 
-            Log::info('New Midtrans Transaction Created', [
+            Log::info('New Midtrans Transaction Created & Synced', [
                 'pembayaran_id' => $pembayaran->id,
                 'order_id'      => $result['order_id']
             ]);
@@ -77,29 +85,44 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Log detail error untuk debugging
             Log::error('MIDTRANS CRITICAL ERROR: ' . $e->getMessage(), [
-                'pembayaran_id' => $pembayaran->id,
-                'trace'         => $e->getTraceAsString()
+                'pembayaran_id' => $pembayaran->id
             ]);
 
-            // Jika error disebabkan 'order_id taken', kita sarankan user refresh
+            // Jika error disebabkan 'order_id taken', kita paksa reset kolom agar bisa generate ulang
             if (str_contains($e->getMessage(), 'already been taken')) {
-                return redirect()->back()->with('error', 'Terjadi sinkronisasi ID. Silakan coba klik bayar sekali lagi.');
+                $pembayaran->update(['payment_ref' => null, 'snap_token' => null]);
+                return redirect()->route('payment.pay', $id)->with('error', 'Menyinkronkan ulang koneksi... Silakan klik bayar kembali.');
             }
 
             return redirect()->route('dashboard')
-                ->with('error', 'Gagal terhubung ke server pembayaran (Midtrans).');
+                ->with('error', 'Gagal terhubung ke server pembayaran: ' . $e->getMessage());
         }
     }
 
     /**
-     * Optional: Tambahkan method callback untuk menerima notifikasi dari Midtrans
+     * Callback dari Midtrans (Notification)
+     * Tambahkan route ini di VerifyCsrfToken agar tidak Error 419
      */
     public function callback(Request $request, PaymentService $paymentService)
     {
-        // Logika verifikasi signature dan update status pembayaran
-        // Biasanya diproses di PaymentService agar controller tetap bersih
-        return $paymentService->handleNotification($request->all());
+        Log::info('Midtrans Notification Received', $request->all());
+        
+        try {
+            // Gunakan service untuk menangani logika update status otomatis
+            $status = $paymentService->handleNotification($request->all());
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notification processed'
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Callback Processing Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
