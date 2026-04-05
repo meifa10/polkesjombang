@@ -12,83 +12,144 @@ use Illuminate\Support\Facades\DB;
 class CallbackController extends Controller
 {
     /**
-     * Handle Midtrans Payment Notification (Webhook)
+     * =========================================
+     * MIDTRANS CALLBACK / WEBHOOK
+     * =========================================
      */
     public function handle(Request $request)
     {
-        // 1. Konfigurasi SDK Midtrans
-        // Menggunakan env() secara dinamis agar aman saat pindah ke Production
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        /**
+         * =========================================
+         * 1. CONFIG MIDTRANS (WAJIB)
+         * =========================================
+         */
+        Config::$serverKey    = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production', false);
+        Config::$isSanitized  = true;
+        Config::$is3ds        = true;
 
+        /**
+         * =========================================
+         * 2. AMBIL NOTIFICATION DARI MIDTRANS
+         * =========================================
+         */
         try {
-            // Notification() otomatis menangkap data POST dari Midtrans
             $notif = new Notification();
         } catch (\Exception $e) {
-            Log::error('Midtrans Callback Error (Invalid Payload): ' . $e->getMessage());
-            return response()->json(['message' => 'Invalid Notification Payload'], 400);
+            Log::error('MIDTRANS INVALID PAYLOAD: ' . $e->getMessage());
+            return response()->json(['message' => 'Invalid payload'], 400);
         }
 
-        // Ambil data penting dari Midtrans
+        /**
+         * =========================================
+         * 3. AMBIL DATA PENTING
+         * =========================================
+         */
         $transactionStatus = $notif->transaction_status;
+        $orderId           = $notif->order_id;
         $paymentType       = $notif->payment_type;
-        $orderId           = $notif->order_id; // Ini harus sesuai dengan kolom payment_ref di DB
-        $fraudStatus       = $notif->fraud_status;
+        $fraudStatus       = $notif->fraud_status ?? null;
+        $grossAmount       = $notif->gross_amount;
+        $signatureKey      = $notif->signature_key;
 
-        // 2. Cari data pembayaran berdasarkan payment_ref
-        // Kita gunakan first() agar jika tidak ada, kita bisa handle errornya
+        Log::info('MIDTRANS CALLBACK MASUK', [
+            'order_id' => $orderId,
+            'status'   => $transactionStatus,
+        ]);
+
+        /**
+         * =========================================
+         * 4. VALIDASI SIGNATURE (PENTING BANGET)
+         * =========================================
+         */
+        $serverKey = config('services.midtrans.server_key');
+
+        $expectedSignature = hash(
+            'sha512',
+            $orderId . $notif->status_code . $grossAmount . $serverKey
+        );
+
+        if ($signatureKey !== $expectedSignature) {
+            Log::warning("MIDTRANS SIGNATURE INVALID: $orderId");
+            return response()->json(['message' => 'Invalid signature'], 403);
+        }
+
+        /**
+         * =========================================
+         * 5. CARI DATA PEMBAYARAN
+         * =========================================
+         */
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
-            Log::warning("Midtrans Callback Warning: Transaksi dengan Ref $orderId tidak ditemukan.");
-            return response()->json(['message' => 'Transaction not found'], 404);
+            Log::warning("MIDTRANS: TRANSAKSI TIDAK DITEMUKAN: $orderId");
+            return response()->json(['message' => 'Not found'], 404);
         }
 
-        // Gunakan Database Transaction agar data aman
+        /**
+         * =========================================
+         * 6. UPDATE STATUS (TRANSACTION SAFE)
+         * =========================================
+         */
         DB::beginTransaction();
 
         try {
-            // 3. Logika Update Status Berdasarkan Dokumentasi Midtrans
-            if ($transactionStatus == 'capture') {
-                if ($fraudStatus == 'challenge') {
-                    // Pembayaran kartu kredit yang butuh review manual
-                    $pembayaran->status = 'pending';
-                } else if ($fraudStatus == 'accept') {
-                    // Pembayaran kartu kredit sukses
+
+            switch ($transactionStatus) {
+
+                case 'capture':
+                    if ($fraudStatus == 'challenge') {
+                        $pembayaran->status = 'pending';
+                    } else if ($fraudStatus == 'accept') {
+                        $pembayaran->status = 'lunas';
+                        $pembayaran->tanggal_bayar = now();
+                    }
+                    break;
+
+                case 'settlement':
                     $pembayaran->status = 'lunas';
                     $pembayaran->tanggal_bayar = now();
-                }
-            } else if ($transactionStatus == 'settlement') {
-                // Pembayaran (Gopay, QRIS, Transfer Bank, Alfamart, dll) sukses
-                $pembayaran->status = 'lunas';
-                $pembayaran->tanggal_bayar = now();
-            } else if ($transactionStatus == 'pending') {
-                // User sudah pilih metode tapi belum bayar
-                $pembayaran->status = 'belum_lunas';
-            } else if (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
-                // Pembayaran gagal atau kedaluwarsa
-                $pembayaran->status = 'gagal';
+                    break;
+
+                case 'pending':
+                    $pembayaran->status = 'belum_lunas';
+                    break;
+
+                case 'deny':
+                case 'expire':
+                case 'cancel':
+                    $pembayaran->status = 'gagal';
+                    break;
+
+                default:
+                    Log::warning("MIDTRANS STATUS TIDAK DIKENAL: $transactionStatus");
+                    break;
             }
 
-            // Simpan detail tambahan
+            /**
+             * Simpan metode pembayaran
+             */
             $pembayaran->paid_by = $paymentType;
+
             $pembayaran->save();
 
             DB::commit();
 
-            Log::info("Midtrans Callback Success: Ref $orderId updated to " . $pembayaran->status);
-            
+            Log::info("MIDTRANS SUCCESS: $orderId -> " . $pembayaran->status);
+
             return response()->json([
-                'status' => 'success',
-                'message' => 'Payment status updated successfully'
+                'message' => 'OK'
             ], 200);
 
         } catch (\Exception $e) {
+
             DB::rollBack();
-            Log::error("Midtrans Callback Database Error: " . $e->getMessage());
-            return response()->json(['message' => 'Server Error during update'], 500);
+
+            Log::error("MIDTRANS DB ERROR: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Server error'
+            ], 500);
         }
     }
 }
