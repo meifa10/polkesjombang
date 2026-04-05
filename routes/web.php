@@ -108,7 +108,7 @@ Route::get('/payment/{id}', [PaymentController::class,'pay'])
 
 });
 
-Route::post('/payment/callback', [CallbackController::class, 'handle']);
+// Route::post('/payment/callback', [CallbackController::class, 'handle']);
 Route::get('/payment/finish', function () {
     return redirect('/dashboard')->with('success','Pembayaran berhasil');
 });
