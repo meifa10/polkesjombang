@@ -18,6 +18,7 @@ class PaymentService
 
         if (empty(Config::$serverKey)) {
             Log::error("❌ MIDTRANS ERROR: Server Key kosong!");
+            throw new \Exception("Midtrans Server Key tidak ditemukan di .env");
         }
     }
 
@@ -25,7 +26,20 @@ class PaymentService
     {
         /**
          * =========================
-         * 1. PASTIKAN RELASI AMAN
+         * 1. VALIDASI DATA
+         * =========================
+         */
+        if (!$pembayaran) {
+            throw new \Exception("Data pembayaran tidak ditemukan");
+        }
+
+        if ((int)$pembayaran->total_biaya <= 0) {
+            throw new \Exception("Total biaya tidak valid");
+        }
+
+        /**
+         * =========================
+         * 2. AMBIL DATA CUSTOMER
          * =========================
          */
         $nama  = optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien';
@@ -34,14 +48,14 @@ class PaymentService
 
         /**
          * =========================
-         * 2. GENERATE ORDER ID BARU (SELALU FRESH)
+         * 3. GENERATE ORDER ID
          * =========================
          */
         $order_id = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(8));
 
         /**
          * =========================
-         * 3. PARAMETER MIDTRANS
+         * 4. PARAMETER MIDTRANS
          * =========================
          */
         $params = [
@@ -49,13 +63,11 @@ class PaymentService
                 'order_id'     => $order_id,
                 'gross_amount' => (int) $pembayaran->total_biaya,
             ],
-
             'customer_details' => [
                 'first_name' => $nama,
                 'email'      => $email,
                 'phone'      => $phone,
             ],
-
             'item_details' => [
                 [
                     'id'       => 'PEMB-' . $pembayaran->id,
@@ -68,19 +80,27 @@ class PaymentService
 
         /**
          * =========================
-         * 4. REQUEST SNAP TOKEN
+         * 5. REQUEST SNAP TOKEN
          * =========================
          */
         try {
-            Log::info('🔄 REQUEST SNAP...', [
-                'order_id' => $order_id
+            Log::info('🔄 REQUEST SNAP KE MIDTRANS', [
+                'order_id' => $order_id,
+                'gross_amount' => $pembayaran->total_biaya
             ]);
 
             $snapToken = Snap::getSnapToken($params);
 
             /**
+             * 🔥 VALIDASI WAJIB
+             */
+            if (empty($snapToken)) {
+                throw new \Exception("Snap token kosong dari Midtrans");
+            }
+
+            /**
              * =========================
-             * 5. SIMPAN KE DATABASE
+             * 6. SIMPAN KE DATABASE
              * =========================
              */
             $pembayaran->update([
@@ -88,9 +108,9 @@ class PaymentService
                 'snap_token'  => $snapToken,
             ]);
 
-            Log::info('✅ SNAP TOKEN BERHASIL', [
+            Log::info('✅ SNAP TOKEN BERHASIL DISIMPAN', [
                 'order_id' => $order_id,
-                'token' => $snapToken
+                'snap_token' => $snapToken
             ]);
 
             return [
@@ -103,11 +123,24 @@ class PaymentService
             Log::error('❌ MIDTRANS ERROR: ' . $e->getMessage());
 
             /**
-             * 🔥 HANDLE DUPLICATE ORDER ID
+             * =========================
+             * HANDLE DUPLICATE ORDER ID
+             * =========================
              */
             if (str_contains($e->getMessage(), 'already been taken')) {
-                return $this->createTransaction($pembayaran); // retry otomatis
+                Log::warning('⚠️ DUPLICATE ORDER ID, RETRYING...');
+                return $this->createTransaction($pembayaran);
             }
+
+            /**
+             * =========================
+             * RESET DATA AGAR BISA RETRY
+             * =========================
+             */
+            $pembayaran->update([
+                'payment_ref' => null,
+                'snap_token'  => null,
+            ]);
 
             throw new \Exception("Midtrans gagal: " . $e->getMessage());
         }

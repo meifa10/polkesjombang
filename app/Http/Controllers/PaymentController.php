@@ -17,8 +17,7 @@ class PaymentController extends Controller
          * 1. VALIDASI LOGIN
          * =========================
          */
-        $user = Auth::user();
-        if (!$user) {
+        if (!Auth::check()) {
             return redirect()->route('login')
                 ->with('error', 'Silakan login terlebih dahulu.');
         }
@@ -42,9 +41,8 @@ class PaymentController extends Controller
 
         /**
          * =========================
-         * 4. GENERATE SNAP TOKEN (FIX UTAMA)
+         * 4. GENERATE SNAP TOKEN
          * =========================
-         * 🔥 PASTIKAN TOKEN TIDAK KOSONG
          */
         if (empty($pembayaran->snap_token)) {
             try {
@@ -52,28 +50,31 @@ class PaymentController extends Controller
                     'pembayaran_id' => $pembayaran->id
                 ]);
 
-                $result = $paymentService->createTransaction($pembayaran);
+                // ✅ HANYA PANGGIL SERVICE (JANGAN UPDATE LAGI!)
+                $paymentService->createTransaction($pembayaran);
 
-                $pembayaran->update([
-                    'payment_ref' => $result['order_id'],
-                    'snap_token'  => $result['snap_token'],
-                ]);
+                // 🔥 WAJIB: REFRESH DATA DARI DATABASE
+                $pembayaran->refresh();
+
+                // 🔥 VALIDASI TOKEN
+                if (empty($pembayaran->snap_token)) {
+                    throw new \Exception("Snap token tetap kosong setelah generate");
+                }
 
                 Log::info('✅ SNAP TOKEN BERHASIL', [
-                    'order_id' => $result['order_id'],
-                    'token' => $result['snap_token']
+                    'order_id' => $pembayaran->payment_ref,
+                    'token' => $pembayaran->snap_token
                 ]);
 
             } catch (\Exception $e) {
+
                 Log::error('❌ MIDTRANS ERROR: ' . $e->getMessage());
 
-                // 🔥 HANDLE DUPLICATE ORDER ID
-                if (str_contains($e->getMessage(), 'already been taken')) {
-                    $pembayaran->update([
-                        'payment_ref' => null,
-                        'snap_token'  => null
-                    ]);
-                }
+                // reset supaya bisa retry
+                $pembayaran->update([
+                    'payment_ref' => null,
+                    'snap_token'  => null
+                ]);
 
                 return redirect()->back()
                     ->with('error', 'Gagal membuat transaksi pembayaran. Silakan refresh.');
@@ -82,7 +83,7 @@ class PaymentController extends Controller
 
         /**
          * =========================
-         * 5. DEBUG (WAJIB SAAT TESTING)
+         * 5. DEBUG TOKEN
          * =========================
          */
         Log::info('📦 SNAP TOKEN DIKIRIM KE VIEW', [
@@ -102,7 +103,7 @@ class PaymentController extends Controller
 
     /**
      * =========================
-     * CALLBACK MIDTRANS (AUTO UPDATE)
+     * CALLBACK MIDTRANS
      * =========================
      */
     public function callback(Request $request)
@@ -117,7 +118,11 @@ class PaymentController extends Controller
             $serverKey
         );
 
-        // 🔒 VALIDASI SIGNATURE
+        /**
+         * =========================
+         * VALIDASI SIGNATURE
+         * =========================
+         */
         if ($hashed !== $request->signature_key) {
             Log::error('❌ SIGNATURE INVALID', [
                 'order_id' => $request->order_id
@@ -143,12 +148,13 @@ class PaymentController extends Controller
 
         /**
          * =========================
-         * UPDATE STATUS
+         * UPDATE STATUS PEMBAYARAN
          * =========================
          */
         $status = $request->transaction_status;
 
         if (in_array($status, ['capture', 'settlement'])) {
+
             $pembayaran->update([
                 'status' => 'lunas',
                 'tanggal_bayar' => now(),
@@ -158,11 +164,15 @@ class PaymentController extends Controller
             Log::info('✅ PEMBAYARAN LUNAS', [
                 'order_id' => $request->order_id
             ]);
-        } elseif ($status == 'pending') {
+
+        } elseif ($status === 'pending') {
+
             $pembayaran->update([
                 'status' => 'belum_lunas'
             ]);
+
         } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
+
             $pembayaran->update([
                 'status' => 'gagal'
             ]);
