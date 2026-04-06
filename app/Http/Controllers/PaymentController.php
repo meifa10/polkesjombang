@@ -34,7 +34,7 @@ class PaymentController extends Controller
          * 3. CEK STATUS
          * =========================
          */
-        if ($pembayaran->status === 'lunas') {
+        if (strtolower($pembayaran->status) === 'lunas') {
             return redirect()->route('dashboard')
                 ->with('success', 'Pembayaran sudah lunas.');
         }
