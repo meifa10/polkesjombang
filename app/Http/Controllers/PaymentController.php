@@ -27,7 +27,15 @@ class PaymentController extends Controller
          * 2. AMBIL DATA
          * =========================
          */
-        $pembayaran = Pembayaran::with('pendaftaran')->findOrFail($id);
+        $pembayaran = Pembayaran::with('pendaftaran')
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$pembayaran) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Data pembayaran tidak ditemukan.');
+        }
 
         /**
          * =========================
