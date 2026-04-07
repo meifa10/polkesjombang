@@ -14,31 +14,30 @@ class PaymentService
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized  = true;
         Config::$is3ds        = true;
-
-        if (empty(Config::$serverKey)) {
-            Log::error("❌ MIDTRANS ERROR: Server Key kosong!");
-            throw new \Exception("Midtrans Server Key tidak ditemukan di .env");
-        }
     }
 
     public function createTransaction($pembayaran)
     {
         /**
          * =========================
-         * 1. VALIDASI DATA
+         * 1. CEK TOKEN SUDAH ADA
          * =========================
          */
-        if (!$pembayaran) {
-            throw new \Exception("Data pembayaran tidak ditemukan");
-        }
+        if (!empty($pembayaran->snap_token)) {
 
-        if ((int)$pembayaran->total_biaya <= 0) {
-            throw new \Exception("Total biaya tidak valid");
+            Log::info('♻️ PAKAI TOKEN LAMA', [
+                'order_id' => $pembayaran->payment_ref
+            ]);
+
+            return [
+                'order_id'   => $pembayaran->payment_ref,
+                'snap_token' => $pembayaran->snap_token
+            ];
         }
 
         /**
          * =========================
-         * 2. CEK ORDER ID (WAJIB STABIL)
+         * 2. BUAT ORDER ID (HANYA SEKALI)
          * =========================
          */
         $order_id = $pembayaran->payment_ref;
@@ -61,35 +60,25 @@ class PaymentService
 
         /**
          * =========================
-         * 4. REQUEST SNAP TOKEN
+         * 4. REQUEST SNAP (HANYA SEKALI)
          * =========================
          */
         try {
 
-            Log::info('🔄 REQUEST SNAP', [
-                'order_id' => $order_id,
-                'amount'   => $pembayaran->total_biaya
+            Log::info('🔄 REQUEST SNAP BARU', [
+                'order_id' => $order_id
             ]);
 
             $snapToken = Snap::getSnapToken($params);
 
-            if (empty($snapToken)) {
-                throw new \Exception("Snap token kosong dari Midtrans");
-            }
-
             /**
              * =========================
-             * 5. SIMPAN KE DATABASE
+             * 5. SIMPAN KE DB
              * =========================
              */
             $pembayaran->update([
                 'payment_ref' => $order_id,
                 'snap_token'  => $snapToken,
-            ]);
-
-            Log::info('✅ SNAP TOKEN BERHASIL', [
-                'order_id'   => $order_id,
-                'snap_token' => $snapToken
             ]);
 
             return [
