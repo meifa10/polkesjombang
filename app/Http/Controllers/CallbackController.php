@@ -12,154 +12,111 @@ class CallbackController extends Controller
 {
     public function handle(Request $request)
     {
-        /**
-         * ===============================
-         * 1. AMBIL DATA MIDTRANS
-         * ===============================
-         */
-        $data = $request->all();
-
-        Log::info('📥 CALLBACK MASUK (JOMBANG)', $data);
-
-        /**
-         * ===============================
-         * 2. VALIDASI SIGNATURE (FIX FORMAT)
-         * ===============================
-         */
-        $serverKey    = env('MIDTRANS_SERVER_KEY');
-        $orderId      = $data['order_id'] ?? null;
-        $statusCode   = $data['status_code'] ?? null;
-        $grossAmount  = number_format((float)($data['gross_amount'] ?? 0), 2, '.', '');
-        $signatureKey = $data['signature_key'] ?? null;
-
-        $localSignature = hash(
-            "sha512",
-            $orderId . $statusCode . $grossAmount . $serverKey
-        );
-
-        if ($localSignature !== $signatureKey) {
-            Log::error('❌ SIGNATURE TIDAK VALID', [
-                'order_id' => $orderId
-            ]);
-
-            return response()->json(['message' => 'Invalid Signature'], 403);
-        }
-
-        Log::info('✅ SIGNATURE VALID', [
-            'order_id' => $orderId,
-            'status'   => $data['transaction_status'] ?? null
-        ]);
-
-        /**
-         * ===============================
-         * 3. CARI DATA PEMBAYARAN
-         * ===============================
-         */
-        $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
-
-        if (!$pembayaran) {
-            Log::warning("❌ DATA TIDAK DITEMUKAN: $orderId");
-
-            // WAJIB 200 biar Midtrans tidak retry terus
-            return response()->json(['message' => 'Transaction not found'], 200);
-        }
-
-        /**
-         * ===============================
-         * 4. UPDATE STATUS (DB JOMBANG)
-         * ===============================
-         */
-        DB::beginTransaction();
-
         try {
 
-            $transactionStatus = strtolower($data['transaction_status'] ?? '');
-            $fraudStatus       = strtolower($data['fraud_status'] ?? '');
-            $paymentType       = $data['payment_type'] ?? '-';
+            /**
+             * =========================
+             * 1. AMBIL DATA
+             * =========================
+             */
+            $data = $request->all();
 
-            Log::info('📊 STATUS TRANSAKSI', [
-                'transaction_status' => $transactionStatus,
-                'fraud_status'       => $fraudStatus
-            ]);
+            Log::info('📥 CALLBACK MASUK', $data);
 
-            if ($transactionStatus == 'capture') {
-                if ($fraudStatus == 'challenge') {
-                    $pembayaran->status = 'pending';
-                } else {
-                    $pembayaran->status = 'lunas';
-                    $pembayaran->tanggal_bayar = now();
-                }
-            } 
-            elseif ($transactionStatus == 'settlement') {
-                $pembayaran->status = 'lunas';
-                $pembayaran->tanggal_bayar = now();
-            } 
-            elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
-                $pembayaran->status = 'gagal';
-            } 
-            elseif ($transactionStatus == 'pending') {
-                $pembayaran->status = 'belum_lunas';
+            /**
+             * =========================
+             * 2. VALIDASI SIGNATURE (AMAN)
+             * =========================
+             */
+            $serverKey = env('MIDTRANS_SERVER_KEY');
+
+            $grossAmount = number_format((float)$data['gross_amount'], 2, '.', '');
+
+            $localSignature = hash(
+                "sha512",
+                $data['order_id'] .
+                $data['status_code'] .
+                $grossAmount .
+                $serverKey
+            );
+
+            if ($localSignature !== ($data['signature_key'] ?? '')) {
+                Log::warning('❌ SIGNATURE INVALID', [
+                    'order_id' => $data['order_id']
+                ]);
+
+                // 🔥 JANGAN 403 → tetap 200
+                return response()->json(['message' => 'OK'], 200);
             }
 
-            // simpan metode pembayaran
-            $pembayaran->paid_by = $paymentType;
+            /**
+             * =========================
+             * 3. CARI DATA
+             * =========================
+             */
+            $pembayaran = Pembayaran::where('payment_ref', $data['order_id'])->first();
 
-            // save DB JOMBANG
+            if (!$pembayaran) {
+                Log::warning('❌ DATA TIDAK DITEMUKAN');
+
+                return response()->json(['message' => 'OK'], 200);
+            }
+
+            /**
+             * =========================
+             * 4. UPDATE STATUS
+             * =========================
+             */
+            DB::beginTransaction();
+
+            $status = strtolower($data['transaction_status'] ?? '');
+
+            if (in_array($status, ['capture', 'settlement'])) {
+                $pembayaran->status = 'lunas';
+                $pembayaran->tanggal_bayar = now();
+            } elseif ($status == 'pending') {
+                $pembayaran->status = 'belum_lunas';
+            } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
+                $pembayaran->status = 'gagal';
+            }
+
+            $pembayaran->paid_by = $data['payment_type'] ?? '-';
             $pembayaran->save();
 
-            Log::info("💾 DB JOMBANG UPDATED", [
-                'order_id' => $orderId,
-                'status'   => $pembayaran->status
+            DB::commit();
+
+            Log::info('✅ PEMBAYARAN DIUPDATE', [
+                'order_id' => $data['order_id'],
+                'status' => $pembayaran->status
             ]);
 
             /**
-             * ===============================
-             * 5. KIRIM SYNC KE INSTANSI
-             * ===============================
+             * =========================
+             * 5. SYNC KE INSTANSI (JANGAN GAGALIN CALLBACK)
+             * =========================
              */
             try {
-
-                $response = Http::timeout(10)
+                Http::timeout(5)
                     ->withHeaders([
                         'X-API-KEY' => 'POLKES_SECRET'
                     ])
                     ->post('https://polkesinstansi.satcloud.tech/api/update-status', [
-                        'order_id' => $orderId,
+                        'order_id' => $data['order_id'],
                         'status'   => $pembayaran->status
                     ]);
 
-                Log::info('📡 RESPONSE INSTANSI', [
-                    'status_code' => $response->status(),
-                    'body'        => $response->body()
-                ]);
-
             } catch (\Exception $e) {
-
-                // 🔥 jangan gagalkan callback kalau API gagal
-                Log::error('❌ GAGAL SYNC KE INSTANSI', [
-                    'error' => $e->getMessage()
-                ]);
+                Log::error('❌ GAGAL SYNC INSTANSI: ' . $e->getMessage());
             }
-
-            /**
-             * ===============================
-             * 6. COMMIT
-             * ===============================
-             */
-            DB::commit();
 
             return response()->json(['message' => 'OK'], 200);
 
         } catch (\Exception $e) {
 
-            DB::rollBack();
+            Log::error('🔥 CALLBACK ERROR TOTAL: ' . $e->getMessage());
 
-            Log::error("❌ ERROR CALLBACK", [
-                'message'  => $e->getMessage(),
-                'order_id' => $orderId
-            ]);
-
-            return response()->json(['message' => 'Internal Server Error'], 500);
+            // 🔥 WAJIB RETURN 200 BIAR MIDTRANS GA RETRY
+            return response()->json(['message' => 'OK'], 200);
         }
     }
 }
