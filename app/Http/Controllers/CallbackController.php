@@ -4,152 +4,162 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Pembayaran;
-use Midtrans\Config;
-use Midtrans\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class CallbackController extends Controller
 {
-    /**
-     * =========================================
-     * MIDTRANS CALLBACK / WEBHOOK
-     * =========================================
-     */
     public function handle(Request $request)
     {
         /**
-         * =========================================
-         * 1. CONFIG MIDTRANS (WAJIB)
-         * =========================================
+         * ===============================
+         * 1. AMBIL DATA MIDTRANS
+         * ===============================
          */
-        Config::$serverKey    = config('services.midtrans.server_key');
-        Config::$isProduction = config('services.midtrans.is_production', false);
-        Config::$isSanitized  = true;
-        Config::$is3ds        = true;
+        $data = $request->all();
+
+        Log::info('📥 CALLBACK MASUK (JOMBANG)', $data);
 
         /**
-         * =========================================
-         * 2. AMBIL NOTIFICATION DARI MIDTRANS
-         * =========================================
+         * ===============================
+         * 2. VALIDASI SIGNATURE (FIX FORMAT)
+         * ===============================
          */
-        try {
-            $notif = new Notification();
-        } catch (\Exception $e) {
-            Log::error('MIDTRANS INVALID PAYLOAD: ' . $e->getMessage());
-            return response()->json(['message' => 'Invalid payload'], 400);
+        $serverKey    = env('MIDTRANS_SERVER_KEY');
+        $orderId      = $data['order_id'] ?? null;
+        $statusCode   = $data['status_code'] ?? null;
+        $grossAmount  = number_format((float)($data['gross_amount'] ?? 0), 2, '.', '');
+        $signatureKey = $data['signature_key'] ?? null;
+
+        $localSignature = hash(
+            "sha512",
+            $orderId . $statusCode . $grossAmount . $serverKey
+        );
+
+        if ($localSignature !== $signatureKey) {
+            Log::error('❌ SIGNATURE TIDAK VALID', [
+                'order_id' => $orderId
+            ]);
+
+            return response()->json(['message' => 'Invalid Signature'], 403);
         }
 
-        /**
-         * =========================================
-         * 3. AMBIL DATA PENTING
-         * =========================================
-         */
-        $transactionStatus = $notif->transaction_status;
-        $orderId           = $notif->order_id;
-        $paymentType       = $notif->payment_type;
-        $fraudStatus       = $notif->fraud_status ?? null;
-        $grossAmount       = $notif->gross_amount;
-        $signatureKey      = $notif->signature_key;
-
-        Log::info('MIDTRANS CALLBACK MASUK', [
+        Log::info('✅ SIGNATURE VALID', [
             'order_id' => $orderId,
-            'status'   => $transactionStatus,
+            'status'   => $data['transaction_status'] ?? null
         ]);
 
         /**
-         * =========================================
-         * 4. VALIDASI SIGNATURE (PENTING BANGET)
-         * =========================================
-         */
-        $serverKey = config('services.midtrans.server_key');
-
-        $expectedSignature = hash(
-            'sha512',
-            $orderId . $notif->status_code . $grossAmount . $serverKey
-        );
-
-        if ($signatureKey !== $expectedSignature) {
-            Log::warning("MIDTRANS SIGNATURE INVALID: $orderId");
-            return response()->json(['message' => 'Invalid signature'], 403);
-        }
-
-        /**
-         * =========================================
-         * 5. CARI DATA PEMBAYARAN
-         * =========================================
+         * ===============================
+         * 3. CARI DATA PEMBAYARAN
+         * ===============================
          */
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
-            Log::warning("MIDTRANS: TRANSAKSI TIDAK DITEMUKAN: $orderId");
-            return response()->json(['message' => 'Not found'], 404);
+            Log::warning("❌ DATA TIDAK DITEMUKAN: $orderId");
+
+            // WAJIB 200 biar Midtrans tidak retry terus
+            return response()->json(['message' => 'Transaction not found'], 200);
         }
 
         /**
-         * =========================================
-         * 6. UPDATE STATUS (TRANSACTION SAFE)
-         * =========================================
+         * ===============================
+         * 4. UPDATE STATUS (DB JOMBANG)
+         * ===============================
          */
         DB::beginTransaction();
 
         try {
 
-            switch ($transactionStatus) {
+            $transactionStatus = strtolower($data['transaction_status'] ?? '');
+            $fraudStatus       = strtolower($data['fraud_status'] ?? '');
+            $paymentType       = $data['payment_type'] ?? '-';
 
-                case 'capture':
-                    if ($fraudStatus == 'challenge') {
-                        $pembayaran->status = 'pending';
-                    } else if ($fraudStatus == 'accept') {
-                        $pembayaran->status = 'lunas';
-                        $pembayaran->tanggal_bayar = now();
-                    }
-                    break;
+            Log::info('📊 STATUS TRANSAKSI', [
+                'transaction_status' => $transactionStatus,
+                'fraud_status'       => $fraudStatus
+            ]);
 
-                case 'settlement':
+            if ($transactionStatus == 'capture') {
+                if ($fraudStatus == 'challenge') {
+                    $pembayaran->status = 'pending';
+                } else {
                     $pembayaran->status = 'lunas';
                     $pembayaran->tanggal_bayar = now();
-                    break;
+                }
+            } 
+            elseif ($transactionStatus == 'settlement') {
+                $pembayaran->status = 'lunas';
+                $pembayaran->tanggal_bayar = now();
+            } 
+            elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+                $pembayaran->status = 'gagal';
+            } 
+            elseif ($transactionStatus == 'pending') {
+                $pembayaran->status = 'belum_lunas';
+            }
 
-                case 'pending':
-                    $pembayaran->status = 'belum_lunas';
-                    break;
+            // simpan metode pembayaran
+            $pembayaran->paid_by = $paymentType;
 
-                case 'deny':
-                case 'expire':
-                case 'cancel':
-                    $pembayaran->status = 'gagal';
-                    break;
+            // save DB JOMBANG
+            $pembayaran->save();
 
-                default:
-                    Log::warning("MIDTRANS STATUS TIDAK DIKENAL: $transactionStatus");
-                    break;
+            Log::info("💾 DB JOMBANG UPDATED", [
+                'order_id' => $orderId,
+                'status'   => $pembayaran->status
+            ]);
+
+            /**
+             * ===============================
+             * 5. KIRIM SYNC KE INSTANSI
+             * ===============================
+             */
+            try {
+
+                $response = Http::timeout(10)
+                    ->withHeaders([
+                        'X-API-KEY' => 'POLKES_SECRET'
+                    ])
+                    ->post('https://polkesinstansi.satcloud.tech/api/update-status', [
+                        'order_id' => $orderId,
+                        'status'   => $pembayaran->status
+                    ]);
+
+                Log::info('📡 RESPONSE INSTANSI', [
+                    'status_code' => $response->status(),
+                    'body'        => $response->body()
+                ]);
+
+            } catch (\Exception $e) {
+
+                // 🔥 jangan gagalkan callback kalau API gagal
+                Log::error('❌ GAGAL SYNC KE INSTANSI', [
+                    'error' => $e->getMessage()
+                ]);
             }
 
             /**
-             * Simpan metode pembayaran
+             * ===============================
+             * 6. COMMIT
+             * ===============================
              */
-            $pembayaran->paid_by = $paymentType;
-
-            $pembayaran->save();
-
             DB::commit();
 
-            Log::info("MIDTRANS SUCCESS: $orderId -> " . $pembayaran->status);
-
-            return response()->json([
-                'message' => 'OK'
-            ], 200);
+            return response()->json(['message' => 'OK'], 200);
 
         } catch (\Exception $e) {
 
             DB::rollBack();
 
-            Log::error("MIDTRANS DB ERROR: " . $e->getMessage());
+            Log::error("❌ ERROR CALLBACK", [
+                'message'  => $e->getMessage(),
+                'order_id' => $orderId
+            ]);
 
-            return response()->json([
-                'message' => 'Server error'
-            ], 500);
+            return response()->json(['message' => 'Internal Server Error'], 500);
         }
     }
 }
