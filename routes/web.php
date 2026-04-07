@@ -129,3 +129,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('pasien.rekammedis.pdf');
 
 });
+
+Route::match(['get','post'], '/payment/callback', function () {
+    \Log::info('🔥 CALLBACK TEMBUS LANGSUNG');
+    return response()->json(['ok' => true]);
+});
