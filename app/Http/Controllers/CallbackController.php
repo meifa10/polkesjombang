@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Pembayaran;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class CallbackController extends Controller
 {
@@ -30,7 +29,7 @@ class CallbackController extends Controller
                 "sha512",
                 $data['order_id'] .
                 $data['status_code'] .
-                $data['gross_amount'] . // 🔥 FIX DI SINI
+                $data['gross_amount'] .
                 $serverKey
             );
 
@@ -65,7 +64,7 @@ class CallbackController extends Controller
             if (in_array($status, ['capture', 'settlement'])) {
                 $pembayaran->status = 'lunas';
                 $pembayaran->tanggal_bayar = now();
-            } elseif ($status == 'pending') {
+            } elseif ($status === 'pending') {
                 $pembayaran->status = 'belum_lunas';
             } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
                 $pembayaran->status = 'gagal';
@@ -81,25 +80,11 @@ class CallbackController extends Controller
                 'status'   => $pembayaran->status
             ]);
 
-            // =========================
-            // 5. SYNC KE INSTANSI
-            // =========================
-            try {
-                Http::timeout(5)
-                    ->withHeaders([
-                        'X-API-KEY' => 'POLKES_SECRET'
-                    ])
-                    ->post('https://polkesinstansi.satcloud.tech/api/update-status', [
-                        'order_id' => $data['order_id'],
-                        'status'   => $pembayaran->status
-                    ]);
-            } catch (\Exception $e) {
-                Log::error('❌ GAGAL SYNC INSTANSI: ' . $e->getMessage());
-            }
-
             return response()->json(['message' => 'OK'], 200);
 
         } catch (\Exception $e) {
+
+            DB::rollBack();
 
             Log::error('🔥 CALLBACK ERROR TOTAL: ' . $e->getMessage());
 
