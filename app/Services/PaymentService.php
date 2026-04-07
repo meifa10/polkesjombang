@@ -20,7 +20,7 @@ class PaymentService
     {
         /**
          * =========================
-         * 1. JIKA TOKEN SUDAH ADA → PAKAI ULANG
+         * 1. JIKA TOKEN SUDAH ADA → PAKAI
          * =========================
          */
         if (!empty($pembayaran->snap_token)) {
@@ -37,21 +37,25 @@ class PaymentService
 
         /**
          * =========================
-         * 2. JIKA ORDER ID SUDAH ADA TAPI TOKEN HILANG
+         * 2. JIKA ORDER ADA TAPI TOKEN HILANG
          * =========================
          */
         if (!empty($pembayaran->payment_ref) && empty($pembayaran->snap_token)) {
 
-            Log::error('❌ TOKEN HILANG TAPI ORDER SUDAH ADA', [
-                'order_id' => $pembayaran->payment_ref
+            Log::warning('⚠️ TOKEN HILANG → RESET OTOMATIS', [
+                'old_order_id' => $pembayaran->payment_ref
             ]);
 
-            throw new \Exception("Token pembayaran hilang. Silakan reset pembayaran.");
+            // 🔥 RESET TOTAL (INI KUNCI)
+            $pembayaran->update([
+                'payment_ref' => null,
+                'snap_token'  => null,
+            ]);
         }
 
         /**
          * =========================
-         * 3. BUAT TRANSAKSI BARU (HANYA SEKALI)
+         * 3. BUAT ORDER BARU (BERSIH)
          * =========================
          */
         $order_id = 'PAY-' . $pembayaran->id . '-' . time();
