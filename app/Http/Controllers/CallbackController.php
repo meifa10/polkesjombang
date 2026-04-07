@@ -14,29 +14,23 @@ class CallbackController extends Controller
     {
         try {
 
-            /**
-             * =========================
-             * 1. AMBIL DATA
-             * =========================
-             */
+            // =========================
+            // 1. AMBIL DATA
+            // =========================
             $data = $request->all();
 
             Log::info('📥 CALLBACK MASUK', $data);
 
-            /**
-             * =========================
-             * 2. VALIDASI SIGNATURE (AMAN)
-             * =========================
-             */
+            // =========================
+            // 2. VALIDASI SIGNATURE
+            // =========================
             $serverKey = env('MIDTRANS_SERVER_KEY');
-
-            $grossAmount = number_format((float)$data['gross_amount'], 2, '.', '');
 
             $localSignature = hash(
                 "sha512",
                 $data['order_id'] .
                 $data['status_code'] .
-                $grossAmount .
+                $data['gross_amount'] . // 🔥 FIX DI SINI
                 $serverKey
             );
 
@@ -45,28 +39,25 @@ class CallbackController extends Controller
                     'order_id' => $data['order_id']
                 ]);
 
-                // 🔥 JANGAN 403 → tetap 200
                 return response()->json(['message' => 'OK'], 200);
             }
 
-            /**
-             * =========================
-             * 3. CARI DATA
-             * =========================
-             */
+            // =========================
+            // 3. CARI DATA
+            // =========================
             $pembayaran = Pembayaran::where('payment_ref', $data['order_id'])->first();
 
             if (!$pembayaran) {
-                Log::warning('❌ DATA TIDAK DITEMUKAN');
+                Log::warning('❌ DATA TIDAK DITEMUKAN', [
+                    'order_id' => $data['order_id']
+                ]);
 
                 return response()->json(['message' => 'OK'], 200);
             }
 
-            /**
-             * =========================
-             * 4. UPDATE STATUS
-             * =========================
-             */
+            // =========================
+            // 4. UPDATE STATUS
+            // =========================
             DB::beginTransaction();
 
             $status = strtolower($data['transaction_status'] ?? '');
@@ -87,14 +78,12 @@ class CallbackController extends Controller
 
             Log::info('✅ PEMBAYARAN DIUPDATE', [
                 'order_id' => $data['order_id'],
-                'status' => $pembayaran->status
+                'status'   => $pembayaran->status
             ]);
 
-            /**
-             * =========================
-             * 5. SYNC KE INSTANSI (JANGAN GAGALIN CALLBACK)
-             * =========================
-             */
+            // =========================
+            // 5. SYNC KE INSTANSI
+            // =========================
             try {
                 Http::timeout(5)
                     ->withHeaders([
@@ -104,7 +93,6 @@ class CallbackController extends Controller
                         'order_id' => $data['order_id'],
                         'status'   => $pembayaran->status
                     ]);
-
             } catch (\Exception $e) {
                 Log::error('❌ GAGAL SYNC INSTANSI: ' . $e->getMessage());
             }
@@ -115,7 +103,6 @@ class CallbackController extends Controller
 
             Log::error('🔥 CALLBACK ERROR TOTAL: ' . $e->getMessage());
 
-            // 🔥 WAJIB RETURN 200 BIAR MIDTRANS GA RETRY
             return response()->json(['message' => 'OK'], 200);
         }
     }
