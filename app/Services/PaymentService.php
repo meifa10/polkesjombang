@@ -20,7 +20,7 @@ class PaymentService
     {
         /**
          * =========================
-         * 1. CEK TOKEN SUDAH ADA
+         * 1. JIKA TOKEN SUDAH ADA → PAKAI ULANG
          * =========================
          */
         if (!empty($pembayaran->snap_token)) {
@@ -37,20 +37,25 @@ class PaymentService
 
         /**
          * =========================
-         * 2. BUAT ORDER ID (HANYA SEKALI)
+         * 2. JIKA ORDER ID SUDAH ADA TAPI TOKEN HILANG
          * =========================
          */
-        $order_id = $pembayaran->payment_ref;
+        if (!empty($pembayaran->payment_ref) && empty($pembayaran->snap_token)) {
 
-        if (empty($order_id)) {
-            $order_id = 'PAY-' . $pembayaran->id . '-' . time();
+            Log::error('❌ TOKEN HILANG TAPI ORDER SUDAH ADA', [
+                'order_id' => $pembayaran->payment_ref
+            ]);
+
+            throw new \Exception("Token pembayaran hilang. Silakan reset pembayaran.");
         }
 
         /**
          * =========================
-         * 3. PARAMETER MIDTRANS
+         * 3. BUAT TRANSAKSI BARU (HANYA SEKALI)
          * =========================
          */
+        $order_id = 'PAY-' . $pembayaran->id . '-' . time();
+
         $params = [
             'transaction_details' => [
                 'order_id'     => $order_id,
@@ -58,24 +63,14 @@ class PaymentService
             ]
         ];
 
-        /**
-         * =========================
-         * 4. REQUEST SNAP (HANYA SEKALI)
-         * =========================
-         */
         try {
 
-            Log::info('🔄 REQUEST SNAP BARU', [
+            Log::info('🔄 CREATE TRANSACTION BARU', [
                 'order_id' => $order_id
             ]);
 
             $snapToken = Snap::getSnapToken($params);
 
-            /**
-             * =========================
-             * 5. SIMPAN KE DB
-             * =========================
-             */
             $pembayaran->update([
                 'payment_ref' => $order_id,
                 'snap_token'  => $snapToken,
