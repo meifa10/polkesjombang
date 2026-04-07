@@ -11,6 +11,8 @@ class CallbackController extends Controller
 {
     public function handle(Request $request)
     {
+        DB::beginTransaction();
+
         try {
 
             // =========================
@@ -21,62 +23,90 @@ class CallbackController extends Controller
             Log::info('📥 CALLBACK MASUK', $data);
 
             // =========================
-            // 2. VALIDASI SIGNATURE
+            // 2. VALIDASI SIGNATURE (FIX FORMAT)
             // =========================
             $serverKey = env('MIDTRANS_SERVER_KEY');
 
+            $orderId      = $data['order_id'] ?? '';
+            $statusCode   = $data['status_code'] ?? '';
+            $grossAmount  = $data['gross_amount'] ?? '';
+            $signatureKey = $data['signature_key'] ?? '';
+
             $localSignature = hash(
                 "sha512",
-                $data['order_id'] .
-                $data['status_code'] .
-                $data['gross_amount'] .
-                $serverKey
+                $orderId . $statusCode . $grossAmount . $serverKey
             );
 
-            if ($localSignature !== ($data['signature_key'] ?? '')) {
+            if ($localSignature !== $signatureKey) {
                 Log::warning('❌ SIGNATURE INVALID', [
-                    'order_id' => $data['order_id']
+                    'order_id' => $orderId
                 ]);
 
+                DB::commit();
                 return response()->json(['message' => 'OK'], 200);
             }
 
             // =========================
             // 3. CARI DATA
             // =========================
-            $pembayaran = Pembayaran::where('payment_ref', $data['order_id'])->first();
+            $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
             if (!$pembayaran) {
                 Log::warning('❌ DATA TIDAK DITEMUKAN', [
-                    'order_id' => $data['order_id']
+                    'order_id' => $orderId
                 ]);
 
+                DB::commit();
                 return response()->json(['message' => 'OK'], 200);
             }
 
             // =========================
-            // 4. UPDATE STATUS
+            // 4. NORMALISASI STATUS (FIX UTAMA)
             // =========================
-            DB::beginTransaction();
+            $status = strtolower(trim($data['transaction_status'] ?? ''));
 
-            $status = strtolower($data['transaction_status'] ?? '');
+            Log::info('🔥 STATUS MIDTRANS', [
+                'raw' => $data['transaction_status'] ?? null,
+                'clean' => $status
+            ]);
 
-            if (in_array($status, ['capture', 'settlement'])) {
-                $pembayaran->status = 'lunas';
-                $pembayaran->tanggal_bayar = now();
-            } elseif ($status === 'pending') {
-                $pembayaran->status = 'belum_lunas';
-            } elseif (in_array($status, ['deny', 'expire', 'cancel'])) {
-                $pembayaran->status = 'gagal';
+            // =========================
+            // 5. UPDATE STATUS
+            // =========================
+            switch ($status) {
+                case 'capture':
+                case 'settlement':
+                    $pembayaran->status = 'lunas';
+                    $pembayaran->tanggal_bayar = now();
+                    break;
+
+                case 'pending':
+                    $pembayaran->status = 'belum_lunas';
+                    break;
+
+                case 'deny':
+                case 'expire':
+                case 'cancel':
+                    $pembayaran->status = 'gagal';
+                    break;
+
+                default:
+                    Log::warning('⚠️ STATUS TIDAK DIKENAL', [
+                        'status' => $status
+                    ]);
+                    break;
             }
 
+            // =========================
+            // 6. SIMPAN DATA
+            // =========================
             $pembayaran->paid_by = $data['payment_type'] ?? '-';
             $pembayaran->save();
 
             DB::commit();
 
             Log::info('✅ PEMBAYARAN DIUPDATE', [
-                'order_id' => $data['order_id'],
+                'order_id' => $orderId,
                 'status'   => $pembayaran->status
             ]);
 
@@ -86,7 +116,10 @@ class CallbackController extends Controller
 
             DB::rollBack();
 
-            Log::error('🔥 CALLBACK ERROR TOTAL: ' . $e->getMessage());
+            Log::error('🔥 CALLBACK ERROR TOTAL', [
+                'message' => $e->getMessage(),
+                'data' => $request->all()
+            ]);
 
             return response()->json(['message' => 'OK'], 200);
         }
