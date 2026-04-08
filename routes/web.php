@@ -103,12 +103,13 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function(){
 
-Route::get('/payment/{id}', [PaymentController::class,'pay'])
-    ->name('payment.pay');
+    Route::get('/payment/{id}', [PaymentController::class,'pay'])
+        ->name('payment.pay');
 
 });
 
-Route::post('/payment/callback', [CallbackController::class, 'handle']);
+Route::post('/payment/callback', [PaymentController::class, 'callback']); // ✅ PINDAH KE SINI
+
 Route::get('/payment/finish', function () {
     return redirect('/dashboard')->with('success','Pembayaran berhasil');
 });
@@ -116,7 +117,6 @@ Route::get('/payment/finish', function () {
 Route::get('/payment/error', function () {
     return redirect('/dashboard')->with('error','Pembayaran gagal');
 });
-
 
 // rekam medis 
 

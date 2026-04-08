@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // ✅ Tambahan: Exclude CSRF untuk Midtrans Callback
         $middleware->validateCsrfTokens(except: [
-            'payment/callback',
+            'payment/*',
         ]);
 
         // ✅ Middleware alias kamu (tetap)

@@ -14,7 +14,7 @@ class Pembayaran extends Model
         'metode',
         'status',
         'payment_ref',
-        // 'snap_token',
+        'snap_token',
         'paid_by',
         'tanggal_bayar'
     ];
