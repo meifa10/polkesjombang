@@ -9,36 +9,47 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
+    /**
+     * =========================
+     * INIT MIDTRANS
+     * =========================
+     */
     protected function initMidtrans()
     {
         Config::$serverKey    = config('services.midtrans.server_key');
         Config::$isProduction = config('services.midtrans.is_production', false);
         Config::$isSanitized  = true;
         Config::$is3ds        = true;
+
+        if (empty(Config::$serverKey)) {
+            throw new \Exception('Midtrans Server Key belum diset!');
+        }
     }
 
+    /**
+     * =========================
+     * CREATE TRANSACTION
+     * =========================
+     */
     public function createTransaction($pembayaran)
     {
         $this->initMidtrans();
 
-        if (!Config::$serverKey) {
-            throw new \Exception('Konfigurasi Midtrans (Server Key) kosong!');
-        }
-
         /**
-         * 1. PROTEKSI: JANGAN PROSES KALAU SUDAH LUNAS
-         * Di log kamu, statusnya sudah 'settlement'. Jika di DB masih 'belum_lunas',
-         * kita harus cegah kirim request lagi ke Midtrans dengan Order ID yang sama.
+         * =========================
+         * 1. CEK STATUS
+         * =========================
          */
         if ($pembayaran->status === 'lunas') {
-            throw new \Exception('Pembayaran ini sudah selesai.');
+            throw new \Exception('Pembayaran sudah lunas.');
         }
 
         /**
-         * 2. GUNAKAN SNAP TOKEN LAMA JIKA ADA
-         * Supaya tidak kena error 'order_id taken'
+         * =========================
+         * 2. JIKA SUDAH ADA TOKEN → PAKAI LAGI
+         * =========================
          */
-        if ($pembayaran->snap_token) {
+        if ($pembayaran->snap_token && $pembayaran->payment_ref) {
             return [
                 'order_id'   => $pembayaran->payment_ref,
                 'snap_token' => $pembayaran->snap_token
@@ -46,15 +57,27 @@ class PaymentService
         }
 
         /**
-         * 3. BUAT ORDER ID BARU JIKA BELUM ADA
+         * =========================
+         * 3. BUAT ORDER ID (WAJIB UNIQUE)
+         * =========================
          */
-        $order_id = 'PAY-' . $pembayaran->id . '-' . Str::upper(Str::random(6));
-        
-        // Simpan referensi awal
+        $order_id = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(8));
+
+        /**
+         * =========================
+         * 4. SIMPAN KE DB DULU (PENTING!)
+         * =========================
+         */
         $pembayaran->update([
-            'payment_ref' => $order_id
+            'payment_ref' => $order_id,
+            'snap_token'  => null
         ]);
 
+        /**
+         * =========================
+         * 5. PARAMETER MIDTRANS
+         * =========================
+         */
         $params = [
             'transaction_details' => [
                 'order_id'     => $order_id,
@@ -65,14 +88,28 @@ class PaymentService
                     'id'       => $pembayaran->id,
                     'price'    => (int) $pembayaran->total_biaya,
                     'quantity' => 1,
-                    'name'     => "Layanan Polkes Jombang #" . $pembayaran->id,
+                    'name'     => 'Pembayaran Layanan #' . $pembayaran->id,
                 ]
+            ],
+            'customer_details' => [
+                'first_name' => optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien',
             ],
         ];
 
+        /**
+         * =========================
+         * 6. REQUEST KE MIDTRANS
+         * =========================
+         */
         try {
+
             $snapToken = Snap::getSnapToken($params);
 
+            /**
+             * =========================
+             * 7. SIMPAN TOKEN
+             * =========================
+             */
             $pembayaran->update([
                 'snap_token' => $snapToken
             ]);
@@ -83,16 +120,30 @@ class PaymentService
             ];
 
         } catch (\Exception $e) {
-            Log::error('Midtrans Error: ' . $e->getMessage());
 
-            // Jika tetap error duplikat, paksa ganti Order ID dan coba sekali lagi
-            if (str_contains($e->getMessage(), 'already been taken')) {
-                $new_id = 'PAY-' . $pembayaran->id . '-' . Str::upper(Str::random(9));
-                $pembayaran->update(['payment_ref' => $new_id, 'snap_token' => null]);
+            Log::error('❌ MIDTRANS ERROR: ' . $e->getMessage());
+
+            /**
+             * =========================
+             * 8. HANDLE DUPLICATE ORDER ID
+             * =========================
+             */
+            if (
+                str_contains($e->getMessage(), 'order_id sudah digunakan') ||
+                str_contains($e->getMessage(), 'already been taken')
+            ) {
+
+                $newOrderId = 'PAY-' . $pembayaran->id . '-' . strtoupper(Str::random(10));
+
+                $pembayaran->update([
+                    'payment_ref' => $newOrderId,
+                    'snap_token'  => null
+                ]);
+
                 return $this->createTransaction($pembayaran->fresh());
             }
 
-            throw $e;
+            throw new \Exception("Midtrans gagal: " . $e->getMessage());
         }
     }
 }
