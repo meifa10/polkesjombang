@@ -18,17 +18,25 @@ class PaymentService
 
     public function createTransaction($pembayaran)
     {
-        // ✅ 1. kalau sudah ada token → pakai ulang
-        if (!empty($pembayaran->snap_token)) {
-            return [
-                'order_id'   => $pembayaran->payment_ref,
-                'snap_token' => $pembayaran->snap_token,
-            ];
+        /**
+         * =========================
+         * 1. PAKAI ORDER ID YANG SUDAH ADA
+         * =========================
+         */
+        if ($pembayaran->payment_ref) {
+            $order_id = $pembayaran->payment_ref;
+        } else {
+            $order_id = 'PAY-' . $pembayaran->id . '-' . time();
+
+            $pembayaran->payment_ref = $order_id;
+            $pembayaran->save();
         }
 
-        // ✅ 2. kalau belum ada → buat sekali saja
-        $order_id = 'PAY-' . $pembayaran->id . '-' . time();
-
+        /**
+         * =========================
+         * 2. PARAMETER MIDTRANS
+         * =========================
+         */
         $params = [
             'transaction_details' => [
                 'order_id'     => $order_id,
@@ -36,23 +44,16 @@ class PaymentService
             ],
         ];
 
-        try {
-            $snapToken = Snap::getSnapToken($params);
+        /**
+         * =========================
+         * 3. REQUEST SNAP
+         * =========================
+         */
+        $snapToken = Snap::getSnapToken($params);
 
-            // ✅ simpan ke DB SEKALI
-            $pembayaran->update([
-                'payment_ref' => $order_id,
-                'snap_token'  => $snapToken,
-            ]);
-
-            return [
-                'order_id'   => $order_id,
-                'snap_token' => $snapToken,
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('❌ MIDTRANS ERROR: ' . $e->getMessage());
-            throw new \Exception("Midtrans gagal: " . $e->getMessage());
-        }
+        return [
+            'order_id'   => $order_id,
+            'snap_token' => $snapToken
+        ];
     }
 }
