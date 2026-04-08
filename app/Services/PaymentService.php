@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Log;
 class PaymentService
 {
     /**
+     * =========================
      * INIT MIDTRANS
+     * =========================
      */
     protected function initMidtrans()
     {
@@ -24,7 +26,9 @@ class PaymentService
     }
 
     /**
-     * CREATE TRANSACTION (FIX)
+     * =========================
+     * CREATE TRANSACTION
+     * =========================
      */
     public function createTransaction($pembayaran)
     {
@@ -34,11 +38,11 @@ class PaymentService
         // CEK STATUS
         // =========================
         if ($pembayaran->status === 'lunas') {
-            throw new \Exception('Sudah lunas');
+            throw new \Exception('Pembayaran sudah lunas.');
         }
 
         // =========================
-        // PAKAI ORDER ID DARI ADMIN (PENTING!)
+        // PAKAI ORDER ID DARI ADMIN
         // =========================
         $order_id = $pembayaran->payment_ref;
 
@@ -53,13 +57,20 @@ class PaymentService
         }
 
         // =========================
-        // PARAMETER MIDTRANS
+        // PARAMETER MIDTRANS (FIX + CALLBACKS)
         // =========================
         $params = [
             'transaction_details' => [
                 'order_id'     => $order_id,
                 'gross_amount' => (int) $pembayaran->total_biaya,
             ],
+
+            // 🔥 INI YANG KITA TAMBAHKAN (PENTING BANGET)
+            'callbacks' => [
+                'finish' => url('/payment/finish'),
+                'error'  => url('/payment/error'),
+            ],
+
             'item_details' => [
                 [
                     'id'       => $pembayaran->id,
@@ -68,18 +79,20 @@ class PaymentService
                     'name'     => 'Pembayaran Layanan #' . $pembayaran->id,
                 ]
             ],
+
             'customer_details' => [
                 'first_name' => optional($pembayaran->pendaftaran)->nama_pasien ?? 'Pasien',
             ],
         ];
 
         // =========================
-        // REQUEST SNAP
+        // REQUEST KE MIDTRANS
         // =========================
         try {
 
             $snapToken = Snap::getSnapToken($params);
 
+            // SIMPAN TOKEN
             $pembayaran->update([
                 'snap_token' => $snapToken
             ]);

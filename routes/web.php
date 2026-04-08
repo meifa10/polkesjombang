@@ -110,9 +110,11 @@ Route::middleware('auth')->group(function(){
 
 Route::post('/payment/callback', [PaymentController::class, 'callback']); // ✅ PINDAH KE SINI
 
-Route::get('/payment/finish', function () {
-    return redirect('/dashboard')->with('success','Pembayaran berhasil');
-});
+// Route::get('/payment/finish', function () {
+//     return redirect('/dashboard')->with('success','Pembayaran berhasil');
+// });
+
+Route::get('/payment/finish', [PaymentController::class, 'finish']);
 
 Route::get('/payment/error', function () {
     return redirect('/dashboard')->with('error','Pembayaran gagal');

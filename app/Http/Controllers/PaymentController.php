@@ -18,14 +18,25 @@ class PaymentController extends Controller
      */
     public function pay($id, PaymentService $paymentService)
     {
+        // 🔥 HANDLE kalau diakses tanpa login (redirect dari Midtrans)
+        if (!Auth::check()) {
+            return redirect('/dashboard');
+        }
+
         $user = Auth::user();
 
+        // 🔥 gunakan first() bukan firstOrFail biar tidak 404
         $pembayaran = Pembayaran::where('id', $id)
             ->where('status', 'belum_lunas')
             ->whereHas('pendaftaran', function ($q) use ($user) {
                 $q->where('nama_pasien', $user->name);
             })
-            ->firstOrFail();
+            ->first();
+
+        // 🔥 kalau tidak ditemukan (biasanya dari redirect Midtrans)
+        if (!$pembayaran) {
+            return redirect('/dashboard');
+        }
 
         try {
             $result = $paymentService->createTransaction($pembayaran);
@@ -36,13 +47,13 @@ class PaymentController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Midtrans Error: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memproses pembayaran.');
+            return redirect('/dashboard')->with('error', 'Gagal memproses pembayaran.');
         }
     }
 
     /**
      * =========================
-     * CALLBACK MIDTRANS (FIX)
+     * CALLBACK MIDTRANS
      * =========================
      */
     public function callback(Request $request)
@@ -57,9 +68,7 @@ class PaymentController extends Controller
         $signatureKey = $data['signature_key'] ?? null;
         $serverKey    = config('services.midtrans.server_key');
 
-        // =========================
         // VALIDASI SIGNATURE
-        // =========================
         $hashed = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
 
         if ($hashed !== $signatureKey) {
@@ -67,9 +76,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        // =========================
-        // CARI DATA
-        // =========================
+        // CARI DATA PEMBAYARAN
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
@@ -114,5 +121,27 @@ class PaymentController extends Controller
             Log::error("ERROR UPDATE: " . $e->getMessage());
             return response()->json(['message' => 'Error'], 500);
         }
+    }
+
+    /**
+     * =========================
+     * FINISH (SETELAH BAYAR)
+     * =========================
+     */
+    public function finish(Request $request)
+    {
+        Log::info('FINISH MASUK', $request->all());
+
+        return redirect('/dashboard')->with('success', 'Pembayaran berhasil');
+    }
+
+    /**
+     * =========================
+     * ERROR (GAGAL BAYAR)
+     * =========================
+     */
+    public function error()
+    {
+        return redirect('/dashboard')->with('error', 'Pembayaran gagal');
     }
 }
