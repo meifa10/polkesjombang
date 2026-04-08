@@ -20,23 +20,34 @@ class PaymentService
     {
         /**
          * =========================
-         * 1. CEK ORDER ID
+         * 1. CEK SNAP TOKEN DULU
+         * =========================
+         */
+        if ($pembayaran->snap_token && $pembayaran->status === 'belum_lunas') {
+            return [
+                'order_id'   => $pembayaran->payment_ref,
+                'snap_token' => $pembayaran->snap_token
+            ];
+        }
+
+        /**
+         * =========================
+         * 2. CEK / BUAT ORDER ID
          * =========================
          */
         if ($pembayaran->payment_ref && $pembayaran->status === 'belum_lunas') {
             $order_id = $pembayaran->payment_ref;
         } else {
-            // 🔥 BUAT BARU (UNIQUE)
             $order_id = 'PAY-' . $pembayaran->id . '-' . Str::upper(Str::random(6));
 
             $pembayaran->payment_ref = $order_id;
-            $pembayaran->snap_token  = null; // reset token
+            $pembayaran->snap_token  = null;
             $pembayaran->save();
         }
 
         /**
          * =========================
-         * 2. PARAMETER
+         * 3. PARAMETER MIDTRANS
          * =========================
          */
         $params = [
@@ -48,7 +59,7 @@ class PaymentService
 
         /**
          * =========================
-         * 3. REQUEST SNAP
+         * 4. REQUEST SNAP
          * =========================
          */
         try {
@@ -65,7 +76,7 @@ class PaymentService
 
         } catch (\Exception $e) {
 
-            // 🔥 kalau order_id duplicate → generate ulang
+            // 🔥 HANDLE DUPLICATE ORDER ID
             if (str_contains($e->getMessage(), 'order_id sudah digunakan')) {
 
                 $order_id = 'PAY-' . $pembayaran->id . '-' . Str::upper(Str::random(8));
