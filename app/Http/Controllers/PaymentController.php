@@ -7,6 +7,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -18,6 +19,7 @@ class PaymentController extends Controller
         $user = Auth::user();
 
         // Cari data pembayaran yang belum lunas milik user yang sedang login
+        // Pastikan relasi 'pendaftaran' sudah ada di Model Pembayaran
         $pembayaran = Pembayaran::where('id', $id)
             ->where('status', 'belum_lunas')
             ->whereHas('pendaftaran', function ($q) use ($user) {
@@ -34,50 +36,74 @@ class PaymentController extends Controller
                 'pembayaran' => $pembayaran
             ]);
         } catch (\Exception $e) {
-            Log::error('Gagal memproses pembayaran: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memproses pembayaran ke Midtrans.');
+            Log::error('Midtrans Snap Error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memproses ke sistem pembayaran. Silakan coba lagi.');
         }
     }
 
     /**
      * Menangani Callback / Webhook dari Midtrans
-     * Ini yang bertugas mengubah status di DB jadi LUNAS secara otomatis
+     * Endpoint ini harus didaftarkan di Dashboard Midtrans & dikecualikan dari CSRF
      */
     public function callback(Request $request)
     {
-        $serverKey = config('services.midtrans.server_key');
-        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+        // 1. Ambil data mentah dari request
+        $data = $request->all();
+        
+        $orderId      = $data['order_id'] ?? null;
+        $statusCode   = $data['status_code'] ?? null;
+        $grossAmount  = $data['gross_amount'] ?? null;
+        $signatureKey = $data['signature_key'] ?? null;
+        $serverKey    = config('services.midtrans.server_key');
 
-        // 1. Validasi Signature Key agar aman dari hacker
-        if ($hashed !== $request->signature_key) {
+        // 2. Validasi Signature Key (Keamanan)
+        $hashed = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
+        if ($hashed !== $signatureKey) {
+            Log::warning("Peringatan: Signature Key Tidak Valid untuk Order: " . $orderId);
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        // 2. Cari data pembayaran berdasarkan payment_ref (order_id di Midtrans)
-        $pembayaran = Pembayaran::where('payment_ref', $request->order_id)->first();
+        // 3. Cari data pembayaran di DB berdasarkan payment_ref
+        $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
-            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+            Log::error("Callback Error: Pembayaran tidak ditemukan untuk Ref: " . $orderId);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        // 3. Logika Update Status
-        $transactionStatus = $request->transaction_status;
-        $type = $request->payment_type;
+        // 4. Logika Update Status Berdasarkan Response Midtrans
+        $transactionStatus = $data['transaction_status'];
+        $type              = $data['payment_type'] ?? 'midtrans';
 
-        if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-            // ✅ PERBAIKAN: Gunakan tanda kutip untuk string agar tidak error SQL
-            $pembayaran->update([
-                'status'        => 'lunas',
-                'tanggal_bayar' => now(),
-                'paid_by'       => (string) $type, // Memastikan masuk sebagai teks
-                'metode'        => 'transfer'
-            ]);
-        } elseif ($transactionStatus == 'pending') {
-            $pembayaran->update(['status' => 'belum_lunas']);
-        } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
-            $pembayaran->update(['status' => 'gagal']);
+        try {
+            // Gunakan Transaction DB untuk memastikan data konsisten
+            DB::transaction(function () use ($pembayaran, $transactionStatus, $type) {
+                
+                if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
+                    
+                    // UPDATE: Pastikan semua value dibungkus string '' agar tidak error SQL
+                    $pembayaran->update([
+                        'status'        => 'lunas',
+                        'tanggal_bayar' => now(),
+                        'paid_by'       => (string) $type, // Memaksa ke string
+                        'metode'        => 'transfer',
+                        'updated_at'    => now(),
+                    ]);
+
+                    Log::info("Pembayaran Berhasil diupdate: " . $pembayaran->payment_ref);
+
+                } elseif ($transactionStatus == 'pending') {
+                    $pembayaran->update(['status' => 'belum_lunas']);
+                } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
+                    $pembayaran->update(['status' => 'gagal']);
+                }
+            });
+
+            return response()->json(['message' => 'Callback success']);
+
+        } catch (\Exception $e) {
+            Log::error("Gagal Update Database saat Callback: " . $e->getMessage());
+            return response()->json(['message' => 'Server Error saat update status'], 500);
         }
-
-        return response()->json(['message' => 'Callback diproses']);
     }
 }
