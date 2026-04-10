@@ -11,21 +11,15 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
-    /**
-     * =========================
-     * HALAMAN BAYAR
-     * =========================
-     */
+
     public function pay($id, PaymentService $paymentService)
     {
-        // 🔥 HANDLE kalau diakses tanpa login (redirect dari Midtrans)
         if (!Auth::check()) {
             return redirect('/dashboard');
         }
 
         $user = Auth::user();
 
-        // 🔥 gunakan first() bukan firstOrFail biar tidak 404
         $pembayaran = Pembayaran::where('id', $id)
             ->where('status', 'belum_lunas')
             ->whereHas('pendaftaran', function ($q) use ($user) {
@@ -33,7 +27,6 @@ class PaymentController extends Controller
             })
             ->first();
 
-        // 🔥 kalau tidak ditemukan (biasanya dari redirect Midtrans)
         if (!$pembayaran) {
             return redirect('/dashboard');
         }
@@ -51,11 +44,7 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * =========================
-     * CALLBACK MIDTRANS
-     * =========================
-     */
+
     public function callback(Request $request)
     {
         Log::info('CALLBACK MASUK', $request->all());
@@ -68,7 +57,6 @@ class PaymentController extends Controller
         $signatureKey = $data['signature_key'] ?? null;
         $serverKey    = config('services.midtrans.server_key');
 
-        // VALIDASI SIGNATURE
         $hashed = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
 
         if ($hashed !== $signatureKey) {
@@ -76,7 +64,6 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        // CARI DATA PEMBAYARAN
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
@@ -123,11 +110,6 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * =========================
-     * FINISH (SETELAH BAYAR)
-     * =========================
-     */
     public function finish(Request $request)
     {
         Log::info('FINISH MASUK', $request->all());
@@ -135,11 +117,7 @@ class PaymentController extends Controller
         return redirect('/dashboard')->with('success', 'Pembayaran berhasil');
     }
 
-    /**
-     * =========================
-     * ERROR (GAGAL BAYAR)
-     * =========================
-     */
+
     public function error()
     {
         return redirect('/dashboard')->with('error', 'Pembayaran gagal');
