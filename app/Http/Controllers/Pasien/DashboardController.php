@@ -14,20 +14,20 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-
         /*
         =====================================
         CEK LOGIN USER
         =====================================
         */
-
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $user = Auth::user();
+        
+        // Menangkap filter dari request
         $bulanFilter = $request->get('bulan');
-
+        $poliFilter = $request->get('poli');
 
         /*
         =====================================
@@ -35,14 +35,16 @@ class DashboardController extends Controller
         Mengambil riwayat pendaftaran poli
         =====================================
         */
+        $queryKunjungan = PendaftaranPoli::where('nama_pasien', $user->name);
 
-        $queryKunjungan = PendaftaranPoli::where(
-            'nama_pasien',
-            $user->name
-        );
-
+        // Filter berdasarkan Bulan (jika dipilih)
         if (!empty($bulanFilter)) {
             $queryKunjungan->whereMonth('created_at', $bulanFilter);
+        }
+
+        // Filter berdasarkan Poli (jika dipilih)
+        if (!empty($poliFilter)) {
+            $queryKunjungan->where('poli', $poliFilter);
         }
 
         $kunjungan = $queryKunjungan
@@ -50,24 +52,18 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-
-
         /*
         =====================================
         REKAM MEDIS TERAKHIR PASIEN
         =====================================
         */
-
         $rekamMedis = RekamMedis::join(
                 'pendaftaran_poli',
                 'rekam_medis.pendaftaran_id',
                 '=',
                 'pendaftaran_poli.id'
             )
-            ->where(
-                'pendaftaran_poli.nama_pasien',
-                $user->name
-            )
+            ->where('pendaftaran_poli.nama_pasien', $user->name)
             ->select(
                 'rekam_medis.*',
                 'pendaftaran_poli.poli',
@@ -77,65 +73,45 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-
-
         /*
         =====================================
         ANTRIAN AKTIF HARI INI
         =====================================
         */
-
-        $antrianAktif = PendaftaranPoli::where(
-                'nama_pasien',
-                $user->name
-            )
+        $antrianAktif = PendaftaranPoli::where('nama_pasien', $user->name)
             ->whereDate('created_at', Carbon::today())
-            ->whereIn('status', ['menunggu','proses'])
-            ->orderBy('id','desc')
+            ->whereIn('status', ['menunggu', 'proses'])
+            ->orderBy('id', 'desc')
             ->first();
-
-
 
         /*
         =====================================
         PEMBAYARAN YANG BELUM LUNAS
         =====================================
         */
-
         $pembayaran = Pembayaran::join(
                 'pendaftaran_poli',
                 'pembayaran.pendaftaran_id',
                 '=',
                 'pendaftaran_poli.id'
             )
-            ->where(
-                'pendaftaran_poli.nama_pasien',
-                $user->name
-            )
-            ->where(
-                'pembayaran.status',
-                'belum_lunas'
-            )
+            ->where('pendaftaran_poli.nama_pasien', $user->name)
+            ->where('pembayaran.status', 'belum_lunas')
             ->select('pembayaran.*')
-            ->orderBy('pembayaran.id','desc')
+            ->orderBy('pembayaran.id', 'desc')
             ->first();
-
-
 
         /*
         =====================================
         KIRIM DATA KE VIEW
         =====================================
         */
-
         return view('pasien.dashboard', [
-
             'user' => $user,
             'kunjungan' => $kunjungan,
             'rekamMedis' => $rekamMedis,
             'antrianAktif' => $antrianAktif,
             'pembayaran' => $pembayaran
-
         ]);
     }
 }

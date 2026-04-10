@@ -1,348 +1,386 @@
 @extends('layout.app')
 
 @section('content')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 
 <style>
     :root {
-        --clinic-primary: #0f172a;    /* Navy Dark */
-        --clinic-accent: #2563eb;     /* Blue Royal */
-        --clinic-success: #059669;    /* Green Emerald */
-        --clinic-bg: #f8fafc;         /* Slate Light */
-        --clinic-card: #ffffff;
-        --clinic-border: #e2e8f0;
-        --clinic-text-main: #1e293b;
-        --clinic-text-muted: #64748b;
+        --c-primary: #0f172a;
+        --c-accent: #4f46e5;
+        --c-emerald: #10b981;
+        --c-white: #ffffff;
+        --c-text-main: #1e293b;
+        --c-text-muted: #64748b;
+        --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
     }
 
     body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--clinic-bg);
-        color: var(--clinic-text-main);
-        line-height: 1.6;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #f1f5f9;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.06) 0px, transparent 40%), 
+            radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 40%);
+        color: var(--c-text-main);
+        min-height: 100vh;
     }
 
-    .medical-container {
+    .container-wide {
         max-width: 1000px;
-        margin: 40px auto;
-        padding: 0 20px;
+        margin: 60px auto;
+        padding: 0 30px;
     }
 
-    /* --- Judul Halaman --- */
-    .top-header {
+    /* --- HERO HEADER --- */
+    .hero-section {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 35px;
+        align-items: flex-end;
+        margin-bottom: 60px;
     }
 
-    .brand-section h1 {
-        font-size: 30px;
+    .hero-title h1 {
+        font-size: 42px;
         font-weight: 800;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.05em;
+        line-height: 1;
         margin: 0;
-        color: var(--clinic-primary);
+        background: linear-gradient(135deg, var(--c-primary) 30%, var(--c-accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    .brand-section p {
-        color: var(--clinic-text-muted);
+    .hero-title p {
+        color: var(--c-text-muted);
+        font-weight: 500;
         font-size: 15px;
-        margin: 4px 0 0 0;
+        margin-top: 12px;
     }
 
-    /* --- Kartu Profil Pasien --- */
-    .patient-brief {
-        background: var(--clinic-primary);
-        color: white;
-        border-radius: 24px;
-        padding: 28px 35px;
+    /* --- PROFILE CARD --- */
+    .profile-glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 40px;
+        padding: 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 40px;
-        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15);
+        box-shadow: var(--card-shadow);
     }
 
-    .patient-id-badge {
-        font-family: 'JetBrains Mono', monospace;
-        background: rgba(255,255,255,0.1);
-        padding: 8px 15px;
-        border-radius: 10px;
-        font-size: 14px;
-        border: 1px solid rgba(255,255,255,0.2);
-        letter-spacing: 1px;
+    .user-flex {
+        display: flex;
+        align-items: center;
+        gap: 24px;
     }
 
-    /* --- Desain Timeline --- */
-    .timeline-wrapper {
-        position: relative;
-        padding-left: 25px;
-    }
-
-    .timeline-wrapper::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 2px;
-        background: var(--clinic-border);
-    }
-
-    .record-entry {
-        position: relative;
-        background: var(--clinic-card);
-        border: 1px solid var(--clinic-border);
+    .avatar-icon {
+        width: 74px;
+        height: 74px;
+        background: var(--c-primary);
+        color: white;
         border-radius: 24px;
-        padding: 32px;
-        margin-bottom: 35px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .record-entry:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.06);
-        border-color: var(--clinic-accent);
-    }
-
-    .record-entry::before {
-        content: '';
-        position: absolute;
-        left: -31px;
-        top: 38px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--clinic-accent);
-        border: 4px solid var(--clinic-bg);
-    }
-
-    /* --- Header Baris Medis --- */
-    .entry-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .date-box {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .calendar-tag {
-        background: #eff6ff;
-        color: var(--clinic-accent);
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
         display: grid;
         place-items: center;
+        font-size: 32px;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
     }
 
-    /* --- Grid Informasi Medis --- */
-    .medical-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-
-    .grid-item {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .grid-item label {
-        font-size: 11px;
+    .user-meta h2 {
+        font-size: 26px;
         font-weight: 800;
-        color: var(--clinic-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        margin: 0;
+        letter-spacing: -0.04em;
     }
 
-    .grid-item .value {
-        font-size: 15px;
-        color: var(--clinic-text-main);
-        background: #f8fafc;
-        padding: 15px;
-        border-radius: 14px;
-        border: 1px solid #f1f5f9;
-        min-height: 45px;
-    }
-
-    .prescription-highlight {
-        grid-column: span 2;
-        background: #f0fdf4 !important; /* Hijau Segar */
-        border: 1px dashed #bbf7d0 !important;
-        color: #166534 !important;
-    }
-
-    /* --- Tombol & Badge --- */
-    .badge-verified {
-        background: #d1fae5;
-        color: #065f46;
-        padding: 6px 14px;
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ecfdf5;
+        color: #059669;
+        padding: 4px 12px;
         border-radius: 100px;
         font-size: 11px;
         font-weight: 700;
+        margin-top: 6px;
     }
 
-    .btn-download-item {
-        background: #ffffff;
-        color: var(--clinic-accent);
-        border: 1.5px solid var(--clinic-accent);
-        padding: 10px 18px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        transition: 0.2s;
+    /* --- FILTER BAR --- */
+    .filter-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 50px;
     }
 
-    .btn-download-item:hover {
-        background: var(--clinic-accent);
-        color: white;
+    .search-wrapper {
+        position: relative;
+        flex: 1;
     }
 
-    /* --- Ringkasan Pembayaran --- */
-    .billing-card {
-        background: white;
-        border: 2px solid var(--clinic-primary);
+    .search-wrapper i {
+        position: absolute;
+        left: 22px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--c-text-muted);
+        font-size: 20px;
+    }
+
+    .input-premium {
+        width: 100%;
+        padding: 20px 20px 20px 60px;
         border-radius: 24px;
-        padding: 30px 40px;
+        border: 1px solid transparent;
+        background: var(--c-white);
+        font-size: 15px;
+        font-weight: 600;
+        box-shadow: var(--card-shadow);
+        transition: 0.3s;
+        outline: none;
+    }
+
+    .input-premium:focus {
+        border-color: var(--c-accent);
+        box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.08);
+    }
+
+    .date-premium {
+        padding: 0 25px;
+        border-radius: 24px;
+        border: 1px solid transparent;
+        background: var(--c-white);
+        font-weight: 700;
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+        outline: none;
+        color: var(--c-text-main);
+    }
+
+    /* --- RESET BUTTON --- */
+    .btn-reset {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 25px;
+        background: #fee2e2;
+        color: #dc2626;
+        border-radius: 24px;
+        font-weight: 800;
+        font-size: 13px;
+        text-decoration: none;
+        transition: 0.3s;
+        border: 1px solid #fecaca;
+    }
+
+    .btn-reset:hover {
+        background: #dc2626;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* --- VISIT CARD BENTO --- */
+    .visit-card {
+        background: var(--c-white);
+        border-radius: 48px;
+        padding: 45px;
+        margin-bottom: 45px;
+        border: 1px solid rgba(241, 245, 249, 0.5);
+        transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .visit-card:hover {
+        transform: translateY(-12px) scale(1.01);
+        box-shadow: 0 40px 60px -15px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 50px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        margin-bottom: 40px;
     }
 
-    @media (max-width: 768px) {
-        .medical-grid { grid-template-columns: 1fr; }
-        .prescription-highlight { grid-column: span 1; }
-        .entry-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-        .billing-card { flex-direction: column; text-align: center; gap: 20px; }
+    .visit-tag {
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--c-accent);
+        background: #f0f0ff;
+        padding: 6px 14px;
+        border-radius: 12px;
+        letter-spacing: 1px;
+    }
+
+    .visit-date {
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 8px;
+        letter-spacing: -0.03em;
+    }
+
+    .bento-layout {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .bento-node {
+        padding: 24px;
+        border-radius: 28px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+    }
+
+    .bento-node label {
+        font-size: 9px;
+        font-weight: 800;
+        color: var(--c-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .bento-node .text {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.6;
+    }
+
+    .node-diagnosis { grid-column: span 2; background: #eff6ff; }
+    .node-diagnosis .text { color: var(--c-accent); font-size: 18px; font-weight: 800; }
+    .node-resep { grid-column: span 3; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px dashed var(--c-emerald); }
+    .node-resep .text { color: #065f46; font-style: italic; }
+
+    .btn-download {
+        background: var(--c-primary);
+        color: white;
+        padding: 16px 28px;
+        border-radius: 22px;
+        font-weight: 700;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: 0.3s;
+    }
+
+    .btn-download:hover { background: var(--c-accent); }
+
+    @media (max-width: 850px) {
+        .bento-layout { grid-template-columns: 1fr; }
+        .node-diagnosis, .node-resep { grid-column: span 1; }
+        .filter-bar { flex-direction: column; }
+        .date-premium, .btn-reset { height: 60px; }
     }
 </style>
 
-<div class="medical-container">
+<div class="container-wide">
 
-    {{-- HEADER HALAMAN --}}
-    <div class="top-header">
-        <div class="brand-section">
-            <h1>Riwayat Rekam Medis</h1>
-            <p>Data klinis dan pemeriksaan kesehatan Anda</p>
+    {{-- TOPBAR --}}
+    <div class="hero-section">
+        <div class="hero-title">
+            <h1>Rekam Medis.</h1>
+            <p>Riwayat diagnosis dan catatan klinis Anda.</p>
         </div>
-        <a href="{{ route('dashboard') }}" class="btn-download-item" style="border-color: #cbd5e1; color: #64748b;">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Dashboard
+        <a href="{{ route('dashboard') }}" class="btn-download" style="background: white; color: var(--c-primary); border: 1px solid #e2e8f0; box-shadow: none;">
+            <i class="ph-bold ph-house-line"></i> Dashboard
         </a>
     </div>
 
-    {{-- KARTU PROFIL --}}
-    <div class="patient-brief">
-        <div style="display: flex; align-items: center; gap: 25px;">
-            <div style="width: 65px; height: 65px; background: rgba(255,255,255,0.1); border-radius: 20px; display: grid; place-items: center; font-size: 28px; border: 1px solid rgba(255,255,255,0.2);">
-                👤
+    {{-- PROFILE --}}
+    <div class="profile-glass">
+        <div class="user-flex">
+            <div class="avatar-icon">
+                <i class="ph-fill ph-user"></i>
             </div>
-            <div>
-                <div style="font-size: 14px; opacity: 0.7; font-weight: 500;">Pasien Terdaftar</div>
-                <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">{{ Auth::user()->name }}</div>
+            <div class="user-meta">
+                <h2>{{ Auth::user()->name }}</h2>
+                <div class="status-pill">
+                    <i class="ph-fill ph-seal-check"></i> Akun Terverifikasi
+                </div>
             </div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 14px; opacity: 0.7; margin-bottom: 5px;">Nomor Rekam Medis</div>
-            <span class="patient-id-badge">{{ Auth::user()->no_identitas }}</span>
+            <p style="font-size: 10px; font-weight: 800; color: var(--c-text-muted); letter-spacing: 2px;">INSTANSI</p>
+            <p style="font-size: 16px; font-weight: 800; color: var(--c-primary);">POLKES JOMBANG</p>
         </div>
     </div>
 
-    {{-- DAFTAR KUNJUNGAN --}}
-    <div class="timeline-wrapper">
-        @forelse($rekamMedis as $rm)
-            <div class="record-entry">
-                <div class="entry-header">
-                    <div class="date-box">
-                        <div class="calendar-tag">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        </div>
-                        <div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--clinic-primary);">{{ \Carbon\Carbon::parse($rm->created_at)->translatedFormat('d F Y') }}</div>
-                            <div style="font-size: 12px; color: var(--clinic-text-muted); font-family: 'JetBrains Mono';">No. Referensi: #RM-{{ str_pad($rm->id, 5, '0', STR_PAD_LEFT) }}</div>
-                        </div>
-                    </div>
-                    
-                    {{-- Ganti bagian tombol cetak di file index Anda dengan ini --}}
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <span class="badge-verified">✓ Terverifikasi</span>
-                        
-                        {{-- Pastikan name route ini sesuai dengan yang ada di web.php --}}
-                        <a href="{{ route('pasien.rekammedis.pdf', $rm->id) }}" target="_blank" class="btn-download-item">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Cetak PDF
-                        </a>
-                    </div>
-                </div>
+    {{-- FILTER SEARCH --}}
+    <form action="{{ route('pasien.rekammedis') }}" method="GET" id="filterForm">
+        <div class="filter-bar">
+            <div class="search-wrapper">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" name="q" id="searchInput" value="{{ request('q') }}" class="input-premium" placeholder="Cari keluhan atau diagnosa...">
+            </div>
+            <input type="date" name="from" value="{{ request('from') }}" class="date-premium" onchange="this.form.submit()">
+            
+            {{-- Tombol Reset Otomatis Muncul --}}
+            @if(request('q') || request('from'))
+                <a href="{{ route('pasien.rekammedis') }}" class="btn-reset">
+                    <i class="ph-bold ph-arrows-counter-clockwise mr-2"></i> Reset
+                </a>
+            @endif
+        </div>
+    </form>
 
-                <div class="medical-grid">
-                    <div class="grid-item">
-                        <label>Keluhan Utama</label>
-                        <div class="value">{{ $rm->keluhan }}</div>
-                    </div>
-                    <div class="grid-item">
-                        <label>Diagnosa Dokter</label>
-                        <div class="value" style="font-weight: 700; color: var(--clinic-accent);">{{ $rm->diagnosis }}</div>
-                    </div>
-                    <div class="grid-item">
-                        <label>Tindakan & Saran Medis</label>
-                        <div class="value">{{ $rm->tindakan }}</div>
-                    </div>
-                    <div class="grid-item">
-                        <label>Poli / Unit Layanan</label>
-                        <div class="value">{{ $pendaftaran->poli ?? 'Layanan Umum' }}</div>
-                    </div>
-                    <div class="grid-item prescription-highlight">
-                        <label style="color: #166534;">Resep Obat & Aturan Pakai</label>
-                        <div style="font-weight: 600; font-size: 15px;">{{ $rm->resep }}</div>
-                    </div>
+    {{-- LIST --}}
+    @forelse($rekamMedis as $rm)
+        <div class="visit-card">
+            <div class="card-top">
+                <div>
+                    <div class="visit-tag">HASIL PEMERIKSAAN</div>
+                    <div class="visit-date">{{ \Carbon\Carbon::parse($rm->created_at)->translatedFormat('d F Y') }}</div>
                 </div>
+                <a href="{{ route('pasien.rekammedis.pdf', $rm->id) }}" target="_blank" class="btn-download">
+                    <i class="ph-bold ph-file-pdf"></i> Unduh Laporan
+                </a>
             </div>
-        @empty
-            <div style="background: white; border-radius: 24px; padding: 100px 20px; text-align: center; border: 1px dashed #cbd5e1;">
-                <div style="font-size: 60px; margin-bottom: 20px;">📁</div>
-                <h3 style="font-weight: 800; color: var(--clinic-primary); font-size: 22px;">Data Belum Tersedia</h3>
-                <p style="color: var(--clinic-text-muted); max-width: 400px; margin: 10px auto;">Riwayat rekam medis Anda akan muncul secara otomatis setelah sesi pemeriksaan dengan dokter selesai.</p>
-            </div>
-        @endforelse
-    </div>
 
-    {{-- RINGKASAN BIAYA --}}
-    @if(isset($pembayaran))
-        <div class="billing-card">
-            <div>
-                <div style="font-size: 13px; text-transform: uppercase; font-weight: 700; color: var(--clinic-text-muted); margin-bottom: 5px;">Total Biaya Kunjungan Terakhir</div>
-                <div style="font-size: 36px; font-weight: 900; color: var(--clinic-primary); letter-spacing: -1px;">
-                    <span style="font-size: 18px; font-weight: 600; color: var(--clinic-accent);">Rp</span> {{ number_format($pembayaran->total_biaya, 0, ',', '.') }}
+            <div class="bento-layout">
+                <div class="bento-node node-diagnosis">
+                    <label>Diagnosis Medis</label>
+                    <div class="text">{{ $rm->diagnosis }}</div>
                 </div>
-            </div>
-            <div style="text-align: right;">
-                @if($pembayaran->status === 'lunas')
-                    <div style="background: var(--clinic-primary); color: white; padding: 12px 25px; border-radius: 14px; font-weight: 800; font-size: 14px;">LUNAS TERBAYAR</div>
-                @else
-                    <div style="background: #fef2f2; color: #991b1b; padding: 12px 25px; border-radius: 14px; font-weight: 800; font-size: 14px; border: 1px solid #fee2e2;">MENUNGGU PEMBAYARAN</div>
-                @endif
-                <div style="margin-top: 12px; font-size: 12px; color: var(--clinic-text-muted); font-family: 'JetBrains Mono'; uppercase">No. Faktur: INV-{{ $pembayaran->id }}{{ date('ymd') }}</div>
+                <div class="bento-node">
+                    <label>Unit Layanan</label>
+                    <div class="text">{{ $rm->poli ?? 'Poli Umum' }}</div>
+                </div>
+                <div class="bento-node">
+                    <label>Keluhan Pasien</label>
+                    <div class="text">{{ $rm->keluhan }}</div>
+                </div>
+                <div class="bento-node">
+                    <label>Tindakan Dokter</label>
+                    <div class="text">{{ $rm->tindakan }}</div>
+                </div>
+                <div class="bento-node node-resep">
+                    <label>Resep Obat & Aturan Pakai</label>
+                    <div class="text">{{ $rm->resep }}</div>
+                </div>
             </div>
         </div>
-    @endif
+    @empty
+        <div style="text-align: center; padding: 120px 20px; background: white; border-radius: 50px; border: 1px dashed #cbd5e1;">
+            <i class="ph-light ph-folder-open" style="font-size: 80px; color: #cbd5e1; margin-bottom: 24px;"></i>
+            <h2 style="font-weight: 800; color: var(--c-primary);">Tidak ada catatan ditemukan.</h2>
+            <p style="color: var(--c-text-muted);">Silakan atur ulang pencarian untuk melihat semua data.</p>
+        </div>
+    @endforelse
 
 </div>
+
+<script>
+    let timer;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            document.getElementById('filterForm').submit();
+        }, 1000); 
+    });
+</script>
 @endsection

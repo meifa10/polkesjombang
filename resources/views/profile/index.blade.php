@@ -344,14 +344,6 @@ masyarakat umum di wilayah Jombang.
     </div>
 </section>
 
-<!-- ================= STATISTIK ================= -->
-<section class="stats">
-    <div class="stat-card"><h3>3</h3><p>Kamar</p></div>
-    <div class="stat-card"><h3>3</h3><p>Poli</p></div>
-    <div class="stat-card"><h3>3</h3><p>Dokter</p></div>
-    <div class="stat-card"><h3>17</h3><p>Karyawan</p></div>
-</section>
-
 <!-- ================= LAYANAN DASAR ================= -->
 <section class="basic-services">
     <h2>LAYANAN DASAR</h2>

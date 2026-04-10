@@ -34,7 +34,6 @@
 
     /* --- GREETING BANNER --- */
     .welcome-banner {
-        background: var(--polkes-dark);
         background: linear-gradient(135deg, #064e3b 0%, #059669 100%);
         border-radius: 32px;
         padding: 45px;
@@ -127,7 +126,6 @@
         margin-bottom: 20px;
     }
 
-    /* Palette Menu */
     .bg-pendaftaran { background: #ecfdf5; color: #10b981; }
     .bg-rekam { background: #eff6ff; color: #3b82f6; }
     .bg-antrian { background: #f5f3ff; color: #8b5cf6; }
@@ -161,6 +159,8 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
     .section-header h2 {
@@ -170,6 +170,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        margin: 0;
     }
 
     .section-header h2::before {
@@ -180,17 +181,38 @@
         border-radius: 10px;
     }
 
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
     .custom-filter {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        padding: 10px 20px;
+        padding: 10px 15px;
         border-radius: 14px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         color: var(--text-main);
         outline: none;
         cursor: pointer;
     }
+
+    .btn-reset-filter {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 10px 15px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-reset-filter:hover { background: #fecaca; }
 
     /* --- VISIT CARD --- */
     .visit-card {
@@ -204,11 +226,6 @@
         transition: 0.3s;
     }
 
-    .visit-card:hover {
-        background: #f8fafc;
-        border-color: #e2e8f0;
-    }
-
     .date-box {
         background: #f1f5f9;
         padding: 12px;
@@ -218,95 +235,20 @@
         margin-right: 20px;
     }
 
-    .date-box .day {
-        display: block;
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--polkes-primary);
-        line-height: 1;
-    }
+    .date-box .day { display: block; font-size: 20px; font-weight: 800; color: var(--polkes-primary); }
+    .date-box .month { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
 
-    .date-box .month {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: var(--text-muted);
-    }
+    .visit-main { flex-grow: 1; }
+    .visit-main h4 { margin: 0 0 5px 0; font-size: 16px; font-weight: 700; }
 
-    .visit-main {
-        flex-grow: 1;
-    }
-
-    .visit-main h4 {
-        margin: 0 0 5px 0;
-        font-size: 16px;
-        font-weight: 700;
-    }
-
-    .visit-tags {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .status-pill {
-        padding: 4px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
+    .status-pill { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
     .pill-success { background: #d1fae5; color: #065f46; }
     .pill-process { background: #e0f2fe; color: #0369a1; }
 
-    .antrian-info {
-        font-size: 13px;
-        color: var(--text-muted);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    /* --- EMPTY STATE --- */
-    .empty-state {
-        text-align: center;
-        padding: 60px 0;
-    }
-
-    .empty-illustration {
-        width: 120px;
-        margin-bottom: 25px;
-        opacity: 0.8;
-    }
-
-    .btn-primary {
-        background: var(--polkes-primary);
-        color: white;
-        padding: 12px 28px;
-        border-radius: 14px;
-        text-decoration: none;
-        font-weight: 700;
-        display: inline-block;
-        transition: 0.3s;
-        box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.2);
-    }
-
-    .btn-primary:hover {
-        background: var(--polkes-dark);
-        transform: scale(1.02);
-    }
-
-    @media (max-width: 992px) {
-        .menu-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 600px) {
-        .menu-grid { grid-template-columns: 1fr; }
-        .welcome-banner { padding: 30px; }
-        .welcome-banner h1 { font-size: 26px; }
-        .visit-card { flex-direction: column; align-items: flex-start; }
-        .date-box { margin-bottom: 15px; width: 100%; }
+    @media (max-width: 992px) { .menu-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+        .section-header { flex-direction: column; align-items: flex-start; }
+        .filter-group { width: 100%; flex-wrap: wrap; }
     }
 </style>
 
@@ -317,15 +259,10 @@
             Halo, 
             @php
                 $hour = date('H');
-                if ($hour >= 5 && $hour < 11) {
-                    echo 'Selamat Pagi 🌅';
-                } elseif ($hour >= 11 && $hour < 15) {
-                    echo 'Selamat Siang ☀️';
-                } elseif ($hour >= 15 && $hour < 18) {
-                    echo 'Selamat Sore 🌇';
-                } else {
-                    echo 'Selamat Malam 🌙';
-                }
+                if ($hour >= 5 && $hour < 11) echo 'Selamat Pagi 🌅';
+                elseif ($hour >= 11 && $hour < 15) echo 'Selamat Siang ☀️';
+                elseif ($hour >= 15 && $hour < 18) echo 'Selamat Sore 🌇';
+                else echo 'Selamat Malam 🌙';
             @endphp
         </p>
         <h1>{{ Auth::user()->name }}</h1>
@@ -389,15 +326,30 @@
     <main class="status-section">
         <div class="section-header">
             <h2>Aktivitas Terakhir</h2>
-            <form method="GET">
+            
+            <form method="GET" class="filter-group">
+                {{-- FILTER POLI --}}
+                <select name="poli" onchange="this.form.submit()" class="custom-filter">
+                    <option value="">Semua Poli</option>
+                    <option value="Poli Umum" {{ request('poli') == 'Poli Umum' ? 'selected' : '' }}>Poli Umum</option>
+                    <option value="Poli Gigi" {{ request('poli') == 'Poli Gigi' ? 'selected' : '' }}>Poli Gigi</option>
+                    <option value="Poli KIA & KB" {{ request('poli') == 'Poli KIA & KB' ? 'selected' : '' }}>Poli KIA & KB</option>
+                </select>
+
+                {{-- FILTER BULAN --}}
                 <select name="bulan" onchange="this.form.submit()" class="custom-filter">
-                    <option value="">Filter Bulan</option>
+                    <option value="">Semua Bulan</option>
                     @foreach(['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $key=>$month)
-                    <option value="{{ $key+1 }}" {{ request('bulan') == ($key+1) ? 'selected' : '' }}>
-                        {{ $month }}
-                    </option>
+                        <option value="{{ $key+1 }}" {{ request('bulan') == ($key+1) ? 'selected' : '' }}>{{ $month }}</option>
                     @endforeach
                 </select>
+
+                {{-- TOMBOL RESET --}}
+                @if(request('poli') || request('bulan'))
+                    <a href="{{ route('dashboard') }}" class="btn-reset-filter">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+                    </a>
+                @endif
             </form>
         </div>
 
@@ -405,36 +357,29 @@
             @foreach($kunjungan as $item)
             <div class="visit-card">
                 <div class="date-box">
-                    <span class="day">{{ $item->created_at ? $item->created_at->format('d') : '-' }}</span>
-                    <span class="month">{{ $item->created_at ? $item->created_at->format('M Y') : '-' }}</span>
+                    <span class="day">{{ $item->created_at->format('d') }}</span>
+                    <span class="month">{{ $item->created_at->format('M Y') }}</span>
                 </div>
                 
                 <div class="visit-main">
                     <h4>{{ $item->poli ?? 'Poli Umum' }}</h4>
-                    <div class="visit-tags">
+                    <div style="display: flex; gap: 15px; align-items: center;">
                         <span class="status-pill {{ $item->status == 'selesai' ? 'pill-success' : 'pill-process' }}">
                             {{ $item->status }}
                         </span>
-                        <span class="antrian-info">
-                            <i class="fa-solid fa-hashtag"></i>
-                            Antrian: <strong>{{ $item->nomor_antrian }}</strong>
+                        <span style="font-size: 13px; color: var(--text-muted);">
+                            <i class="fa-solid fa-hashtag text-emerald-500"></i> Antrian: <strong>{{ $item->nomor_antrian }}</strong>
                         </span>
                     </div>
                 </div>
-
-                <div class="visit-action">
-                    <i class="fa-solid fa-chevron-right text-slate-300"></i>
-                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300"></i>
             </div>
             @endforeach
         @else
-            <div class="empty-state">
-                <img src="https://cdn-icons-png.flaticon.com/512/3793/3793617.png" alt="Hospital" class="empty-illustration">
-                <h3>Belum Ada Riwayat Kunjungan</h3>
-                <p>Mulai konsultasi dengan dokter kami dengan mendaftar di layanan poli.</p>
-                <a href="{{ route('pendaftaran.umum') }}" class="btn-primary">
-                    Daftar Sekarang
-                </a>
+            <div style="text-align: center; padding: 60px 0;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3793/3793617.png" style="width: 100px; opacity: 0.5; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted);">Belum ada riwayat kunjungan</h3>
+                <p style="color: var(--text-muted); font-size: 14px;">Data tidak ditemukan untuk filter ini.</p>
             </div>
         @endif
     </main>

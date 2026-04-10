@@ -108,16 +108,10 @@
         }
 
         /* Billing Table */
-        .billing-table {
-            width: 100%;
-            margin-top: 30px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 15px;
-        }
         .total-box {
             background-color: #0f172a;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 20px;
             text-align: right;
             border-radius: 5px;
         }
@@ -208,11 +202,15 @@
     @endif
 
     @if(isset($pembayaran))
-        <div style="page-break-inside: avoid;">
-            <div class="section-title">RINGKASAN BIAYA & ADMINISTRASI</div>
-            <table class="content-table" style="margin-left: 10px; margin-bottom: 15px;">
+        <div style="page-break-inside: avoid; margin-top: 20px;">
+            <div class="section-title">RINCIAN TRANSAKSI</div>
+            <table class="content-table" style="margin-left: 10px; margin-bottom: 10px;">
                 <tr>
-                    <td width="150" class="info-label">Status Pembayaran</td>
+                    <td width="150" class="info-label">Nomor Referensi</td>
+                    <td>: <span style="font-family: monospace;">{{ $pembayaran->payment_ref ?? '-' }}</span></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Status Pembayaran</td>
                     <td>: 
                         <span style="font-weight: bold; color: {{ $pembayaran->status == 'lunas' ? '#059669' : '#dc2626' }}">
                             {{ strtoupper(str_replace('_',' ', $pembayaran->status)) }}
@@ -221,20 +219,21 @@
                 </tr>
                 <tr>
                     <td class="info-label">Metode Pembayaran</td>
-                    <td>: {{ strtoupper($pembayaran->metode) }}</td>
+                    <td>: {{ strtoupper($pembayaran->metode ?? 'Belum Dipilih') }}</td>
                 </tr>
             </table>
 
             <table width="100%">
                 <tr>
-                    <td width="60%"></td>
-                    <td width="40%">
+                    <td width="55%"></td>
+                    <td width="45%">
                         <div class="total-box">
                             <table width="100%" style="color: white;">
                                 <tr>
-                                    <td style="font-size: 10px; text-transform: uppercase;">Total Tagihan</td>
+                                    <td style="font-size: 9px; text-transform: uppercase; vertical-align: middle;">Total Dibayarkan</td>
                                     <td style="text-align: right; font-size: 16px; font-weight: bold;">
-                                        Rp {{ number_format($pembayaran->total_biaya, 0, ',', '.') }}
+                                        {{-- FIX: Membersihkan input sebelum format untuk menjaga konsistensi nominal --}}
+                                        Rp {{ number_format((int) str_replace(['.', ','], '', $pembayaran->total_biaya), 0, ',', '.') }}
                                     </td>
                                 </tr>
                             </table>
