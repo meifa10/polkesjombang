@@ -35,7 +35,7 @@ body {
     color: #64748b;
 }
 
-/* BUTTON */
+/* DOWNLOAD BUTTON */
 .download-section {
     text-align: center;
     margin-bottom: 50px;
@@ -50,67 +50,62 @@ body {
     font-size: 15px;
     font-weight: 600;
     text-decoration: none;
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
 .btn-medical:hover {
     transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4);
 }
 
-/* CARD */
+/* SECTION CARD */
 .tutorial-card {
     margin-top: 50px;
     padding: 35px;
     border-radius: 20px;
     background: #f9fbff;
     border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
 }
 
 .tutorial-card h4 {
+    font-size: 20px;
+    font-weight: 600;
     color: #1e40af;
+    margin-bottom: 18px;
 }
 
 .tutorial-card ul {
     padding-left: 20px;
+    line-height: 1.9;
+    color: #334155;
+    font-size: 15px;
 }
 
-/* VIDEO */
+/* VIDEO STYLE */
 .video-container {
     margin-top: 25px;
     border-radius: 18px;
     overflow: hidden;
-    position: relative;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
     background: #000;
 }
 
-/* OVERLAY */
-.video-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.video-overlay div {
-    background: rgba(0,0,0,0.6);
-    padding: 15px 25px;
-    border-radius: 50px;
-    color: white;
-    font-weight: 600;
-}
-
-/* LINK */
 .watch-on-yt {
     display: inline-block;
     margin-top: 15px;
     color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-/* BACK */
+.watch-on-yt:hover {
+    text-decoration: underline;
+}
+
+/* BACK BUTTON */
 .back-section {
     text-align: center;
     margin-top: 60px;
@@ -122,6 +117,12 @@ body {
     padding: 14px 35px;
     border-radius: 12px;
     text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.btn-back:hover {
+    background: #d97706;
 }
 </style>
 
@@ -130,10 +131,13 @@ body {
     {{-- HEADER --}}
     <div class="jkn-header">
         <h2>Pendaftaran Pasien JKN (BPJS)</h2>
-        <p>Ikuti panduan berikut untuk registrasi dan pendaftaran online.</p>
+        <p>
+            Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.  
+            Silakan ikuti panduan lengkap berikut untuk proses registrasi akun dan pendaftaran online.
+        </p>
     </div>
 
-    {{-- DOWNLOAD --}}
+    {{-- DOWNLOAD BUTTON --}}
     <div class="download-section">
         <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile"
            target="_blank"
@@ -144,66 +148,63 @@ body {
 
     {{-- ===================== TUTORIAL 1 ===================== --}}
     <div class="tutorial-card">
-        <h4>📝 Tutorial Pembuatan Akun</h4>
-
+        <h4>📝 Tutorial Pembuatan Akun Mobile JKN</h4>
         <ul>
-            <li>Download aplikasi</li>
-            <li>Klik daftar</li>
-            <li>Isi data</li>
-            <li>Verifikasi OTP</li>
+            <li>Unduh dan buka aplikasi Mobile JKN.</li>
+            <li>Pilih menu <strong>Daftar</strong>.</li>
+            <li>Masukkan Nomor Kartu BPJS / NIK dan Tanggal Lahir.</li>
+            <li>Isi Email dan Nomor HP aktif.</li>
+            <li>Masukkan kode verifikasi (OTP).</li>
+            <li>Buat password dan login ke aplikasi.</li>
         </ul>
 
         <div class="video-container">
-
+            {{-- Menggunakan format embed agar bisa diputar di web --}}
             <iframe width="100%" height="420"
                 src="https://www.youtube.com/embed/ddc21BfzVwQ"
+                title="Tutorial Daftar Akun Mobile JKN"
                 frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen>
             </iframe>
-
         </div>
-
-        <a href="https://www.youtube.com/watch?v=ddc21BfzVwQ" target="_blank" class="watch-on-yt">
-            ▶ Tonton di YouTube
+        {{-- Link agar bisa diklik langsung masuk ke YouTube --}}
+        <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="watch-on-yt">
+            ▶ Tonton langsung di YouTube
         </a>
     </div>
 
     {{-- ===================== TUTORIAL 2 ===================== --}}
     <div class="tutorial-card">
-        <h4>📅 Tutorial Pendaftaran Online</h4>
-
+        <h4>📅 Tutorial Pendaftaran Online di Mobile JKN</h4>
         <ul>
-            <li>Login aplikasi</li>
-            <li>Pilih pendaftaran</li>
-            <li>Pilih poli</li>
-            <li>Ambil antrian</li>
+            <li>Login ke aplikasi Mobile JKN.</li>
+            <li>Pilih menu <strong>Pendaftaran Pelayanan</strong>.</li>
+            <li>Pilih Faskes dan Poli tujuan.</li>
+            <li>Tentukan tanggal pelayanan.</li>
+            <li>Konfirmasi dan simpan nomor antrian digital.</li>
+            <li>Tunjukkan nomor antrian saat datang ke fasilitas kesehatan.</li>
         </ul>
 
-        {{-- THUMBNAIL (ANTI ERROR) --}}
         <div class="video-container">
-
-            <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank">
-
-                <img src="https://img.youtube.com/vi/sJ4f2V7uU-A/hqdefault.jpg"
-                     style="width:100%; display:block;">
-
-                <div class="video-overlay">
-                    <div>▶ Klik untuk tonton</div>
-                </div>
-
-            </a>
-
+            {{-- Menggunakan contoh video BPJS resmi karena VIDEO_ID_2 belum kakak isi --}}
+            <iframe width="100%" height="420"
+                src="https://www.youtube.com/embed/sJ4f2V7uU-A"
+                title="Tutorial Pendaftaran Online Mobile JKN"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
         </div>
-
         <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="watch-on-yt">
-            ▶ Tonton di YouTube
+            ▶ Tonton langsung di YouTube
         </a>
     </div>
 
-    {{-- BACK --}}
+    {{-- BACK BUTTON --}}
     <div class="back-section">
         <a href="{{ route('pendaftaran.online') }}" class="btn-back">
-            Kembali
+            Kembali ke Menu Pendaftaran
         </a>
     </div>
 
