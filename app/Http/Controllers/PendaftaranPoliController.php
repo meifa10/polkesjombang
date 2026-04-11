@@ -9,11 +9,8 @@ use Carbon\Carbon;
 
 class PendaftaranPoliController extends Controller
 {
-
     /**
-     * ===================================================
      * SIMPAN PENDAFTARAN PASIEN JKN
-     * ===================================================
      */
     public function storeJkn(Request $request)
     {
@@ -24,49 +21,30 @@ class PendaftaranPoliController extends Controller
             'poli' => 'required'
         ]);
 
-        /**
-         * Ambil tanggal hari ini
-         */
         $today = Carbon::today();
-
-        /**
-         * Ambil nomor antrian terakhir hari ini di poli yang sama
-         */
         $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
             ->where('poli', $request->poli)
             ->max('nomor_antrian');
 
-        /**
-         * Hitung nomor antrian berikutnya
-         */
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
-        /**
-         * Simpan pendaftaran
-         */
+        // PERBAIKAN: Gunakan $request->no_identitas agar data masuk ke DB
         $pendaftaran = PendaftaranPoli::create([
             'jenis_pasien' => 'JKN',
             'nama_pasien' => $request->nama_pasien,
-            'no_identitas' => Auth::user()->no_identitas,
+            'no_identitas' => $request->no_identitas, 
             'tanggal_lahir' => $request->tanggal_lahir,
             'poli' => $request->poli,
             'nomor_antrian' => $nomorAntrian,
             'status' => 'menunggu'
         ]);
 
-        /**
-         * Redirect ke halaman antrian
-         */
         return redirect()->route('pasien.antrian')
             ->with('success', 'Pendaftaran berhasil. Nomor antrian Anda: ' . $nomorAntrian);
     }
 
-
-
     /**
-     * ===================================================
      * SIMPAN PENDAFTARAN PASIEN UMUM
-     * ===================================================
      */
     public function storeUmum(Request $request)
     {
@@ -77,39 +55,24 @@ class PendaftaranPoliController extends Controller
             'poli' => 'required'
         ]);
 
-        /**
-         * Ambil tanggal hari ini
-         */
         $today = Carbon::today();
-
-        /**
-         * Ambil nomor antrian terakhir hari ini di poli yang sama
-         */
         $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
             ->where('poli', $request->poli)
             ->max('nomor_antrian');
 
-        /**
-         * Hitung nomor antrian berikutnya
-         */
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
-        /**
-         * Simpan data pendaftaran
-         */
+        // PERBAIKAN: Gunakan $request->no_identitas
         $pendaftaran = PendaftaranPoli::create([
             'jenis_pasien' => 'UMUM',
             'nama_pasien' => $request->nama_pasien,
-            'no_identitas' => Auth::user()->no_identitas,
+            'no_identitas' => $request->no_identitas, 
             'tanggal_lahir' => $request->tanggal_lahir,
             'poli' => $request->poli,
             'nomor_antrian' => $nomorAntrian,
             'status' => 'menunggu'
         ]);
 
-        /**
-         * Redirect ke halaman antrian pasien
-         */
         return redirect()->route('pasien.antrian')
             ->with('success', 'Pendaftaran berhasil. Nomor antrian Anda: ' . $nomorAntrian);
     }
