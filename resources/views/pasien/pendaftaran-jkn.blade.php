@@ -231,7 +231,7 @@
                 <h4>Pembuatan Akun Mobile JKN</h4>
                 <ul>
                     <li>Unduh & buka Mobile JKN di ponsel Anda</li>
-                    <li>Klik menu <strong>Daftar Baru</strong></li>
+                    <li>Klik menu <strong> Daftar Baru</strong></li>
                     <li>Input Nomor Kartu BPJS / NIK KTP</li>
                     <li>Lakukan verifikasi melalui OTP</li>
                     <li>Tentukan password keamanan Anda</li>
@@ -252,7 +252,7 @@
                 <h4>Pendaftaran Online di Mobile JKN</h4>
                 <ul>
                     <li>Login menggunakan akun terdaftar</li>
-                    <li>Pilih menu utama <strong>Pendaftaran Pelayanan</strong></li>
+                    <li>Pilih menu utama <strong> Pendaftaran Pelayanan</strong></li>
                     <li>Cari Fasilitas Kesehatan & Poli tujuan</li>
                     <li>Tentukan jadwal dokter dan tanggal</li>
                     <li>Konfirmasi dan dapatkan nomor antrian</li>
