@@ -217,8 +217,10 @@
     <div class="jkn-luxury-wrapper">
 
         <div class="jkn-header">
-            <h2>Portal JKN</h2>
-            <p>Sistem pendaftaran rumah sakit terpadu dalam satu genggaman tangan Anda.</p>
+            <h2>Pendaftaran Pasien JKN (BPJS)</h2>
+            <p>Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.  
+               Silakan ikuti panduan lengkap berikut untuk proses registrasi akun dan pendaftaran online.
+            </p>
         </div>
 
         <div class="download-area">
@@ -230,12 +232,13 @@
 
         <div class="step-grid">
             <div class="step-text">
-                <h4>Aktivasi Pengguna</h4>
+                <h4>Tutorial Pembuatan Akun Mobile JKN</h4>
                 <ul>
-                    <li>Siapkan kartu JKN-KIS atau NIK KTP Anda</li>
-                    <li>Lengkapi detail pendaftaran akun baru</li>
-                    <li>Masukan kode verifikasi unik yang Anda terima</li>
-                    <li>Gunakan kata sandi dengan keamanan berlapis</li>
+                    <li>Unduh & buka Mobile JKN di ponsel Anda</li>
+                    <li>Klik menu <strong>Daftar Baru</strong></li>
+                    <li>Input Nomor Kartu BPJS / NIK KTP sesuai identitas</li>
+                    <li>Lakukan verifikasi melalui OTP yang dikirimkan</li>
+                    <li>Tentukan password keamanan Anda</li>
                 </ul>
                 <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
@@ -249,12 +252,13 @@
                 <iframe src="https://www.youtube.com/embed/sJ4f2V7uU-A" allowfullscreen></iframe>
             </div>
             <div class="step-text">
-                <h4>Antrian Pelayanan</h4>
+                <h4>Tutorial Pendaftaran Online di Mobile JKN</h4>
                 <ul>
-                    <li>Pilih menu pendaftaran pelayanan di dashboard</li>
-                    <li>Tentukan poli spesialis & tanggal kunjungan</li>
-                    <li>Konfirmasi slot waktu yang tersedia</li>
-                    <li>Simpan tiket antrian digital Anda</li>
+                    <li>Login ke aplikasi menggunakan akun terdaftar</li>
+                    <li>Pilih menu utama <strong>Pendaftaran Pelayanan</strong></li>
+                    <li>Cari Fasilitas Kesehatan & Poli yang dituju</li>
+                    <li>Pilih jadwal dokter dan tanggal kunjungan</li>
+                    <li>Konfirmasi dan dapatkan nomor antrian digital</li>
                 </ul>
                 <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
