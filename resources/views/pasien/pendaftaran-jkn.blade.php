@@ -21,7 +21,6 @@
         font-family: 'Inter', sans-serif;
     }
 
-    /* FULL SCREEN BACKGROUND */
     .ultra-canvas {
         background: radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.5) 0, transparent 50%), 
                     radial-gradient(at 100% 100%, rgba(254, 243, 199, 0.3) 0, transparent 50%);
@@ -31,7 +30,6 @@
         flex-direction: column;
     }
 
-    /* WRAPPER MELEBAR MENTOK ATAS */
     .jkn-luxury-wrapper {
         max-width: 1300px;
         width: 95%;
@@ -46,7 +44,7 @@
         box-shadow: var(--luxury-shadow);
     }
 
-    /* HEADER - TYPOGRAPHY KECIL & ELEGAN */
+    /* HEADER - Teks 2 Baris */
     .jkn-header {
         text-align: center;
         margin-bottom: 90px;
@@ -54,23 +52,23 @@
 
     .jkn-header h2 {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 42px; /* Diperkecil dari sebelumnya */
+        font-size: 42px;
         font-weight: 800;
         letter-spacing: -2px;
         color: var(--deep-slate);
-        margin-bottom: 12px;
+        margin-bottom: 15px;
     }
 
     .jkn-header p {
-        font-size: 16px; /* Font size ideal untuk sub-header */
+        font-size: 16px;
         color: var(--soft-text);
         letter-spacing: 0.2px;
-        max-width: 500px;
+        max-width: 600px; /* Diatur agar teks pecah jadi 2 baris otomatis */
         margin: 0 auto;
-        line-height: 1.6;
+        line-height: 1.8;
+        font-weight: 500;
     }
 
-    /* PRIMARY CTA */
     .download-area {
         text-align: center;
         margin-bottom: 120px;
@@ -94,10 +92,8 @@
     .btn-luxury:hover {
         transform: translateY(-3px);
         background: #000;
-        box-shadow: 0 30px 60px rgba(0,0,0,0.2);
     }
 
-    /* TUTORIAL GRID */
     .step-grid {
         display: grid;
         grid-template-columns: 1fr 1.5fr;
@@ -114,10 +110,8 @@
         font-weight: 700;
         color: var(--deep-slate);
         margin-bottom: 30px;
-        letter-spacing: -0.5px;
     }
 
-    /* POINT TUTORIAL - AESTHETIC DOTS */
     .step-text ul {
         list-style: none;
         padding: 0;
@@ -127,9 +121,8 @@
         display: flex;
         align-items: flex-start;
         padding: 15px 0;
-        font-size: 15px; /* Font size diperkecil supaya pro */
+        font-size: 15px;
         color: #475569;
-        line-height: 1.6;
     }
 
     .step-text ul li::before {
@@ -143,7 +136,6 @@
         box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
     }
 
-    /* VIDEO FRAME LUXURY */
     .video-frame {
         position: relative;
         border-radius: 40px;
@@ -169,44 +161,44 @@
         letter-spacing: 1px;
     }
 
-    /* BACK BUTTON - SUPER AESTHETIC */
+    /* BACK FOOTER - Dashboard Area */
     .back-footer {
         text-align: center;
-        padding: 100px 0 140px;
+        padding: 120px 0 160px;
     }
 
+    /* TOMBOL DASHBOARD LEVEL DEWA */
     .btn-dashboard {
         display: inline-flex;
         align-items: center;
-        gap: 15px;
-        color: var(--deep-slate);
+        gap: 18px;
+        background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+        color: #ffffff !important;
         text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        padding: 15px 35px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        padding: 22px 65px;
         border-radius: 100px;
-        background: rgba(255, 255, 255, 0.5);
-        border: 1px solid rgba(0,0,0,0.05);
-        backdrop-filter: blur(10px);
-        transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        box-shadow: 0 25px 50px rgba(37, 99, 235, 0.35);
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: none;
     }
 
     .btn-dashboard:hover {
-        background: #fff;
-        transform: scale(1.05);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-        color: var(--ocean);
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 35px 70px rgba(37, 99, 235, 0.5);
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
     }
 
     .btn-dashboard svg {
-        transition: 0.3s;
+        transition: transform 0.4s ease;
     }
 
     .btn-dashboard:hover svg {
-        transform: translateX(-5px);
+        transform: translateX(-8px);
     }
 
-    /* RESPONSIVE */
     @media (max-width: 1024px) {
         .step-grid, .step-grid.reverse { grid-template-columns: 1fr; gap: 50px; }
         .jkn-luxury-wrapper { padding: 60px 30px; }
@@ -216,13 +208,16 @@
 <div class="ultra-canvas">
     <div class="jkn-luxury-wrapper">
 
+        {{-- HEADER --}}
         <div class="jkn-header">
             <h2>Pendaftaran Pasien JKN (BPJS)</h2>
-            <p>Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.  
-               Silakan ikuti panduan lengkap berikut untuk proses registrasi akun dan pendaftaran online.
+            <p>
+                Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.<br>
+                Ikuti panduan lengkap untuk registrasi akun dan pendaftaran online.
             </p>
         </div>
 
+        {{-- CTA AREA --}}
         <div class="download-area">
             <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile" target="_blank" class="btn-luxury">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -230,14 +225,15 @@
             </a>
         </div>
 
+        {{-- TUTORIAL 1 --}}
         <div class="step-grid">
             <div class="step-text">
-                <h4>Tutorial Pembuatan Akun Mobile JKN</h4>
+                <h4>Pembuatan Akun Mobile JKN</h4>
                 <ul>
                     <li>Unduh & buka Mobile JKN di ponsel Anda</li>
                     <li>Klik menu <strong>Daftar Baru</strong></li>
-                    <li>Input Nomor Kartu BPJS / NIK KTP sesuai identitas</li>
-                    <li>Lakukan verifikasi melalui OTP yang dikirimkan</li>
+                    <li>Input Nomor Kartu BPJS / NIK KTP</li>
+                    <li>Lakukan verifikasi melalui OTP</li>
                     <li>Tentukan password keamanan Anda</li>
                 </ul>
                 <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="yt-shortcut">Video Panduan →</a>
@@ -247,26 +243,31 @@
             </div>
         </div>
 
+        {{-- TUTORIAL 2 --}}
         <div class="step-grid reverse">
             <div class="video-frame">
                 <iframe src="https://www.youtube.com/embed/sJ4f2V7uU-A" allowfullscreen></iframe>
             </div>
             <div class="step-text">
-                <h4>Tutorial Pendaftaran Online di Mobile JKN</h4>
+                <h4>Pendaftaran Online di Mobile JKN</h4>
                 <ul>
-                    <li>Login ke aplikasi menggunakan akun terdaftar</li>
+                    <li>Login menggunakan akun terdaftar</li>
                     <li>Pilih menu utama <strong>Pendaftaran Pelayanan</strong></li>
-                    <li>Cari Fasilitas Kesehatan & Poli yang dituju</li>
-                    <li>Pilih jadwal dokter dan tanggal kunjungan</li>
-                    <li>Konfirmasi dan dapatkan nomor antrian digital</li>
+                    <li>Cari Fasilitas Kesehatan & Poli tujuan</li>
+                    <li>Tentukan jadwal dokter dan tanggal</li>
+                    <li>Konfirmasi dan dapatkan nomor antrian</li>
                 </ul>
                 <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
         </div>
 
+        {{-- KEMBALI KE DASHBOARD (SUPER AESTHETIC) --}}
         <div class="back-footer">
             <a href="{{ route('pendaftaran.online') }}" class="btn-dashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
                 Kembali ke Dashboard
             </a>
         </div>
