@@ -195,10 +195,10 @@
 
     {{-- HEADER --}}
     <div class="jkn-header">
-        <h2>Layanan JKN Online</h2>
+        <h2>Pendaftaran Pasien JKN (BPJS)</h2>
         <p>
-            Solusi praktis pendaftaran rumah sakit langsung dari genggaman Anda. 
-            Simak panduan eksklusif di bawah ini.
+            Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.  
+            Silakan ikuti panduan lengkap berikut untuk proses registrasi akun dan pendaftaran online.
         </p>
     </div>
 
@@ -216,7 +216,7 @@
 
     {{-- ===================== TUTORIAL 1 ===================== --}}
     <div class="tutorial-card">
-        <h4><span style="font-size: 30px;">🔐</span> Aktivasi Akun</h4>
+        <h4><span style="font-size: 30px;">🔐</span> Tutorial Pembuatan Akun Mobile JKN</h4>
         <ul>
             <li>Unduh & buka Mobile JKN di ponsel Anda</li>
             <li>Klik menu <strong>Daftar Baru</strong></li>
@@ -242,7 +242,7 @@
 
     {{-- ===================== TUTORIAL 2 ===================== --}}
     <div class="tutorial-card">
-        <h4><span style="font-size: 30px;">🗓️</span> Booking Antrian Online</h4>
+        <h4><span style="font-size: 30px;">🗓️</span> Tutorial Pendaftaran Online di Mobile JKN</h4>
         <ul>
             <li>Login ke aplikasi menggunakan akun terdaftar</li>
             <li>Pilih menu utama <strong>Pendaftaran Pelayanan</strong></li>
