@@ -2,312 +2,267 @@
 
 @section('content')
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
 <style>
-    /* RESET & BASE */
     :root {
-        --primary: #0f172a;
-        --accent: #3b82f6;
-        --accent-soft: rgba(59, 130, 246, 0.1);
-        --text-main: #1e293b;
-        --text-muted: #64748b;
+        --deep-slate: #0f172a;
+        --ocean: #2563eb;
+        --soft-text: #64748b;
+        --luxury-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.06);
     }
 
     body, html {
-        margin: 0 !important;
-        padding: 0 !important;
+        margin: 0;
+        padding: 0;
         width: 100%;
         min-height: 100vh;
-        overflow-x: hidden;
+        background: #fdfdfd;
+        font-family: 'Inter', sans-serif;
     }
 
-    /* FULL BACKGROUND GRADIENT */
-    .master-container {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 40%, #dbeafe 100%);
+    /* FULL SCREEN BACKGROUND */
+    .ultra-canvas {
+        background: radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.5) 0, transparent 50%), 
+                    radial-gradient(at 100% 100%, rgba(254, 243, 199, 0.3) 0, transparent 50%);
         min-height: 100vh;
         width: 100%;
         display: flex;
         flex-direction: column;
-        position: relative;
-    }
-
-    /* DECORATIVE ORBS (Efek Estetik di Background) */
-    .master-container::before {
-        content: '';
-        position: absolute;
-        top: -10%; left: -5%;
-        width: 400px; height: 400px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-        z-index: 0;
     }
 
     /* WRAPPER MELEBAR MENTOK ATAS */
-    .jkn-wrapper {
-        max-width: 1400px;
-        width: 92%;
+    .jkn-luxury-wrapper {
+        max-width: 1300px;
+        width: 95%;
         margin: 0 auto;
-        padding: 100px 60px;
-        background: rgba(255, 255, 255, 0.6);
+        padding: 100px 80px;
+        background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(40px);
         -webkit-backdrop-filter: blur(40px);
-        border-radius: 0 0 80px 80px;
-        box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 0 0 100px 100px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
         border-top: none;
-        position: relative;
-        z-index: 1;
+        box-shadow: var(--luxury-shadow);
     }
 
-    /* HEADER */
+    /* HEADER - TYPOGRAPHY KECIL & ELEGAN */
     .jkn-header {
         text-align: center;
-        margin-bottom: 80px;
+        margin-bottom: 90px;
     }
 
     .jkn-header h2 {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: clamp(36px, 6vw, 64px);
+        font-size: 42px; /* Diperkecil dari sebelumnya */
         font-weight: 800;
-        letter-spacing: -3px;
-        color: var(--primary);
-        line-height: 1;
-        margin-bottom: 25px;
+        letter-spacing: -2px;
+        color: var(--deep-slate);
+        margin-bottom: 12px;
     }
 
     .jkn-header p {
-        font-size: 20px;
-        color: var(--text-muted);
-        max-width: 700px;
+        font-size: 16px; /* Font size ideal untuk sub-header */
+        color: var(--soft-text);
+        letter-spacing: 0.2px;
+        max-width: 500px;
         margin: 0 auto;
-        font-weight: 500;
+        line-height: 1.6;
     }
 
-    /* DOWNLOAD BUTTON SLEEK */
-    .download-section {
+    /* PRIMARY CTA */
+    .download-area {
         text-align: center;
-        margin-bottom: 100px;
-    }
-
-    .btn-medical {
-        display: inline-flex;
-        align-items: center;
-        gap: 15px;
-        background: var(--primary);
-        color: #fff;
-        padding: 24px 60px;
-        border-radius: 30px;
-        font-size: 18px;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        box-shadow: 0 30px 60px -15px rgba(15, 23, 42, 0.4);
-    }
-
-    .btn-medical:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 40px 80px -20px rgba(15, 23, 42, 0.5);
-        background: #000;
-    }
-
-    /* GRID TUTORIAL */
-    .tutorial-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.4fr;
-        gap: 100px;
-        align-items: center;
         margin-bottom: 120px;
-        padding: 60px;
-        background: rgba(255, 255, 255, 0.4);
-        border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.8);
     }
 
-    .tutorial-grid.reverse { grid-template-columns: 1.4fr 1fr; }
-
-    .tutorial-content h4 {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 36px;
-        font-weight: 800;
-        color: var(--primary);
-        margin-bottom: 35px;
-        letter-spacing: -1px;
-    }
-
-    /* POINT TUTORIAL (AESTHETIC PARAH) */
-    .tutorial-content ul {
-        list-style: none;
-        padding: 0;
-        counter-reset: my-step;
-    }
-
-    .tutorial-content ul li {
-        counter-increment: my-step;
-        display: flex;
-        align-items: center;
-        padding: 22px 0;
-        font-size: 19px;
-        color: var(--text-main);
-        font-weight: 500;
-        transition: 0.3s;
-    }
-
-    .tutorial-content ul li::before {
-        content: "0" counter(my-step);
-        background: white;
-        color: var(--accent);
-        min-width: 50px;
-        height: 50px;
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 800;
-        margin-right: 25px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.03);
-        border: 1px solid #f1f5f9;
-        transition: all 0.4s ease;
-    }
-
-    .tutorial-grid:hover ul li::before {
-        background: var(--accent);
-        color: white;
-        transform: scale(1.1) rotate(-5deg);
-    }
-
-    /* VIDEO BOX */
-    .video-box {
-        position: relative;
-        border-radius: 50px;
-        overflow: hidden;
-        padding-top: 56.25%;
-        background: #000;
-        box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.35);
-    }
-
-    .video-box iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-    .watch-yt-link {
-        display: inline-flex;
-        margin-top: 30px;
-        color: var(--accent);
-        text-decoration: none;
-        font-weight: 800;
-        font-size: 16px;
-        letter-spacing: 0.5px;
-        transition: 0.3s;
-    }
-
-    .watch-yt-link:hover { gap: 10px; opacity: 0.8; }
-
-    /* KEMBALI KE DASHBOARD (SUPER AESTHETIC) */
-    .back-section {
-        text-align: center;
-        padding: 120px 0 150px 0; /* Mentok ke bawah dengan lega */
-    }
-
-    .btn-back-dashboard {
+    .btn-luxury {
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 16px;
-        padding: 20px 45px;
+        background: var(--deep-slate);
+        color: #fff;
+        padding: 18px 45px;
         border-radius: 100px;
-        background: white;
-        border: 2px solid #f1f5f9;
-        transition: all 0.4s ease;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-    }
-
-    .btn-back-dashboard:hover {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-        transform: translateX(-10px);
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.4s all;
         box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
 
-    .btn-back-dashboard svg {
-        transition: transform 0.4s ease;
+    .btn-luxury:hover {
+        transform: translateY(-3px);
+        background: #000;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.2);
     }
 
-    .btn-back-dashboard:hover svg {
+    /* TUTORIAL GRID */
+    .step-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 100px;
+        align-items: center;
+        margin-bottom: 150px;
+    }
+
+    .step-grid.reverse { grid-template-columns: 1.5fr 1fr; }
+
+    .step-text h4 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--deep-slate);
+        margin-bottom: 30px;
+        letter-spacing: -0.5px;
+    }
+
+    /* POINT TUTORIAL - AESTHETIC DOTS */
+    .step-text ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .step-text ul li {
+        display: flex;
+        align-items: flex-start;
+        padding: 15px 0;
+        font-size: 15px; /* Font size diperkecil supaya pro */
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    .step-text ul li::before {
+        content: "";
+        min-width: 8px;
+        height: 8px;
+        background: var(--ocean);
+        border-radius: 50%;
+        margin-top: 8px;
+        margin-right: 20px;
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+    }
+
+    /* VIDEO FRAME LUXURY */
+    .video-frame {
+        position: relative;
+        border-radius: 40px;
+        overflow: hidden;
+        padding-top: 56.25%;
+        background: #000;
+        box-shadow: 0 60px 100px -30px rgba(0,0,0,0.3);
+    }
+
+    .video-frame iframe {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%; border: 0;
+    }
+
+    .yt-shortcut {
+        display: inline-block;
+        margin-top: 25px;
+        color: var(--ocean);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* BACK BUTTON - SUPER AESTHETIC */
+    .back-footer {
+        text-align: center;
+        padding: 100px 0 140px;
+    }
+
+    .btn-dashboard {
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--deep-slate);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 15px 35px;
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(0,0,0,0.05);
+        backdrop-filter: blur(10px);
+        transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .btn-dashboard:hover {
+        background: #fff;
+        transform: scale(1.05);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        color: var(--ocean);
+    }
+
+    .btn-dashboard svg {
+        transition: 0.3s;
+    }
+
+    .btn-dashboard:hover svg {
         transform: translateX(-5px);
-        stroke: white;
     }
 
     /* RESPONSIVE */
-    @media (max-width: 1200px) {
-        .tutorial-grid, .tutorial-grid.reverse {
-            grid-template-columns: 1fr;
-            padding: 40px;
-            gap: 50px;
-        }
-        .jkn-wrapper { padding: 80px 30px; width: 95%; }
+    @media (max-width: 1024px) {
+        .step-grid, .step-grid.reverse { grid-template-columns: 1fr; gap: 50px; }
+        .jkn-luxury-wrapper { padding: 60px 30px; }
     }
 </style>
 
-<div class="master-container">
-    <div class="jkn-wrapper">
+<div class="ultra-canvas">
+    <div class="jkn-luxury-wrapper">
 
         <div class="jkn-header">
-            <h2>Portal JKN Digital</h2>
-            <p>Panduan eksklusif untuk akses kesehatan yang lebih cerdas dan efisien.</p>
+            <h2>Portal JKN</h2>
+            <p>Sistem pendaftaran rumah sakit terpadu dalam satu genggaman tangan Anda.</p>
         </div>
 
-        <div class="download-section">
-            <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile" target="_blank" class="btn-medical">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                Instal Mobile JKN
+        <div class="download-area">
+            <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile" target="_blank" class="btn-luxury">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Dapatkan Aplikasi
             </a>
         </div>
 
-        <div class="tutorial-grid">
-            <div class="tutorial-content">
-                <h4>🔐 Registrasi User</h4>
+        <div class="step-grid">
+            <div class="step-text">
+                <h4>Aktivasi Pengguna</h4>
                 <ul>
-                    <li>Gunakan identitas KTP & Nomor JKN valid</li>
-                    <li>Lengkapi formulir pendaftaran digital</li>
-                    <li>Verifikasi akses via kode OTP rahasia</li>
-                    <li>Ciptakan password keamanan tingkat tinggi</li>
+                    <li>Siapkan kartu JKN-KIS atau NIK KTP Anda</li>
+                    <li>Lengkapi detail pendaftaran akun baru</li>
+                    <li>Masukan kode verifikasi unik yang Anda terima</li>
+                    <li>Gunakan kata sandi dengan keamanan berlapis</li>
                 </ul>
-                <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="watch-yt-link">WATCH ON YOUTUBE →</a>
+                <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
-            <div class="video-box">
+            <div class="video-frame">
                 <iframe src="https://www.youtube.com/embed/ddc21BfzVwQ" allowfullscreen></iframe>
             </div>
         </div>
 
-        <div class="tutorial-grid reverse">
-            <div class="video-box">
+        <div class="step-grid reverse">
+            <div class="video-frame">
                 <iframe src="https://www.youtube.com/embed/sJ4f2V7uU-A" allowfullscreen></iframe>
             </div>
-            <div class="tutorial-content">
-                <h4>🗓️ Antrian Online</h4>
+            <div class="step-text">
+                <h4>Antrian Pelayanan</h4>
                 <ul>
-                    <li>Masuk ke menu Pendaftaran Pelayanan</li>
-                    <li>Tentukan Faskes & Poli spesialis tujuan</li>
-                    <li>Pilih slot waktu kunjungan yang tersedia</li>
-                    <li>Gunakan QR Antrian saat tiba di lokasi</li>
+                    <li>Pilih menu pendaftaran pelayanan di dashboard</li>
+                    <li>Tentukan poli spesialis & tanggal kunjungan</li>
+                    <li>Konfirmasi slot waktu yang tersedia</li>
+                    <li>Simpan tiket antrian digital Anda</li>
                 </ul>
-                <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="watch-yt-link">WATCH ON YOUTUBE →</a>
+                <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
         </div>
 
-        <div class="back-section">
-            <a href="{{ route('pendaftaran.online') }}" class="btn-back-dashboard">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <div class="back-footer">
+            <a href="{{ route('pendaftaran.online') }}" class="btn-dashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 Kembali ke Dashboard
             </a>
         </div>
