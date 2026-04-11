@@ -246,7 +246,7 @@
         {{-- TUTORIAL 2 --}}
         <div class="step-grid reverse">
             <div class="video-frame">
-                <iframe src="https://www.youtube.com/embed/ddc21BfzVwQ" allowfullscreen></iframe>
+                <iframe src="https://www.youtube.com/embed/5DCur3Yy4w8" allowfullscreen></iframe>
             </div>
             <div class="step-text">
                 <h4>Pendaftaran Online di Mobile JKN</h4>
@@ -257,7 +257,7 @@
                     <li>Tentukan jadwal dokter dan tanggal</li>
                     <li>Konfirmasi dan dapatkan nomor antrian</li>
                 </ul>
-                <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="yt-shortcut">Video Panduan →</a>
+                <a href="https://youtube.com/shorts/5DCur3Yy4w8" target="_blank" class="yt-shortcut">Video Panduan →</a>
             </div>
         </div>
 
