@@ -3,207 +3,282 @@
 @section('content')
 
 <style>
-body {
-    background: linear-gradient(to bottom right, #eef5ff, #f8fbff);
-}
+    /* IMPORT FONT (Opsional jika belum ada di app.blade) */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
-/* CONTAINER */
-.jkn-wrapper {
-    max-width: 1100px;
-    margin: 70px auto;
-    padding: 50px;
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.07);
-}
+    body {
+        background: radial-gradient(circle at top right, #eef5ff, #f0f7ff);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #334155;
+    }
 
-/* HEADER */
-.jkn-header {
-    text-align: center;
-    margin-bottom: 50px;
-}
+    /* CONTAINER UTAMA */
+    .jkn-wrapper {
+        max-width: 900px;
+        margin: 60px auto;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px); /* Efek Kaca */
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
+    }
 
-.jkn-header h2 {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1e3a8a;
-}
+    /* HEADER */
+    .jkn-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
 
-.jkn-header p {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #64748b;
-}
+    .jkn-header h2 {
+        font-size: 36px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+    }
 
-/* DOWNLOAD BUTTON */
-.download-section {
-    text-align: center;
-    margin-bottom: 50px;
-}
+    .jkn-header p {
+        font-size: 17px;
+        color: #64748b;
+        max-width: 600px;
+        margin: 0 auto;
+    }
 
-.btn-medical {
-    display: inline-block;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: #fff;
-    padding: 16px 40px;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
-}
+    /* DOWNLOAD BUTTON */
+    .download-section {
+        text-align: center;
+        margin-bottom: 60px;
+    }
 
-.btn-medical:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4);
-}
+    .btn-medical {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #1e293b; /* Dark sleek color */
+        color: #fff;
+        padding: 18px 45px;
+        border-radius: 20px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
 
-/* SECTION CARD */
-.tutorial-card {
-    margin-top: 50px;
-    padding: 35px;
-    border-radius: 20px;
-    background: #f9fbff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-}
+    .btn-medical:hover {
+        transform: translateY(-5px) scale(1.02);
+        background: #0f172a;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.15);
+    }
 
-.tutorial-card h4 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1e40af;
-    margin-bottom: 18px;
-}
+    /* TUTORIAL CARD */
+    .tutorial-card {
+        margin-top: 40px;
+        padding: 40px;
+        border-radius: 28px;
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
+        position: relative;
+        transition: transform 0.3s ease;
+    }
 
-.tutorial-card ul {
-    padding-left: 20px;
-    line-height: 1.9;
-    color: #334155;
-    font-size: 15px;
-}
+    .tutorial-card:hover {
+        border-color: #dbeafe;
+    }
 
-/* VIDEO STYLE */
-.video-container {
-    margin-top: 25px;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-    background: #000;
-}
+    .tutorial-card h4 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-.watch-on-yt {
-    display: inline-block;
-    margin-top: 15px;
-    color: #2563eb;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-}
+    .tutorial-card ul {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 30px;
+    }
 
-.watch-on-yt:hover {
-    text-decoration: underline;
-}
+    .tutorial-card ul li {
+        position: relative;
+        padding-left: 30px;
+        margin-bottom: 12px;
+        font-size: 15px;
+        color: #475569;
+    }
 
-/* BACK BUTTON */
-.back-section {
-    text-align: center;
-    margin-top: 60px;
-}
+    .tutorial-card ul li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-weight: bold;
+    }
 
-.btn-back {
-    background: #f59e0b;
-    color: white;
-    padding: 14px 35px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: 0.3s;
-}
+    /* VIDEO CONTAINER (Thumbnail Style) */
+    .video-container {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        cursor: pointer;
+        background: #000;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
 
-.btn-back:hover {
-    background: #d97706;
-}
+    .video-thumbnail {
+        width: 100%;
+        height: 450px;
+        object-fit: cover;
+        display: block;
+        opacity: 0.85;
+        transition: all 0.5s ease;
+    }
+
+    .video-container:hover .video-thumbnail {
+        transform: scale(1.05);
+        opacity: 0.7;
+    }
+
+    .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(30, 58, 138, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .play-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        box-shadow: 0 0 30px rgba(255,255,255,0.4);
+        transition: all 0.3s ease;
+    }
+
+    .play-icon svg {
+        width: 30px;
+        height: 30px;
+        fill: #1e3a8a;
+        margin-left: 5px;
+    }
+
+    .video-container:hover .play-icon {
+        transform: scale(1.2);
+        background: #ffffff;
+    }
+
+    .watch-label {
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: rgba(0,0,0,0.3);
+        padding: 8px 20px;
+        border-radius: 50px;
+        backdrop-filter: blur(5px);
+    }
+
+    /* BACK BUTTON */
+    .back-section {
+        text-align: center;
+        margin-top: 60px;
+    }
+
+    .btn-back {
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: color 0.3s;
+    }
+
+    .btn-back:hover {
+        color: #1e293b;
+    }
 </style>
 
 <div class="jkn-wrapper">
 
     {{-- HEADER --}}
     <div class="jkn-header">
-        <h2>Pendaftaran Pasien JKN (BPJS)</h2>
-        <p>
-            Pendaftaran layanan dilakukan melalui aplikasi resmi Mobile JKN.  
-            Silakan ikuti panduan lengkap berikut untuk proses registrasi akun dan pendaftaran online.
-        </p>
+        <h2>Layanan JKN Online</h2>
+        <p>Nikmati kemudahan pendaftaran rumah sakit langsung dari ponsel Anda melalui sistem integrasi Mobile JKN.</p>
     </div>
 
     {{-- DOWNLOAD BUTTON --}}
     <div class="download-section">
-        <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile"
-           target="_blank"
-           class="btn-medical">
-           Download / Buka Aplikasi Mobile JKN
+        <a href="https://play.google.com/store/apps/details?id=app.bpjs.mobile" target="_blank" class="btn-medical">
+            <svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="currentColor" d="M17,18H7V6H17M17,1H7C5.89,1 5,1.89 5,3V21C5,22.11 5.89,23 7,23H17C18.11,23 19,22.11 19,21V3C19,1.89 18.11,1 17,1Z"/></svg>
+            Buka Aplikasi Mobile JKN
         </a>
     </div>
 
-    {{-- ===================== TUTORIAL 1 ===================== --}}
+    {{-- TUTORIAL 1 --}}
     <div class="tutorial-card">
-        <h4>📝 Tutorial Pembuatan Akun Mobile JKN</h4>
+        <h4><span>📝</span> Registrasi & Aktivasi Akun</h4>
         <ul>
-            <li>Unduh dan buka aplikasi Mobile JKN.</li>
-            <li>Pilih menu <strong>Daftar</strong>.</li>
-            <li>Masukkan Nomor Kartu BPJS / NIK dan Tanggal Lahir.</li>
-            <li>Isi Email dan Nomor HP aktif.</li>
-            <li>Masukkan kode verifikasi (OTP).</li>
-            <li>Buat password dan login ke aplikasi.</li>
+            <li>Siapkan Nomor Kartu JKN atau NIK KTP Anda.</li>
+            <li>Klik tombol <strong>Daftar</strong> pada halaman utama aplikasi.</li>
+            <li>Masukkan data diri secara lengkap dan valid.</li>
+            <li>Verifikasi email/nomor HP melalui kode OTP.</li>
         </ul>
 
-        <div class="video-container">
-            {{-- Menggunakan format /embed/ agar bisa diputar langsung --}}
-            <iframe width="100%" height="420"
-                src="https://www.youtube.com/embed/ddc21BfzVwQ" 
-                title="Tutorial Daftar Akun Mobile JKN"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-            </iframe>
-        </div>
-        <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="watch-on-yt">
-            ▶ Tonton langsung di YouTube
+        <a href="https://www.youtube.com/watch?v=ddc21BfzVwQ" target="_blank" class="video-container">
+            <img src="https://img.youtube.com/vi/ddc21BfzVwQ/maxresdefault.jpg" class="video-thumbnail" alt="Tutorial Registrasi">
+            <div class="video-overlay">
+                <div class="play-icon">
+                    <svg viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
+                </div>
+                <div class="watch-label">Putar Tutorial</div>
+            </div>
         </a>
     </div>
 
-    {{-- ===================== TUTORIAL 2 ===================== --}}
+    {{-- TUTORIAL 2 --}}
     <div class="tutorial-card">
-        <h4>📅 Tutorial Pendaftaran Online di Mobile JKN</h4>
+        <h4><span>📅</span> Pendaftaran Antrian Online</h4>
         <ul>
-            <li>Login ke aplikasi Mobile JKN.</li>
-            <li>Pilih menu <strong>Pendaftaran Pelayanan</strong>.</li>
-            <li>Pilih Faskes dan Poli tujuan.</li>
-            <li>Tentukan tanggal pelayanan.</li>
-            <li>Konfirmasi dan simpan nomor antrian digital.</li>
-            <li>Tunjukkan nomor antrian saat datang ke fasilitas kesehatan.</li>
+            <li>Masuk ke aplikasi menggunakan akun yang telah aktif.</li>
+            <li>Pilih menu <strong>Pendaftaran Pelayanan</strong> (Antrian).</li>
+            <li>Pilih Fasilitas Kesehatan dan Poli yang dituju.</li>
+            <li>Ambil nomor antrian digital untuk hari kunjungan.</li>
         </ul>
 
-        <div class="video-container">
-            {{-- Pastikan VIDEO_ID_2 diganti dengan ID video asli jika sudah ada --}}
-            <iframe width="100%" height="420"
-                src="https://www.youtube.com/embed/VIDEO_ID_2"
-                title="Tutorial Pendaftaran Online Mobile JKN"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-            </iframe>
-        </div>
-        <a href="https://www.youtube.com/watch?v=VIDEO_ID_2" target="_blank" class="watch-on-yt">
-            ▶ Tonton langsung di YouTube
+        <a href="https://www.youtube.com/watch?v=sJ4f2V7uU-A" target="_blank" class="video-container">
+            <img src="https://img.youtube.com/vi/sJ4f2V7uU-A/maxresdefault.jpg" class="video-thumbnail" alt="Tutorial Antrian">
+            <div class="video-overlay">
+                <div class="play-icon">
+                    <svg viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
+                </div>
+                <div class="watch-label">Putar Tutorial</div>
+            </div>
         </a>
     </div>
 
-    {{-- BACK BUTTON --}}
+    {{-- BACK SECTION --}}
     <div class="back-section">
         <a href="{{ route('pendaftaran.online') }}" class="btn-back">
-            Kembali ke Menu Pendaftaran
+            ← Kembali ke Menu Utama
         </a>
     </div>
 
