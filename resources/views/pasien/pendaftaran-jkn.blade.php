@@ -89,6 +89,20 @@ body {
     border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    background: #000;
+}
+
+.watch-on-yt {
+    display: inline-block;
+    margin-top: 15px;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.watch-on-yt:hover {
+    text-decoration: underline;
 }
 
 /* BACK BUTTON */
@@ -145,13 +159,18 @@ body {
         </ul>
 
         <div class="video-container">
+            {{-- Menggunakan format /embed/ agar bisa diputar langsung --}}
             <iframe width="100%" height="420"
-                src="https://www.youtube.com/embed/VIDEO_ID_1"
+                src="https://www.youtube.com/embed/ddc21BfzVwQ" 
                 title="Tutorial Daftar Akun Mobile JKN"
                 frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen>
             </iframe>
         </div>
+        <a href="https://youtube.com/shorts/ddc21BfzVwQ" target="_blank" class="watch-on-yt">
+            ▶ Tonton langsung di YouTube
+        </a>
     </div>
 
     {{-- ===================== TUTORIAL 2 ===================== --}}
@@ -167,13 +186,18 @@ body {
         </ul>
 
         <div class="video-container">
+            {{-- Pastikan VIDEO_ID_2 diganti dengan ID video asli jika sudah ada --}}
             <iframe width="100%" height="420"
                 src="https://www.youtube.com/embed/VIDEO_ID_2"
                 title="Tutorial Pendaftaran Online Mobile JKN"
                 frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen>
             </iframe>
         </div>
+        <a href="https://www.youtube.com/watch?v=VIDEO_ID_2" target="_blank" class="watch-on-yt">
+            ▶ Tonton langsung di YouTube
+        </a>
     </div>
 
     {{-- BACK BUTTON --}}
