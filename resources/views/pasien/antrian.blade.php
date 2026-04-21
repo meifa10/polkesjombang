@@ -5,35 +5,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
 
 <style>
-    /* CSS RESET & OPTIMASI */
-    #capture-zone * {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        box-sizing: border-box;
+    /* CSS UNTUK MENGHILANGKAN SPACE PUTIH DI LAYOUT UTAMA */
+    /* Kita paksa pembungkus utama Laravel untuk mengikuti tema gelap kita */
+    html, body {
+        background-color: #0d121c !important; 
+        margin: 0;
+        padding: 0;
     }
 
-    /* Hilangkan margin/padding bawaan yang mungkin menyebabkan spasi putih */
     .antrian-wrapper {
         width: 100%;
-        min-height: 100vh;
+        /* Menggunakan vh (viewport height) agar selalu penuh setinggi layar */
+        min-height: 100vh; 
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #064e3b; /* Warna solid agar menyatu */
-        background: radial-gradient(circle at top left, #064e3b 0%, #111827 100%);
-        padding: 20px;
-        margin: 0;
+        background: radial-gradient(circle at top left, #064e3b 0%, #0d121c 100%);
+        padding: 40px 20px;
+        position: relative;
+        z-index: 999; /* Memastikan berada di atas elemen layout lain */
     }
 
     .integrated-ticket {
         background: #ffffff !important;
         width: 100%;
-        max-width: 450px;
+        max-width: 420px;
         border-radius: 30px;
         overflow: hidden;
-        position: relative;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.5);
     }
 
     .ticket-header {
@@ -44,108 +43,100 @@
         position: relative;
     }
 
-    .hospital-identity {
-        font-family: 'Inter', sans-serif;
-        font-weight: 800;
-        font-size: 18px;
-        color: #10b981 !important;
-        text-transform: uppercase;
-        margin-bottom: 5px;
-    }
-
-    .ticket-display-number {
-        font-family: 'Inter', sans-serif;
-        font-size: 110px;
-        font-weight: 900;
-        color: #1e293b !important;
-        line-height: 1;
-        margin: 15px 0;
-    }
-
-    .ticket-body {
-        background: #ffffff !important;
-        padding: 30px;
-    }
-
-    .details-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .detail-item label {
-        display: block;
-        font-size: 11px;
-        font-weight: 800;
-        color: #64748b !important;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-    }
-
-    .detail-item span {
-        font-size: 16px;
-        font-weight: 700;
-        color: #0f172a !important;
-    }
-
     /* Lubang Tiket */
     .ticket-header::before, .ticket-header::after {
         content: "";
         position: absolute;
         width: 30px;
         height: 30px;
-        background: #064e3b; /* Samakan dengan warna background luar terdekat */
+        background: #081d18; /* Sesuaikan warna gelap background luar */
         border-radius: 50%;
         bottom: -15px;
-        z-index: 2;
     }
     .ticket-header::before { left: -15px; }
     .ticket-header::after { right: -15px; }
+
+    .hospital-identity {
+        font-weight: 800;
+        font-size: 18px;
+        color: #10b981 !important;
+        text-transform: uppercase;
+    }
+
+    .ticket-display-number {
+        font-size: 100px;
+        font-weight: 900;
+        color: #1e293b !important;
+        line-height: 1;
+        margin: 10px 0;
+    }
+
+    .ticket-body {
+        background: #ffffff !important;
+        padding: 25px 30px;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .detail-item label {
+        display: block;
+        font-size: 10px;
+        font-weight: 800;
+        color: #64748b !important;
+        text-transform: uppercase;
+    }
+
+    .detail-item span {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a !important;
+    }
 
     .status-badge {
         display: inline-block;
         background: #d1fae5 !important;
         color: #065f46 !important;
-        padding: 5px 12px;
+        padding: 4px 10px;
         border-radius: 6px;
         font-weight: 800;
-        font-size: 12px;
+        font-size: 11px;
     }
 
-    /* Tombol & Aksi */
+    /* Tombol Navigasi */
     .no-screenshot {
-        padding: 10px 0;
+        padding: 15px 0;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 10px;
     }
 
     .btn-action {
         display: block;
         width: 100%;
-        padding: 16px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
         font-weight: 800;
-        font-size: 15px;
+        font-size: 14px;
         text-align: center;
         text-decoration: none;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         border: none;
         cursor: pointer;
-        transition: transform 0.2s;
     }
-
-    .btn-action:active { transform: scale(0.98); }
 
     .btn-save { background: #10b981; color: white; }
     .btn-dashboard { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
     .ticket-footer {
         text-align: center;
-        font-size: 12px;
+        font-size: 11px;
         color: #64748b !important;
-        margin-top: 15px;
+        margin-top: 5px;
         line-height: 1.5;
-        padding-top: 15px;
-        border-top: 1px solid #f1f5f9;
     }
 </style>
 
@@ -154,11 +145,11 @@
         @isset($data)
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
-            <div style="color: #64748b; font-weight: 700; font-size: 13px;">NOMOR ANTRIAN DIGITAL</div>
+            <div style="color: #64748b; font-weight: 700; font-size: 12px; letter-spacing: 1px;">NOMOR ANTRIAN DIGITAL</div>
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
-            <div style="color: #334155; font-weight: 600; font-size: 15px;">
+            <div style="color: #334155; font-weight: 600; font-size: 14px;">
                 {{ \Carbon\Carbon::parse($data->created_at)->translatedFormat('l, d F Y') }}
             </div>
         </div>
@@ -197,11 +188,6 @@
                 Tunjukkan tiket digital ini kepada petugas.
             </div>
         </div>
-        @else
-        <div style="padding: 50px 20px; text-align: center;">
-            <p>Data antrian tidak ditemukan.</p>
-            <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">Kembali</a>
-        </div>
         @endisset
     </div>
 </div>
@@ -212,25 +198,18 @@
         const zone = document.getElementById('capture-zone');
         const noShow = zone.querySelector('.no-screenshot');
         
-        // Sembunyikan elemen yang tidak ingin ada di gambar
         noShow.style.display = 'none';
 
         html2canvas(zone, {
             scale: 3, 
             useCORS: true,
             backgroundColor: "#ffffff",
-            logging: false,
         }).then(canvas => {
-            // Tampilkan kembali elemen setelah render selesai
             noShow.style.display = 'block';
-            
             const link = document.createElement('a');
-            link.download = 'Antrian_Polkes_{{ $data->nomor_antrian ?? "00" }}.png';
+            link.download = 'Antrian_Polkes_{{ $data->nomor_antrian }}.png';
             link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
-        }).catch(err => {
-            noShow.style.display = 'block';
-            console.error("Gagal menyimpan gambar:", err);
         });
     }
 </script>
