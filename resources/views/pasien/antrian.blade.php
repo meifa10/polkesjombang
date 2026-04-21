@@ -5,21 +5,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
 
 <style>
-    /* CSS RESET UNTUK RENDER CANVAS */
+    /* CSS RESET & OPTIMASI */
     #capture-zone * {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        text-shadow: none !important;
+        box-sizing: border-box;
     }
 
-    .antrian-container {
+    /* Hilangkan margin/padding bawaan yang mungkin menyebabkan spasi putih */
+    .antrian-wrapper {
+        width: 100%;
         min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #111827; /* Fallback warna solid */
+        background: #064e3b; /* Warna solid agar menyatu */
         background: radial-gradient(circle at top left, #064e3b 0%, #111827 100%);
         padding: 20px;
+        margin: 0;
     }
 
     .integrated-ticket {
@@ -29,33 +33,31 @@
         border-radius: 30px;
         overflow: hidden;
         position: relative;
-        /* Tambahkan border tipis agar batas tiket jelas di hosting */
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
 
     .ticket-header {
         background: #ffffff !important;
-        padding: 40px 20px;
+        padding: 35px 20px;
         text-align: center;
         border-bottom: 2px dashed #cbd5e1;
         position: relative;
     }
 
-    /* Paksa Font Sistem jika Google Font Gagal di Hosting */
     .hospital-identity {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: 'Inter', sans-serif;
         font-weight: 800;
         font-size: 18px;
         color: #10b981 !important;
         text-transform: uppercase;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
 
     .ticket-display-number {
-        font-family: 'Inter', Arial, sans-serif;
+        font-family: 'Inter', sans-serif;
         font-size: 110px;
-        font-weight: 900; /* Lebih tebal */
-        color: #1e293b !important; /* Biru gelap pekat */
+        font-weight: 900;
+        color: #1e293b !important;
         line-height: 1;
         margin: 15px 0;
     }
@@ -69,32 +71,34 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 20px;
+        margin-bottom: 25px;
     }
 
     .detail-item label {
         display: block;
         font-size: 11px;
         font-weight: 800;
-        color: #64748b !important; /* Abu-abu solid */
+        color: #64748b !important;
         text-transform: uppercase;
-        margin-bottom: 5px;
+        margin-bottom: 4px;
     }
 
     .detail-item span {
         font-size: 16px;
         font-weight: 700;
-        color: #0f172a !important; /* Hitam pekat */
+        color: #0f172a !important;
     }
 
-    /* Lubang Tiket Adaptif */
+    /* Lubang Tiket */
     .ticket-header::before, .ticket-header::after {
         content: "";
         position: absolute;
         width: 30px;
         height: 30px;
-        background: #0f1521; /* Samakan dengan BG container */
+        background: #064e3b; /* Samakan dengan warna background luar terdekat */
         border-radius: 50%;
         bottom: -15px;
+        z-index: 2;
     }
     .ticket-header::before { left: -15px; }
     .ticket-header::after { right: -15px; }
@@ -109,32 +113,43 @@
         font-size: 12px;
     }
 
+    /* Tombol & Aksi */
+    .no-screenshot {
+        padding: 10px 0;
+    }
+
+    .btn-action {
+        display: block;
+        width: 100%;
+        padding: 16px;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 15px;
+        text-align: center;
+        text-decoration: none;
+        margin-bottom: 12px;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-action:active { transform: scale(0.98); }
+
+    .btn-save { background: #10b981; color: white; }
+    .btn-dashboard { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
     .ticket-footer {
         text-align: center;
         font-size: 12px;
-        color: #94a3b8 !important;
-        margin-top: 25px;
-        line-height: 1.4;
-    }
-
-    .no-screenshot {
-        padding: 20px 0;
-    }
-
-    .btn-download {
-        background: #10b981;
-        color: white;
-        width: 100%;
-        padding: 15px;
-        border-radius: 12px;
-        border: none;
-        font-weight: 800;
-        cursor: pointer;
-        font-size: 16px;
+        color: #64748b !important;
+        margin-top: 15px;
+        line-height: 1.5;
+        padding-top: 15px;
+        border-top: 1px solid #f1f5f9;
     }
 </style>
 
-<div class="antrian-container">
+<div class="antrian-wrapper">
     <div class="integrated-ticket" id="capture-zone">
         @isset($data)
         <div class="ticket-header">
@@ -143,7 +158,7 @@
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
-            <div style="color: #334155; font-weight: 600;">
+            <div style="color: #334155; font-weight: 600; font-size: 15px;">
                 {{ \Carbon\Carbon::parse($data->created_at)->translatedFormat('l, d F Y') }}
             </div>
         </div>
@@ -159,7 +174,7 @@
                     <span>{{ $data->poli }}</span>
                 </div>
                 <div class="detail-item">
-                    <label>Waktu</label>
+                    <label>Waktu Daftar</label>
                     <span>{{ \Carbon\Carbon::parse($data->created_at)->format('H:i') }} WIB</span>
                 </div>
                 <div class="detail-item">
@@ -169,12 +184,23 @@
             </div>
 
             <div class="no-screenshot">
-                <button onclick="saveTicket()" class="btn-download">SIMPAN TIKET KE GALERI</button>
+                <button onclick="saveTicket()" class="btn-action btn-save">
+                    SIMPAN TIKET KE GALERI
+                </button>
+                <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">
+                    KEMBALI KE DASHBOARD
+                </a>
             </div>
 
             <div class="ticket-footer">
-                Simpan tiket ini untuk ditunjukkan kepada petugas pendaftaran di RS.
+                Harap datang 15 menit sebelum pelayanan.<br>
+                Tunjukkan tiket digital ini kepada petugas.
             </div>
+        </div>
+        @else
+        <div style="padding: 50px 20px; text-align: center;">
+            <p>Data antrian tidak ditemukan.</p>
+            <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">Kembali</a>
         </div>
         @endisset
     </div>
@@ -184,26 +210,27 @@
 <script>
     function saveTicket() {
         const zone = document.getElementById('capture-zone');
-        const btnArea = zone.querySelector('.no-screenshot');
+        const noShow = zone.querySelector('.no-screenshot');
         
-        // Gunakan visibility agar layout tidak goyang saat render
-        btnArea.style.visibility = 'hidden';
+        // Sembunyikan elemen yang tidak ingin ada di gambar
+        noShow.style.display = 'none';
 
         html2canvas(zone, {
-            scale: 3, // Skala 3 sudah sangat cukup untuk Hosting
-            useCORS: true, // WAJIB untuk Hosting
-            allowTaint: false,
+            scale: 3, 
+            useCORS: true,
             backgroundColor: "#ffffff",
             logging: false,
-            width: zone.offsetWidth,
-            height: zone.offsetHeight
         }).then(canvas => {
-            btnArea.style.visibility = 'visible';
+            // Tampilkan kembali elemen setelah render selesai
+            noShow.style.display = 'block';
             
             const link = document.createElement('a');
-            link.download = 'Antrian_{{ $data->nomor_antrian }}.png';
+            link.download = 'Antrian_Polkes_{{ $data->nomor_antrian ?? "00" }}.png';
             link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
+        }).catch(err => {
+            noShow.style.display = 'block';
+            console.error("Gagal menyimpan gambar:", err);
         });
     }
 </script>
