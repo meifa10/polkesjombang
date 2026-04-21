@@ -9,9 +9,7 @@ use Carbon\Carbon;
 
 class PendaftaranPoliController extends Controller
 {
-    /**
-     * SIMPAN PENDAFTARAN PASIEN JKN
-     */
+
     public function storeJkn(Request $request)
     {
         $request->validate([
@@ -28,7 +26,6 @@ class PendaftaranPoliController extends Controller
 
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
-        // PERBAIKAN: Gunakan $request->no_identitas agar data masuk ke DB
         $pendaftaran = PendaftaranPoli::create([
             'jenis_pasien' => 'JKN',
             'nama_pasien' => $request->nama_pasien,
@@ -43,9 +40,7 @@ class PendaftaranPoliController extends Controller
             ->with('success', 'Pendaftaran berhasil. Nomor antrian Anda: ' . $nomorAntrian);
     }
 
-    /**
-     * SIMPAN PENDAFTARAN PASIEN UMUM
-     */
+
     public function storeUmum(Request $request)
     {
         $request->validate([
@@ -62,7 +57,6 @@ class PendaftaranPoliController extends Controller
 
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
-        // PERBAIKAN: Gunakan $request->no_identitas
         $pendaftaran = PendaftaranPoli::create([
             'jenis_pasien' => 'UMUM',
             'nama_pasien' => $request->nama_pasien,

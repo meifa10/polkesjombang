@@ -14,35 +14,22 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        /*
-        =====================================
-        CEK LOGIN USER
-        =====================================
-        */
+   
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $user = Auth::user();
         
-        // Menangkap filter dari request
         $bulanFilter = $request->get('bulan');
         $poliFilter = $request->get('poli');
 
-        /*
-        =====================================
-        AKTIVITAS TERAKHIR PASIEN
-        Mengambil riwayat pendaftaran poli
-        =====================================
-        */
         $queryKunjungan = PendaftaranPoli::where('nama_pasien', $user->name);
 
-        // Filter berdasarkan Bulan (jika dipilih)
         if (!empty($bulanFilter)) {
             $queryKunjungan->whereMonth('created_at', $bulanFilter);
         }
 
-        // Filter berdasarkan Poli (jika dipilih)
         if (!empty($poliFilter)) {
             $queryKunjungan->where('poli', $poliFilter);
         }
@@ -52,11 +39,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        /*
-        =====================================
-        REKAM MEDIS TERAKHIR PASIEN
-        =====================================
-        */
+
         $rekamMedis = RekamMedis::join(
                 'pendaftaran_poli',
                 'rekam_medis.pendaftaran_id',
@@ -73,22 +56,12 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        /*
-        =====================================
-        ANTRIAN AKTIF HARI INI
-        =====================================
-        */
         $antrianAktif = PendaftaranPoli::where('nama_pasien', $user->name)
             ->whereDate('created_at', Carbon::today())
             ->whereIn('status', ['menunggu', 'proses'])
             ->orderBy('id', 'desc')
             ->first();
 
-        /*
-        =====================================
-        PEMBAYARAN YANG BELUM LUNAS
-        =====================================
-        */
         $pembayaran = Pembayaran::join(
                 'pendaftaran_poli',
                 'pembayaran.pendaftaran_id',
@@ -101,11 +74,6 @@ class DashboardController extends Controller
             ->orderBy('pembayaran.id', 'desc')
             ->first();
 
-        /*
-        =====================================
-        KIRIM DATA KE VIEW
-        =====================================
-        */
         return view('pasien.dashboard', [
             'user' => $user,
             'kunjungan' => $kunjungan,

@@ -50,7 +50,6 @@ class ProfilJadwalDokterController extends Controller
             ],
         ];
 
-        // 🔥 Tambahin hari_ini secara otomatis
         foreach ($dokters as &$d) {
             $d['hari_ini'] = str_contains($d['hari'], $hariIni);
         }

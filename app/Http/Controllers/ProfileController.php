@@ -8,7 +8,7 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        $galleries = Gallery::all(); // TANPA created_at
+        $galleries = Gallery::all(); 
 
         return view('profile.index', compact('galleries'));
     }

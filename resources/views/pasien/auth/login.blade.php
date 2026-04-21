@@ -6,7 +6,8 @@
         --polkes-green: #059669;
         --polkes-dark: #064e3b;
         --polkes-light: #ecfdf5;
-        --accent-lime: #10b981;
+        --danger-red: #dc2626;
+        --danger-bg: #fef2f2;
     }
 
     body {
@@ -32,33 +33,48 @@
         border-radius: 30px;
         box-shadow: 0 25px 50px -12px rgba(5, 150, 105, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.6);
-        position: relative;
-        z-index: 1;
     }
 
-    /* Dekorasi Lingkaran Aesthetic */
-    .login-card::before {
-        content: "";
-        position: absolute;
-        top: -40px;
-        right: -40px;
-        width: 120px;
-        height: 120px;
-        background: var(--polkes-light);
-        border-radius: 50%;
-        z-index: -1;
+    /* Tampilan Alert Error seperti Admin */
+    .alert-custom {
+        display: flex;
+        align-items: center;
+        background-color: var(--danger-bg);
+        border: 1px solid #fecaca;
+        color: var(--danger-red);
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        gap: 15px;
     }
 
-    .login-header {
-        text-align: center;
-        margin-bottom: 40px;
+    .alert-icon {
+        background: #fff;
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+    }
+
+    .alert-content b {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .alert-content span {
+        font-size: 13px;
+        opacity: 0.9;
     }
 
     .brand-logo {
         font-size: 24px;
         font-weight: 800;
         color: var(--polkes-dark);
-        letter-spacing: -1px;
+        text-align: center;
         margin-bottom: 10px;
         display: flex;
         align-items: center;
@@ -66,139 +82,90 @@
         gap: 8px;
     }
 
-    .brand-logo span {
-        color: var(--polkes-green);
-    }
+    .brand-logo span { color: var(--polkes-green); }
 
-    .login-header p {
-        color: #6b7280;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .form-group {
-        margin-bottom: 24px;
-    }
+    .form-group { margin-bottom: 20px; }
 
     .form-group label {
         display: block;
         font-size: 12px;
         font-weight: 700;
         color: var(--polkes-dark);
-        text-transform: uppercase;
         margin-bottom: 8px;
-        letter-spacing: 0.8px;
+        text-transform: uppercase;
     }
 
-    /* Input Wrapper untuk icon mata */
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
+    .input-wrapper { position: relative; }
 
     .form-control {
         width: 100%;
-        padding: 14px 50px 14px 20px; /* Ruang ekstra di kanan untuk mata */
-        background: white;
+        padding: 14px 20px;
         border: 1.5px solid #e5e7eb;
-        border-radius: 15px;
-        font-size: 15px;
-        color: #1f2937;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 12px;
+        transition: all 0.3s ease;
     }
 
     .form-control:focus {
         outline: none;
         border-color: var(--polkes-green);
         box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
-        transform: translateY(-2px);
     }
 
-    /* Style Icon Mata */
     .toggle-password {
         position: absolute;
-        right: 18px;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
         cursor: pointer;
         color: #9ca3af;
-        font-size: 18px;
-        transition: all 0.3s ease;
-        padding: 5px;
-        user-select: none;
-    }
-
-    .toggle-password:hover {
-        color: var(--polkes-green);
     }
 
     .btn-login {
         width: 100%;
         padding: 16px;
-        background: linear-gradient(135deg, var(--polkes-green) 0%, var(--polkes-dark) 100%);
+        background: linear-gradient(135deg, var(--polkes-green), var(--polkes-dark));
         color: white;
         border: none;
-        border-radius: 15px;
-        font-size: 15px;
+        border-radius: 12px;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .btn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4);
-        filter: brightness(1.1);
-    }
-
-    .register-link {
-        text-align: center;
-        margin-top: 30px;
-        font-size: 14px;
-        color: #6b7280;
-    }
-
-    .register-link a {
-        color: var(--polkes-green);
-        font-weight: 700;
-        text-decoration: none;
-        padding-bottom: 2px;
-        border-bottom: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-    .register-link a:hover {
-        border-bottom-color: var(--polkes-green);
+        margin-top: 10px;
     }
 </style>
 
 <div class="login-container">
     <div class="login-card">
-        <div class="login-header">
-            <div class="brand-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L3 7V17L12 22L21 17V7L12 2Z" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 8V16" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 12H16" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                POLKES<span>JOMBANG</span>
-            </div>
-            <p>Portal Pelayanan Pasien Online</p>
+        <div class="brand-logo">
+            <i class="fa-solid fa-shield-halved" style="color: var(--polkes-green)"></i>
+            POLKES<span>JOMBANG</span>
         </div>
+        <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">Portal Pelayanan Pasien Online</p>
+
+        @if(session('error'))
+            <div class="alert-custom">
+                <div class="alert-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="alert-content">
+                    <b>Login Gagal</b>
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
 
         <form method="POST" action="{{ route('login.process') }}">
-            @csrf
-            <div class="form-group">
+            @csrf <div class="form-group">
                 <label>Email Resmi</label>
-                <input type="email" name="email" class="form-control" placeholder="pasien@email.com" required>
+                <input type="email" name="email" class="form-control" 
+                       placeholder="pasien@email.com" 
+                       value="{{ old('email') }}" required>
             </div>
 
             <div class="form-group">
                 <label>Kata Sandi</label>
                 <div class="input-wrapper">
-                    <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+                    <input type="password" name="password" id="password" 
+                           class="form-control" placeholder="••••••••" required>
                     <span class="toggle-password" id="toggleEye">
                         <i class="fa-regular fa-eye"></i>
                     </span>
@@ -208,8 +175,8 @@
             <button type="submit" class="btn-login">Masuk Sekarang</button>
         </form>
 
-        <div class="register-link">
-            Belum memiliki akun? <a href="{{ route('register') }}">Buat Akun Baru</a>
+        <div style="text-align: center; margin-top: 25px; font-size: 14px; color: #6b7280;">
+            Belum memiliki akun? <a href="{{ route('register') }}" style="color: var(--polkes-green); font-weight: 700; text-decoration: none;">Buat Akun Baru</a>
         </div>
     </div>
 </div>
@@ -219,22 +186,13 @@
         const passwordInput = document.getElementById('password');
         const icon = this.querySelector('i');
         
-        // Toggle tipe input
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
         } else {
             passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
         }
-        
-        // Animasi efek feedback saat diklik
-        this.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            this.style.transform = 'scale(1)';
-        }, 100);
     });
 </script>
 @endsection

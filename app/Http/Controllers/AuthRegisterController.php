@@ -15,15 +15,13 @@ class AuthRegisterController extends Controller
 
     public function register(Request $request)
     {
-        // 1. Validasi Data dengan sangat ketat
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'no_identitas' => 'required|numeric|digits:16|unique:users,no_identitas',
             'tanggal_lahir' => 'required|date',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed', // 'confirmed' mencari input bernama password_confirmation
+            'password' => 'required|min:8|confirmed', 
         ], [
-            // Pesan Error Kustom (Bahasa Indonesia)
             'name.required' => 'Nama lengkap wajib diisi.',
             'no_identitas.required' => 'Nomor NIK wajib diisi.',
             'no_identitas.numeric' => 'NIK hanya boleh berisi angka.',
@@ -38,18 +36,15 @@ class AuthRegisterController extends Controller
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
-        // 2. Simpan ke Database
         User::create([
             'name' => $data['name'],
             'no_identitas' => $data['no_identitas'],
             'tanggal_lahir' => $data['tanggal_lahir'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            // Pastikan role diset otomatis jika Anda menggunakan sistem role
             'role' => 'pasien', 
         ]);
 
-        // 3. Redirect dengan pesan sukses
         return redirect()->route('login')
             ->with('success', 'Registrasi berhasil! Silakan masuk ke akun Anda.');
     }
