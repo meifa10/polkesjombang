@@ -24,6 +24,9 @@
         margin: 0;
         font-family: 'Inter', sans-serif;
         background-color: var(--bg-accent);
+        /* Optimasi render teks */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
     .antrian-container {
@@ -37,21 +40,6 @@
         overflow: hidden;
     }
 
-    /* Dekorasi latar belakang yang menyatu dengan gradasi */
-    .antrian-container::before {
-        content: "";
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: rgba(16, 185, 129, 0.15);
-        filter: blur(120px);
-        border-radius: 50%;
-        top: -150px;
-        right: -150px;
-        z-index: 0;
-    }
-
-    /* integrated-ticket: Struktur tunggal tanpa jarak putih internal */
     .integrated-ticket {
         background: var(--card-white);
         width: 100%;
@@ -69,7 +57,6 @@
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Header Tiket */
     .ticket-header {
         background: #f8fafc;
         padding: 35px 25px;
@@ -78,28 +65,18 @@
         position: relative;
     }
 
-    /* Efek lubang tiket yang terintegrasi di samping */
     .ticket-header::before, .ticket-header::after {
         content: "";
         position: absolute;
         width: 32px;
         height: 32px;
-        background: transparent;
         border-radius: 50%;
         bottom: -16px;
         z-index: 15;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
     }
     
-    /* Warna latar belakang di dalam lubangtiket, samakan dengan gradasi container di posisi tersebut */
-    .ticket-header::before { 
-        left: -16px; 
-        background-color: #064f3c; /* Samakan dengan bg-container */
-    }
-    .ticket-header::after { 
-        right: -16px; 
-        background-color: #0d121c; /* Samakan dengan bg-container */
-    }
+    .ticket-header::before { left: -16px; background-color: #064f3c; }
+    .ticket-header::after { right: -16px; background-color: #0d121c; }
 
     .hospital-identity {
         font-weight: 800;
@@ -119,15 +96,6 @@
         height: 20px;
         background-color: var(--primary);
         border-radius: 6px;
-        display: inline-block;
-    }
-
-    .ticket-main-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
     .ticket-display-number {
@@ -136,19 +104,10 @@
         color: var(--text-main);
         line-height: 1;
         margin: 10px 0;
-        letter-spacing: -5px;
+        letter-spacing: -3px; 
     }
 
-    .ticket-display-date {
-        font-size: 15px;
-        font-weight: 500;
-        color: var(--text-muted);
-    }
-
-    /* Body Tiket - Sekarang terhubung langsung */
-    .ticket-body {
-        padding: 35px 30px;
-    }
+    .ticket-body { padding: 35px 30px; }
 
     .details-grid {
         display: grid;
@@ -164,7 +123,6 @@
         color: var(--text-muted);
         font-weight: 700;
         margin-bottom: 6px;
-        letter-spacing: 0.5px;
     }
 
     .detail-item span {
@@ -185,16 +143,6 @@
         border: 1px solid rgba(16,185,129,0.2);
     }
 
-    .status-badge::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        background: #10b981;
-        border-radius: 50%;
-        margin-right: 8px;
-        box-shadow: 0 0 10px rgba(16,185,129,0.5);
-    }
-
     .rekam-medis-box {
         background: var(--card-light);
         border: 1px solid #e2e8f0;
@@ -202,26 +150,8 @@
         padding: 20px;
         margin-top: 25px;
         text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
 
-    .box-label {
-        font-size: 10px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-    }
-
-    .box-value {
-        font-family: 'Monaco', 'Courier New', monospace;
-        font-size: 18px;
-        color: #0f172a;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-
-    /* Bagian Aksi - Bagian paling aesthetic yang menyatu */
     .ticket-actions {
         margin-top: 35px;
         padding-top: 25px;
@@ -238,68 +168,37 @@
         border-radius: 20px;
         font-size: 15px;
         font-weight: 700;
-        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
         border: none;
         cursor: pointer;
         text-decoration: none;
         margin-bottom: 14px;
-        box-sizing: border-box;
+        transition: 0.3s;
     }
 
-    .btn-emerald {
-        background: var(--primary);
-        color: var(--text-white);
-        box-shadow: 0 10px 25px rgba(16,185,129,0.3);
-    }
-
-    .btn-emerald:hover {
-        background: var(--primary-dark);
-        transform: translateY(-3px) scale(1.01);
-        box-shadow: 0 15px 35px rgba(16,185,129,0.4);
-    }
-
-    .btn-outline-white {
-        background: transparent;
-        border: 2px solid #e2e8f0;
-        color: var(--text-main);
-    }
-
-    .btn-outline-white:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        transform: translateY(-2px);
-    }
+    .btn-emerald { background: var(--primary); color: white; }
+    .btn-outline-white { background: transparent; border: 2px solid #e2e8f0; color: var(--text-main); }
 
     .ticket-footer {
         font-size: 12px;
         color: var(--text-muted);
         text-align: center;
-        line-height: 1.6;
         margin-top: 25px;
     }
-
-    .error-body {
-        text-align: center;
-        padding: 80px 30px;
-    }
-
 </style>
 
 <div class="antrian-container">
-
     <div class="integrated-ticket" id="capture-zone">
         @isset($data)
-        
         <div class="ticket-header">
             <span class="hospital-identity">
                 <span class="hospital-logo-icon"></span>
                 POLKES JOMBANG
             </span>
-            <div class="ticket-main-title">Nomor Antrian Digital</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Nomor Antrian Digital</div>
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
-            <div class="ticket-display-date">
+            <div style="font-size: 15px; font-weight: 500; color: var(--text-muted);">
                 {{ \Carbon\Carbon::parse($data->created_at)->translatedFormat('l, d F Y') }}
             </div>
         </div>
@@ -326,8 +225,8 @@
 
             @if(!empty($data->token_akses))
             <div class="rekam-medis-box">
-                <div class="box-label">Token Rekam Medis</div>
-                <div class="box-value">{{ $data->token_akses }}</div>
+                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Token Rekam Medis</div>
+                <div style="font-family: monospace; font-size: 18px; font-weight: 700;">{{ $data->token_akses }}</div>
             </div>
             @endif
 
@@ -338,7 +237,6 @@
                 </button>
 
                 <a href="{{ route('dashboard') }}" class="btn-integrated btn-outline-white">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7-7-7M19 10v10a1 1 0 00-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     Kembali ke Dashboard
                 </a>
             </div>
@@ -348,20 +246,13 @@
                 Nomor Antrian ini valid hanya untuk tanggal yang tertera di atas.
             </div>
         </div>
-
         @else
-        <div class="error-body">
-            <div style="font-size: 56px; margin-bottom: 25px;">🚫</div>
-            <h3 style="color: #ef4444; font-weight: 800; font-size: 22px; margin-bottom: 10px;">NOMOR ANTRIAN TIDAK TERSEDIA</h3>
-            <p style="color: var(--text-muted); margin-bottom: 35px; line-height: 1.6;">Maaf, data antrian Anda tidak tersedia atau telah kadaluarsa.</p>
-            <a href="{{ route('dashboard') }}" class="btn-integrated btn-emerald">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7-7-7M19 10v10a1 1 0 00-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                Kembali ke Dashboard
-            </a>
+        <div style="text-align: center; padding: 80px 30px;">
+            <h3>DATA TIDAK DITEMUKAN</h3>
+            <a href="{{ route('dashboard') }}" class="btn-integrated btn-emerald">Kembali</a>
         </div>
         @endisset
     </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -371,21 +262,29 @@
         const zone = document.getElementById('capture-zone');
         const actions = zone.querySelector('.no-screenshot');
         
-        // Sembunyikan tombol saat proses screenshot
         actions.style.display = 'none';
 
         html2canvas(zone, {
-            scale: 3, // Kualitas Tinggi
-            backgroundColor: '#ffffff',
-            borderRadius: 36,
+            scale: 4, 
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            onclone: (clonedDoc) => {
+                const ticket = clonedDoc.getElementById('capture-zone');
+                ticket.style.boxShadow = 'none'; 
+                ticket.style.borderRadius = '36px';
+            }
         }).then(canvas => {
-            // Tampilkan kembali tombol
             actions.style.display = 'block';
 
             const link = document.createElement('a');
-            link.download = 'Nomor_Antrian_PolkesJombang_{{ $data->nomor_antrian ?? "00" }}.png';
-            link.href = canvas.toDataURL('image/png');
+            link.download = 'Antrian_Polkes_{{ $data->nomor_antrian ?? "00" }}.png';
+            link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
+        }).catch(err => {
+            console.error("Gagal mengunduh gambar:", err);
+            actions.style.display = 'block';
         });
     }
 </script>
