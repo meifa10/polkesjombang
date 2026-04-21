@@ -176,7 +176,7 @@
 
             <div class="no-screenshot">
                 <button onclick="saveTicket()" class="btn-action btn-save">
-                    SIMPAN TIKET KE GALERI
+                    SIMPAN ANTRIAN KE GALERI
                 </button>
                 <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">
                     KEMBALI KE DASHBOARD
