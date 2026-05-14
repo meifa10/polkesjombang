@@ -2,11 +2,9 @@
 
 @section('content')
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
-    /* CSS UNTUK MENGHILANGKAN SPACE PUTIH DI LAYOUT UTAMA */
-    /* Kita paksa pembungkus utama Laravel untuk mengikuti tema gelap kita */
     html, body {
         background-color: #0d121c !important; 
         margin: 0;
@@ -15,15 +13,12 @@
 
     .antrian-wrapper {
         width: 100%;
-        /* Menggunakan vh (viewport height) agar selalu penuh setinggi layar */
         min-height: 100vh; 
         display: flex;
         align-items: center;
         justify-content: center;
         background: radial-gradient(circle at top left, #064e3b 0%, #0d121c 100%);
         padding: 40px 20px;
-        position: relative;
-        z-index: 999; /* Memastikan berada di atas elemen layout lain */
     }
 
     .integrated-ticket {
@@ -43,13 +38,12 @@
         position: relative;
     }
 
-    /* Lubang Tiket */
     .ticket-header::before, .ticket-header::after {
         content: "";
         position: absolute;
         width: 30px;
         height: 30px;
-        background: #081d18; /* Sesuaikan warna gelap background luar */
+        background: #081d18; 
         border-radius: 50%;
         bottom: -15px;
     }
@@ -92,11 +86,12 @@
     }
 
     .detail-item span {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 700;
         color: #0f172a !important;
     }
 
+    /* Warna Hijau sesuai permintaan untuk status Menunggu */
     .status-badge {
         display: inline-block;
         background: #d1fae5 !important;
@@ -105,13 +100,6 @@
         border-radius: 6px;
         font-weight: 800;
         font-size: 11px;
-    }
-
-    /* Tombol Navigasi */
-    .no-screenshot {
-        padding: 15px 0;
-        border-top: 1px solid #f1f5f9;
-        margin-top: 10px;
     }
 
     .btn-action {
@@ -135,14 +123,13 @@
         text-align: center;
         font-size: 11px;
         color: #64748b !important;
-        margin-top: 5px;
+        margin-top: 15px;
         line-height: 1.5;
     }
 </style>
 
 <div class="antrian-wrapper">
     <div class="integrated-ticket" id="capture-zone">
-        @isset($data)
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
             <div style="color: #64748b; font-weight: 700; font-size: 12px; letter-spacing: 1px;">NOMOR ANTRIAN DIGITAL</div>
@@ -165,8 +152,8 @@
                     <span>{{ $data->poli }}</span>
                 </div>
                 <div class="detail-item">
-                    <label>Waktu Daftar</label>
-                    <span>{{ \Carbon\Carbon::parse($data->created_at)->format('H:i') }} WIB</span>
+                    <label>Estimasi Dilayani</label>
+                    <span style="color: #10b981 !important;">± {{ $prediksi }} WIB</span>
                 </div>
                 <div class="detail-item">
                     <label>Status</label>
@@ -184,11 +171,10 @@
             </div>
 
             <div class="ticket-footer">
-                Harap datang 15 menit sebelum pelayanan.<br>
-                Tunjukkan tiket digital ini kepada petugas.
+                Harap datang 15 menit sebelum estimasi.<br>
+                Tunjukkan tiket digital ini kepada petugas poli.
             </div>
         </div>
-        @endisset
     </div>
 </div>
 
@@ -198,16 +184,16 @@
         const zone = document.getElementById('capture-zone');
         const noShow = zone.querySelector('.no-screenshot');
         
-        noShow.style.display = 'none';
+        noShow.style.visibility = 'hidden'; // Gunakan visibility agar layout tidak bergeser saat capture
 
         html2canvas(zone, {
             scale: 3, 
             useCORS: true,
             backgroundColor: "#ffffff",
         }).then(canvas => {
-            noShow.style.display = 'block';
+            noShow.style.visibility = 'visible';
             const link = document.createElement('a');
-            link.download = 'Antrian_Polkes_{{ $data->nomor_antrian }}.png';
+            link.download = 'Tiket_Antrian_{{ $data->nomor_antrian }}.png';
             link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
         });

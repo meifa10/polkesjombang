@@ -109,7 +109,7 @@
         box-shadow: var(--shadow-sm);
     }
 
-    .menu-card:hover {
+    .menu-card:not(.disabled):hover {
         transform: translateY(-8px);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
         border-color: var(--polkes-primary);
@@ -241,9 +241,11 @@
     .visit-main { flex-grow: 1; }
     .visit-main h4 { margin: 0 0 5px 0; font-size: 16px; font-weight: 700; }
 
-    .status-pill { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-    .pill-success { background: #d1fae5; color: #065f46; }
-    .pill-process { background: #e0f2fe; color: #0369a1; }
+    /* --- STATUS PILLS --- */
+    .status-pill { padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pill-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; } 
+    .pill-waiting { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; } 
+    .pill-process { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 
     @media (max-width: 992px) { .menu-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) {
@@ -254,6 +256,13 @@
 
 <div class="dashboard-wrapper">
 
+    @php
+        // Gunakan whereIn agar bisa mendeteksi berbagai variasi status 'menunggu'
+        $antrianAktif = \App\Models\PendaftaranPoli::where('nama_pasien', Auth::user()->name)
+                        ->whereIn('status', ['menunggu', 'menunggu_petugas', 'menunggu_admin', 'diproses_dokter', 'menunggu_pembayaran', 'proses']) 
+                        ->latest()
+                        ->first();
+    @endphp
     <header class="welcome-banner">
         <p>
             Halo, 
@@ -273,13 +282,14 @@
                 {{ Auth::user()->no_identitas }}
             </div>
             <div class="meta-tag">
-                <i class="fa-solid fa-shield-check text-emerald-300"></i>
+                <i class="fa-solid fa-circle-check text-emerald-300"></i>
                 Verified Patient
             </div>
         </div>
     </header>
 
     <section class="menu-grid">
+        {{-- MENU DAFTAR POLI --}}
         <a href="{{ route('pendaftaran.umum') }}" class="menu-card">
             <div class="icon-box bg-pendaftaran">
                 <i class="fa-solid fa-calendar-plus"></i>
@@ -288,6 +298,7 @@
             <p>Registrasi kunjungan ke klinik spesialis & umum.</p>
         </a>
 
+        {{-- MENU REKAM MEDIS --}}
         <a href="{{ route('pasien.rekammedis') }}" class="menu-card">
             <div class="icon-box bg-rekam">
                 <i class="fa-solid fa-file-waveform"></i>
@@ -296,30 +307,42 @@
             <p>Lihat diagnosa, resep obat, dan riwayat klinis.</p>
         </a>
 
-        <a href="{{ route('pasien.antrian') }}" class="menu-card">
-            <div class="icon-box bg-antrian">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-            </div>
-            <h3>Cek Antrian</h3>
-            <p>Pantau estimasi waktu panggil secara live.</p>
-        </a>
-
-        @if(isset($pembayaran) && $pembayaran)
-        <a href="{{ route('payment.pay',$pembayaran->id) }}" class="menu-card">
-            <div class="icon-box bg-bayar">
-                <i class="fa-solid fa-credit-card"></i>
-            </div>
-            <h3>Pembayaran</h3>
-            <p>Selesaikan tagihan administrasi Anda.</p>
-        </a>
+        {{-- MENU CEK ANTRIAN: AKTIF HANYA JIKA ADA ANTRIAN STATUS MENUNGGU --}}
+        @if($antrianAktif)
+            <a href="{{ route('pasien.antrian') }}" class="menu-card">
+                <div class="icon-box bg-antrian">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3>Cek Antrian</h3>
+                <p>Pantau estimasi waktu panggil secara live.</p>
+            </a>
         @else
-        <div class="menu-card" style="opacity: 0.7; cursor: not-allowed;">
-            <div class="icon-box" style="background: #f1f5f9; color: #94a3b8;">
-                <i class="fa-solid fa-wallet"></i>
+            <div class="menu-card disabled" style="opacity: 0.6; cursor: not-allowed; background: #f1f5f9;">
+                <div class="icon-box" style="background: #e2e8f0; color: #94a3b8;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3 style="color: #64748b;">Cek Antrian</h3>
+                <p style="color: #94a3b8;">Hanya aktif saat memiliki antrian.</p>
             </div>
-            <h3>Pembayaran</h3>
-            <p>Tidak ada tagihan yang perlu dibayar.</p>
-        </div>
+        @endif
+
+        {{-- MENU PEMBAYARAN: AKTIF HANYA JIKA ADA TAGIHAN PENDING/GAGAL --}}
+        @if(isset($pembayaran) && $pembayaran)
+            <a href="{{ route('payment.pay', $pembayaran->id) }}" class="menu-card">
+                <div class="icon-box bg-bayar">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <h3>Pembayaran</h3>
+                <p>Selesaikan tagihan administrasi Anda.</p>
+            </a>
+        @else
+            <div class="menu-card disabled" style="opacity: 0.6; cursor: not-allowed; background: #f1f5f9;">
+                <div class="icon-box" style="background: #e2e8f0; color: #94a3b8;">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <h3 style="color: #64748b;">Pembayaran</h3>
+                <p style="color: #94a3b8;">Tidak ada tagihan aktif.</p>
+            </div>
         @endif
     </section>
 
@@ -328,7 +351,6 @@
             <h2>Aktivitas Terakhir</h2>
             
             <form method="GET" class="filter-group">
-                {{-- FILTER POLI --}}
                 <select name="poli" onchange="this.form.submit()" class="custom-filter">
                     <option value="">Semua Poli</option>
                     <option value="Poli Umum" {{ request('poli') == 'Poli Umum' ? 'selected' : '' }}>Poli Umum</option>
@@ -336,7 +358,6 @@
                     <option value="Poli KIA & KB" {{ request('poli') == 'Poli KIA & KB' ? 'selected' : '' }}>Poli KIA & KB</option>
                 </select>
 
-                {{-- FILTER BULAN --}}
                 <select name="bulan" onchange="this.form.submit()" class="custom-filter">
                     <option value="">Semua Bulan</option>
                     @foreach(['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $key=>$month)
@@ -344,7 +365,6 @@
                     @endforeach
                 </select>
 
-                {{-- TOMBOL RESET --}}
                 @if(request('poli') || request('bulan'))
                     <a href="{{ route('dashboard') }}" class="btn-reset-filter">
                         <i class="fa-solid fa-arrow-rotate-left"></i> Reset
@@ -363,12 +383,24 @@
                 
                 <div class="visit-main">
                     <h4>{{ $item->poli ?? 'Poli Umum' }}</h4>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <span class="status-pill {{ $item->status == 'selesai' ? 'pill-success' : 'pill-process' }}">
-                            {{ $item->status }}
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        @php
+                            $statusClass = 'pill-process';
+                            $displayStatus = str_replace('_', ' ', $item->status);
+                            
+                            if($item->status == 'selesai') {
+                                $statusClass = 'pill-success';
+                            } elseif($item->status == 'menunggu') {
+                                $statusClass = 'pill-waiting'; 
+                            }
+                        @endphp
+                        
+                        <span class="status-pill {{ $statusClass }}">
+                            {{ $displayStatus }}
                         </span>
-                        <span style="font-size: 13px; color: var(--text-muted);">
-                            <i class="fa-solid fa-hashtag text-emerald-500"></i> Antrian: <strong>{{ $item->nomor_antrian }}</strong>
+
+                        <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">
+                            <i class="fa-solid fa-hashtag text-emerald-500"></i> Antrian: <span style="color: var(--text-main);">{{ str_pad($item->nomor_antrian, 2, '0', STR_PAD_LEFT) }}</span>
                         </span>
                     </div>
                 </div>
@@ -376,10 +408,12 @@
             </div>
             @endforeach
         @else
-            <div style="text-align: center; padding: 60px 0;">
-                <img src="https://cdn-icons-png.flaticon.com/512/3793/3793617.png" style="width: 100px; opacity: 0.5; margin-bottom: 20px;">
-                <h3 style="color: var(--text-muted);">Belum ada riwayat kunjungan</h3>
-                <p style="color: var(--text-muted); font-size: 14px;">Data tidak ditemukan untuk filter ini.</p>
+            <div style="text-align: center; padding: 80px 0;">
+                <div style="background: #f1f5f9; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 32px; color: #cbd5e1;"></i>
+                </div>
+                <h3 style="color: #64748b; font-weight: 700;">Belum ada riwayat kunjungan</h3>
+                <p style="color: #94a3b8; font-size: 14px;">Silakan melakukan pendaftaran poli terlebih dahulu.</p>
             </div>
         @endif
     </main>

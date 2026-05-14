@@ -14,7 +14,6 @@
         background: #ffffff;
         border: 1px solid #e2e8f0;
     }
-    /* Custom style untuk dropdown agar panah tidak ganggu */
     select {
         appearance: none;
         -webkit-appearance: none;
@@ -28,7 +27,7 @@
             Registrasi Baru
         </span>
         <h2 class="mt-6 text-4xl font-[800] text-black tracking-tighter">Pasien Umum & Non JKN</h2>
-        <p class="mt-2 text-slate-600 font-semibold">Silakan isi formulir pendaftaran di bawah ini</p>
+        <p class="mt-2 text-slate-600 font-semibold">Silakan lengkapi pilihan poli dan dokter</p>
     </div>
 
     <div class="max-w-2xl w-full glass-card rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden">
@@ -39,43 +38,27 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                     
-                    {{-- NAMA PASIEN --}}
+                    {{-- NAMA PASIEN (Data User) --}}
                     <div class="md:col-span-2 group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Nama Pasien</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-circle-user text-lg"></i>
                             </div>
-                            <input type="text" name="nama_pasien" value="{{ Auth::user()->name }}" readonly
-                                class="block w-full pl-12 pr-4 py-4 bg-slate-100 border-none rounded-2xl text-slate-800 font-bold focus:outline-none cursor-not-allowed">
-                        </div>
-                    </div>
-
-                    {{-- JENIS IDENTITAS --}}
-                    <div class="group">
-                        <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Jenis Identitas</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600 transition-colors">
-                                <i class="fa-solid fa-id-card"></i>
-                            </div>
-                            <select name="identitas" required
-                                class="block w-full pl-12 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl text-black font-bold focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none">
-                                <option value="">Pilih Identitas</option>
-                                <option value="KTP">KTP</option>
-                                <option value="RM">Rekam Medik</option>
-                            </select>
+                            <input type="text" value="{{ Auth::user()->name }}" readonly
+                                class="block w-full pl-12 pr-4 py-4 bg-slate-100 border-none rounded-2xl text-slate-500 font-bold focus:outline-none cursor-not-allowed">
                         </div>
                     </div>
 
                     {{-- NOMOR IDENTITAS --}}
                     <div class="group">
-                        <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Nomor Identitas</label>
+                        <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Nomor Identitas (KTP)</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600 transition-colors">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-hashtag"></i>
                             </div>
-                            <input type="text" name="no_identitas" placeholder="Ketik nomor..." required
-                                class="block w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl text-black font-bold placeholder:text-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none">
+                            <input type="text" value="{{ Auth::user()->no_identitas }}" readonly
+                                class="block w-full pl-12 pr-4 py-4 bg-slate-100 border-none rounded-2xl text-slate-500 font-bold cursor-not-allowed">
                         </div>
                     </div>
 
@@ -83,11 +66,11 @@
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Tanggal Lahir</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600 transition-colors">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-calendar-day"></i>
                             </div>
-                            <input type="date" name="tanggal_lahir" required
-                                class="block w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl text-black font-bold focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none">
+                            <input type="text" value="{{ \Carbon\Carbon::parse(Auth::user()->tanggal_lahir)->format('d-m-Y') }}" readonly
+                                class="block w-full pl-12 pr-4 py-4 bg-slate-100 border-none rounded-2xl text-slate-500 font-bold cursor-not-allowed">
                         </div>
                     </div>
 
@@ -95,15 +78,29 @@
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Poliklinik Tujuan</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600 transition-colors">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600">
                                 <i class="fa-solid fa-stethoscope"></i>
                             </div>
-                            <select name="poli" required
+                            <select name="poli" id="poli_select" required onchange="filterDokter()"
                                 class="block w-full pl-12 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl text-black font-bold focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none">
-                                <option value="">Cari Poli</option>
+                                <option value="">Pilih Poli</option>
                                 <option value="Poli Umum">Poli Umum</option>
                                 <option value="Poli Gigi">Poli Gigi</option>
                                 <option value="Poli KIA & KB">Poli KIA & KB</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- PILIH DOKTER (Dinamis dari Database) --}}
+                    <div class="group">
+                        <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Pilih Dokter</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-600">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <select name="dokter_id" id="dokter_select" required
+                                class="block w-full pl-12 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl text-black font-bold focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none">
+                                <option value="">-- Pilih Poli Dahulu --</option>
                             </select>
                         </div>
                     </div>
@@ -118,7 +115,7 @@
                     </a>
                     
                     <button type="submit" 
-                        class="px-10 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-[800] rounded-xl shadow-lg shadow-emerald-200 transition-all transform active:scale-95 flex items-center gap-3 order-1 sm:order-2">
+                        class="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-[800] rounded-xl shadow-lg shadow-emerald-200 transition-all transform active:scale-95 flex items-center gap-3 order-1 sm:order-2">
                         <span>DAFTAR SEKARANG</span>
                         <i class="fa-solid fa-paper-plane text-[10px]"></i>
                     </button>
@@ -126,17 +123,46 @@
             </form>
         </div>
     </div>
-
-    <div class="mt-12 flex flex-col items-center gap-3">
-        <div class="h-1 w-12 bg-emerald-200 rounded-full mb-1"></div>
-        
-        <div class="flex items-center gap-3 px-6 py-2 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
-            <i class="fa-solid fa-shield-check text-emerald-500 text-xs animate-pulse"></i>
-            <p class="text-[11px] font-extrabold text-emerald-700 uppercase tracking-[0.2em]">
-                Data aman & dilindungi sistem <span class="text-emerald-900">Polkes Jombang</span>
-            </p>
-        </div>
-
-    </div>
 </div>
+
+<script>
+    // dbDokters berisi: id, name, poli, jam_kerja dari database
+    const dbDokters = @json($dokters);
+
+    function filterDokter() {
+        const selectedPoli = document.getElementById('poli_select').value;
+        const dokterSelect = document.getElementById('dokter_select');
+
+        // Bersihkan dropdown dokter
+        dokterSelect.innerHTML = '<option value="">-- Pilih Dokter --</option>';
+
+        if (selectedPoli) {
+            // Ambil dokter yang sesuai dengan poli yang dipilih
+            const filtered = dbDokters.filter(d => d.poli === selectedPoli);
+            
+            if(filtered.length > 0) {
+                filtered.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    
+                    // Gunakan d.jam_kerja langsung dari database
+                    const jadwal = d.jam_kerja ? ` (${d.jam_kerja})` : "";
+                    opt.text = `${d.name}${jadwal}`;
+                    
+                    dokterSelect.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement('option');
+                opt.text = "Tidak ada dokter tersedia";
+                opt.disabled = true;
+                dokterSelect.appendChild(opt);
+            }
+        } else {
+            const opt = document.createElement('option');
+            opt.text = "-- Pilih Poli Dahulu --";
+            opt.disabled = true;
+            dokterSelect.appendChild(opt);
+        }
+    }
+</script>
 @endsection

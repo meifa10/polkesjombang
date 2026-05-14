@@ -19,8 +19,13 @@ class RekamMedisController extends Controller
         $dateFrom = $request->input('from');
         $dateTo = $request->input('to');
 
+        // Query Utama: Mengambil rekam medis beserta data pendaftaran, dokter, dan rincian pembayaran
         $rekamMedis = DB::table('rekam_medis')
             ->join('pendaftaran_poli', 'rekam_medis.pendaftaran_id', '=', 'pendaftaran_poli.id')
+            // Join ke tabel users untuk mendapatkan nama dokter
+            ->leftJoin('users as dokter', 'pendaftaran_poli.dokter_id', '=', 'dokter.id')
+            // Join ke tabel pembayaran untuk ambil rincian biaya
+            ->leftJoin('pembayaran', 'pendaftaran_poli.id', '=', 'pembayaran.pendaftaran_id')
             ->where('pendaftaran_poli.nama_pasien', $user->name)
             ->when($querySearch, function ($query, $querySearch) {
                 return $query->where(function($q) use ($querySearch) {
@@ -34,7 +39,16 @@ class RekamMedisController extends Controller
             ->when($dateTo, function ($query, $dateTo) {
                 return $query->whereDate('rekam_medis.created_at', '<=', $dateTo);
             })
-            ->select('rekam_medis.*', 'pendaftaran_poli.poli', 'pendaftaran_poli.nama_pasien')
+            ->select(
+                'rekam_medis.*', 
+                'pendaftaran_poli.poli', 
+                'dokter.name as nama_dokter', // Ambil nama dokter
+                'pembayaran.total_biaya',
+                'pembayaran.biaya_dokter',
+                'pembayaran.total_obat',
+                'pembayaran.biaya_admin',
+                'pembayaran.status as status_bayar'
+            )
             ->orderByDesc('rekam_medis.created_at')
             ->get();
 
@@ -43,35 +57,24 @@ class RekamMedisController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        $pembayaran = null;
-        if ($pendaftaran) {
-            $pembayaran = DB::table('pembayaran')
-                ->where('pendaftaran_id', $pendaftaran->id)
-                ->first();
-        }
-
-        return view('pasien.rekammedis', compact('pendaftaran', 'rekamMedis', 'pembayaran'));
+        return view('pasien.rekammedis', compact('pendaftaran', 'rekamMedis'));
     }
 
     public function pdf($id)
     {
         $user = Auth::user();
-        if (!$user) return redirect()->route('login');
-
         $rmSingle = DB::table('rekam_medis')->where('id', $id)->first();
+        if (!$rmSingle) abort(404);
 
-        if (!$rmSingle) {
-            abort(404, 'Data Rekam Medis tidak ditemukan.');
-        }
-
+        // Ambil pendaftaran dengan join ke dokter agar nama dokter muncul di PDF
         $pendaftaran = DB::table('pendaftaran_poli')
-            ->where('id', $rmSingle->pendaftaran_id)
-            ->where('nama_pasien', $user->name)
+            ->leftJoin('users as dokter', 'pendaftaran_poli.dokter_id', '=', 'dokter.id')
+            ->where('pendaftaran_poli.id', $rmSingle->pendaftaran_id)
+            ->where('pendaftaran_poli.nama_pasien', $user->name)
+            ->select('pendaftaran_poli.*', 'dokter.name as nama_dokter') // Pastikan nama_dokter terpilih
             ->first();
 
-        if (!$pendaftaran) {
-            abort(404, 'Data Pendaftaran tidak valid.');
-        }
+        if (!$pendaftaran) abort(404);
 
         $rekamMedis = DB::table('rekam_medis')
             ->where('pendaftaran_id', $pendaftaran->id)
@@ -81,14 +84,11 @@ class RekamMedisController extends Controller
             ->where('pendaftaran_id', $pendaftaran->id)
             ->first();
 
-        $pdf = Pdf::loadView('pasien.rekammedis-pdf', [
-            'pendaftaran' => $pendaftaran,
-            'rekamMedis'  => $rekamMedis,
-            'pembayaran'  => $pembayaran
-        ]);
+        // Siapkan objek dokter manual agar kompatibel dengan template PDF Anda ($pendaftaran->dokter->name)
+        // Jika template PDF Anda menggunakan {{ $pendaftaran->nama_dokter }}, baris di bawah ini opsional.
+        $pendaftaran->dokter = (object) ['name' => $pendaftaran->nama_dokter];
 
-        $filename = 'rekam-medis-' . str_replace(' ', '-', strtolower($pendaftaran->nama_pasien)) . '-' . date('Ymd') . '.pdf';
-
-        return $pdf->download($filename);
+        $pdf = Pdf::loadView('pasien.rekammedis-pdf', compact('pendaftaran', 'rekamMedis', 'pembayaran'));
+        return $pdf->download('rekam-medis-' . time() . '.pdf');
     }
 }

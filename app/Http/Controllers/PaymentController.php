@@ -2,37 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pembayaran;
-use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\Pembayaran;
+use App\Models\PendaftaranPoli;
+use App\Services\PaymentService;
 
 class PaymentController extends Controller
 {
-
     public function pay($id, PaymentService $paymentService)
     {
         if (!Auth::check()) {
-            return redirect('/dashboard');
+            return redirect('/login');
         }
 
         $user = Auth::user();
-
-        $pembayaran = Pembayaran::where('id', $id)
-            ->where('status', 'belum_lunas')
+        $pembayaran = Pembayaran::with('pendaftaran')
+            ->where('id', $id)
             ->whereHas('pendaftaran', function ($q) use ($user) {
                 $q->where('nama_pasien', $user->name);
-            })
-            ->first();
+            })->first();
 
         if (!$pembayaran) {
-            return redirect('/dashboard');
+            return redirect('/dashboard')->with('error', 'Pembayaran tidak ditemukan');
+        }
+
+        if ($pembayaran->status == 'lunas') {
+            return redirect('/dashboard')->with('success', 'Pembayaran sudah lunas');
         }
 
         try {
             $result = $paymentService->createTransaction($pembayaran);
+            session(['last_order_id' => $pembayaran->payment_ref]);
 
             return view('payment.pay', [
                 'snapToken' => $result['snap_token'],
@@ -40,86 +43,80 @@ class PaymentController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Midtrans Error: ' . $e->getMessage());
-            return redirect('/dashboard')->with('error', 'Gagal memproses pembayaran.');
+            return redirect('/dashboard')->with('error', 'Gagal memproses pembayaran');
         }
     }
 
-
     public function callback(Request $request)
     {
-        Log::info('CALLBACK MASUK', $request->all());
-
-        $data = $request->all();
-
-        $orderId      = $data['order_id'] ?? null;
-        $statusCode   = $data['status_code'] ?? null;
-        $grossAmount  = $data['gross_amount'] ?? null;
-        $signatureKey = $data['signature_key'] ?? null;
-        $serverKey    = config('services.midtrans.server_key');
-
-        $hashed = hash("sha512", $orderId . $statusCode . $grossAmount . $serverKey);
-
-        if ($hashed !== $signatureKey) {
-            Log::warning("Signature tidak valid: " . $orderId);
-            return response()->json(['message' => 'Invalid signature'], 403);
-        }
+        $orderId = $request->order_id;
+        $transactionStatus = $request->transaction_status;
+        $paymentType = $request->payment_type ?? 'midtrans';
 
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if (!$pembayaran) {
-            Log::error("Pembayaran tidak ditemukan: " . $orderId);
-            return response()->json(['message' => 'Not found'], 404);
+            return response()->json(['message' => 'Not Found'], 404);
         }
 
-        $transactionStatus = $data['transaction_status'];
-        $paymentType       = $data['payment_type'] ?? 'midtrans';
-
+        DB::beginTransaction();
         try {
-            DB::transaction(function () use ($pembayaran, $transactionStatus, $paymentType) {
+            if (in_array($transactionStatus, ['capture', 'settlement'])) {
+                // Update Tabel Pembayaran
+                $pembayaran->update([
+                    'status' => 'lunas',
+                    'paid_by' => $paymentType,
+                    'tanggal_bayar' => now(),
+                    'metode' => 'midtrans'
+                ]);
 
-                if (in_array($transactionStatus, ['settlement', 'capture'])) {
+                // Update Tabel Pendaftaran (Aktivitas Terakhir)
+                PendaftaranPoli::where('id', $pembayaran->pendaftaran_id)
+                    ->update(['status' => 'selesai']);
 
-                    $pembayaran->update([
-                        'status'        => 'lunas',
-                        'tanggal_bayar' => now(),
-                        'paid_by'       => $paymentType,
-                        'metode'        => 'transfer',
-                    ]);
+                Log::info("Payment Success for Order ID: $orderId");
+            } elseif ($transactionStatus == 'pending') {
+                $pembayaran->update(['status' => 'pending']);
+            } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
+                $pembayaran->update(['status' => 'gagal']);
+            }
 
-                    Log::info("✅ LUNAS: " . $pembayaran->payment_ref);
-
-                } elseif ($transactionStatus == 'pending') {
-
-                    $pembayaran->update([
-                        'status' => 'belum_lunas'
-                    ]);
-
-                } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
-
-                    $pembayaran->update([
-                        'status' => 'gagal'
-                    ]);
-                }
-            });
-
+            DB::commit();
             return response()->json(['message' => 'OK']);
-
         } catch (\Exception $e) {
-            Log::error("ERROR UPDATE: " . $e->getMessage());
-            return response()->json(['message' => 'Error'], 500);
+            DB::rollBack();
+            Log::error('Callback Error: ' . $e->getMessage());
+            return response()->json(['message' => 'ERROR'], 500);
         }
     }
 
     public function finish(Request $request)
     {
-        Log::info('FINISH MASUK', $request->all());
+        $orderId = $request->order_id ?? $request->query('order_id') ?? session('last_order_id');
 
-        return redirect('/dashboard')->with('success', 'Pembayaran berhasil');
-    }
+        if (!$orderId) {
+            return redirect('/dashboard')->with('error', 'Order ID tidak ditemukan');
+        }
 
+        $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
-    public function error()
-    {
-        return redirect('/dashboard')->with('error', 'Pembayaran gagal');
+        if ($pembayaran) {
+            // Kita lakukan update lagi di sini untuk jaga-jaga jika callback delay
+            DB::transaction(function () use ($pembayaran) {
+                $pembayaran->update([
+                    'status' => 'lunas',
+                    'paid_by' => 'midtrans',
+                    'tanggal_bayar' => now(),
+                    'metode' => 'midtrans'
+                ]);
+
+                PendaftaranPoli::where('id', $pembayaran->pendaftaran_id)
+                    ->update(['status' => 'selesai']);
+            });
+
+            return redirect('/dashboard')->with('success', 'Pembayaran berhasil dikonfirmasi');
+        }
+
+        return redirect('/dashboard');
     }
 }

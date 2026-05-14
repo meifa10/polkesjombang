@@ -5,45 +5,37 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Pembayaran;
 use App\Models\RekamMedis;
+use App\Models\User;
 
 class PendaftaranPoli extends Model
 {
-    /**
-     * Nama tabel
-     */
     protected $table = 'pendaftaran_poli';
 
-    /**
-     * Field yang boleh diisi
-     */
     protected $fillable = [
         'jenis_pasien',
         'nama_pasien',
         'no_identitas',
         'tanggal_lahir',
         'poli',
+        'dokter_id', // Tambahkan ini
         'nomor_antrian',
         'status',
         'token_akses'
     ];
 
-    /**
-     * Pastikan timestamps aktif
-     * agar created_at tersimpan otomatis
-     */
     public $timestamps = true;
 
-    /**
-     * Relasi ke tabel pembayaran
-     */
+    // Relasi untuk mendapatkan data dokter
+    public function dokter()
+    {
+        return $this->belongsTo(User::class, 'dokter_id');
+    }
+
     public function pembayaran()
     {
         return $this->hasOne(Pembayaran::class, 'pendaftaran_id');
     }
 
-    /**
-     * Relasi ke rekam medis
-     */
     public function rekamMedis()
     {
         return $this->hasOne(RekamMedis::class, 'pendaftaran_id');

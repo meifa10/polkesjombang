@@ -76,9 +76,9 @@ Route::middleware('auth')->group(function () {
         [DashboardController::class,'index']
     )->name('dashboard');
 
-    Route::get('/pendaftaran-poliklinik/umum', function () {
-        return view('pasien.pendaftaran-umum');
-    })->name('pendaftaran.umum');
+    Route::get('/pendaftaran-poliklinik/umum',
+        [PendaftaranPoliController::class, 'pendaftaranUmum']
+    )->name('pendaftaran.umum');
 
     Route::post('/pendaftaran-poliklinik/umum',
         [PendaftaranPoliController::class,'storeUmum']
@@ -101,24 +101,41 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function(){
+/*
+|--------------------------------------------------------------------------
+| PAYMENT USER (LOGIN)
+|--------------------------------------------------------------------------
+*/
 
-    Route::get('/payment/{id}', [PaymentController::class,'pay'])
-        ->name('payment.pay');
+Route::middleware(['auth'])->group(function () {
 
+    Route::get(
+        '/payment/{id}',
+        [PaymentController::class, 'pay']
+    )->name('payment.pay');
+
+    Route::get(
+        '/payment/finish',
+        [PaymentController::class, 'finish']
+    );
+
+    Route::get(
+        '/payment/error',
+        [PaymentController::class, 'error']
+    );
 });
 
-Route::post('/payment/callback', [PaymentController::class, 'callback']); // ✅ PINDAH KE SINI
 
-// Route::get('/payment/finish', function () {
-//     return redirect('/dashboard')->with('success','Pembayaran berhasil');
-// });
+/*
+|--------------------------------------------------------------------------
+| CALLBACK MIDTRANS (TANPA LOGIN)
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/payment/finish', [PaymentController::class, 'finish']);
-
-Route::get('/payment/error', function () {
-    return redirect('/dashboard')->with('error','Pembayaran gagal');
-});
+Route::post(
+    '/payment/callback',
+    [PaymentController::class, 'callback']
+);
 
 // rekam medis 
 
@@ -131,3 +148,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('pasien.rekammedis.pdf');
 
 });
+
