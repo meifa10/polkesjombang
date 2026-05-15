@@ -247,6 +247,31 @@
     .pill-waiting { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; } 
     .pill-process { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 
+    /* --- BUTTON STRUK --- */
+    .btn-struk {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--polkes-primary);
+        background: var(--polkes-primary-light);
+        border: 1px solid #a7f3d0;
+        border-radius: 12px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-struk:hover {
+        background: var(--polkes-primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2);
+    }
+
     @media (max-width: 992px) { .menu-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) {
         .section-header { flex-direction: column; align-items: flex-start; }
@@ -404,7 +429,23 @@
                         </span>
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                
+                {{-- BAGIAN KANAN: TOMBOL CETAK STRUK & PANAH --}}
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    
+                    @if($item->status == 'selesai' || $item->status == 'lunas')
+                        @php 
+                            // Proteksi ID: Jika berelasi dengan tabel pembayaran, ambil ID pembayaran, kalau tidak ambil ID pendaftaran
+                            $pembayaranId = isset($item->pembayaran) ? $item->pembayaran->id : $item->id; 
+                        @endphp
+                        <a href="/pembayaran/struk/{{ $pembayaranId }}" target="_blank" class="btn-struk" title="Cetak Bukti Pembayaran">
+                            <i class="fa-solid fa-print"></i> Struk
+                        </a>
+                    @endif
+
+                    <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                </div>
+                
             </div>
             @endforeach
         @else
