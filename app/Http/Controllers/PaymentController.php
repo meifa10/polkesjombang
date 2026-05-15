@@ -133,7 +133,7 @@ class PaymentController extends Controller
             abort(403, 'Struk hanya dapat dicetak untuk pembayaran yang sudah lunas.');
         }
 
-        // Lempar ke tampilan view struk
-        return view('pembayaran.struk', compact('pembayaran'));
+        // ✅ UBAH DI SINI: Ganti 'pembayaran.struk' menjadi 'payment.struk'
+        return view('payment.struk', compact('pembayaran'));
     }
 }
