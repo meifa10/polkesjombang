@@ -52,9 +52,9 @@
         
         {{-- HEADER STRUK --}}
         <div class="text-center mb-6">
-            <h1 class="text-xl font-bold uppercase tracking-widest">POLKES JOMBANG</h1>
-            <p class="text-sm mt-1">Jl. KH. Wahid Hasyim No.133<br>Jombang, Jawa Timur</p>
-            <p class="text-sm">Telp: (0321) 123456</p>
+            <h1 class="text-xl font-bold uppercase tracking-widest">POLKES 05.09.15 JOMBANG</h1>
+            <p class="text-sm mt-1">Jl. KH. Wahid Hasyim No.28 B<br>Jombang, Jawa Timur</p>
+            <p class="text-sm">Telp: (0877) 7723-5386</p>
         </div>
 
         <div class="dashed-line"></div>
