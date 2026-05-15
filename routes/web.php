@@ -118,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
         [PaymentController::class, 'error']
     );
 });
-Route::get('/pembayaran/struk/{id}', [App\Http\Controllers\PaymentController::class, 'cetakStruk'])->name('payment.struk');
+Route::get('/pembayaran/struk/{id}', [App\Http\Controllers\PaymentController::class, 'cetakStruk'])->name('pembayaran.struk');
 
 /*
 |--------------------------------------------------------------------------
