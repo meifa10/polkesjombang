@@ -119,4 +119,21 @@ class PaymentController extends Controller
 
         return redirect('/dashboard');
     }
+
+    /**
+     * Menampilkan halaman cetak struk pembayaran.
+     */
+    public function cetakStruk($id)
+    {
+        // Ambil data pembayaran berdasarkan ID beserta data pendaftarannya
+        $pembayaran = Pembayaran::with('pendaftaran')->findOrFail($id);
+
+        // Pastikan hanya yang sudah lunas yang bisa dicetak
+        if ($pembayaran->status != 'lunas') {
+            abort(403, 'Struk hanya dapat dicetak untuk pembayaran yang sudah lunas.');
+        }
+
+        // Lempar ke tampilan view struk
+        return view('pembayaran.struk', compact('pembayaran'));
+    }
 }
