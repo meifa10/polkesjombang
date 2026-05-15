@@ -12,6 +12,7 @@ class PendaftaranPoli extends Model
     protected $table = 'pendaftaran_poli';
 
     protected $fillable = [
+        'user_id',
         'jenis_pasien',
         'nama_pasien',
         'no_identitas',
