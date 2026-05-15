@@ -101,12 +101,6 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-/*
-|--------------------------------------------------------------------------
-| PAYMENT USER (LOGIN)
-|--------------------------------------------------------------------------
-*/
-
 Route::middleware(['auth'])->group(function () {
 
     Route::get(
@@ -124,6 +118,7 @@ Route::middleware(['auth'])->group(function () {
         [PaymentController::class, 'error']
     );
 });
+Route::get('/pembayaran/struk/{id}', [App\Http\Controllers\PembayaranController::class, 'cetakStruk'])->name('pembayaran.struk');
 
 
 /*
