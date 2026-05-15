@@ -117,7 +117,7 @@
                         </div>
                     </div>
 
-                    {{-- BUTTON --}}
+                    {{-- BUTTON & CETAK STRUK --}}
                     @if($pembayaran->status != 'lunas')
                         <button id="pay-button" class="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-200 active:scale-95">
                             <i class="fa-solid fa-lock mr-2"></i>
@@ -135,7 +135,7 @@
                                 Transaksi telah berhasil diverifikasi sistem.
                             </p>
                             
-                            {{-- TOMBOL CETAK STRUK DITAMBAHKAN DI SINI --}}
+                            {{-- TOMBOL CETAK STRUK --}}
                             <a href="/pembayaran/struk/{{ $pembayaran->id }}" target="_blank" class="inline-flex items-center justify-center w-full h-14 rounded-xl bg-white border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white font-black uppercase tracking-[0.1em] transition-all shadow-sm active:scale-95">
                                 <i class="fa-solid fa-print mr-2"></i>
                                 Cetak Struk
@@ -177,15 +177,17 @@
                 snap.pay(snapToken, {
                     onSuccess: function(result) {
                         console.log(result);
-                        window.location.href = "/dashboard";
+                        // Me-refresh halaman agar tombol Cetak Struk muncul
+                        window.location.reload(); 
                     },
                     onPending: function(result) {
                         console.log(result);
+                        // Jika pending (misal baru dapat kode VA), arahkan ke dashboard
                         window.location.href = "/dashboard";
                     },
                     onError: function(result) {
                         console.log(result);
-                        alert("Pembayaran gagal");
+                        alert("Pembayaran gagal atau dibatalkan.");
                         resetButton();
                     },
                     onClose: function() {
