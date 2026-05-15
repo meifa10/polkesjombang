@@ -7,9 +7,10 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    {{-- Menggunakan font ala mesin kasir/struk --}}
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    {{-- LIBRARY UNTUK CONVERT HTML KE PDF --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         body {
@@ -18,6 +19,7 @@
             background-color: #e2e8f0;
         }
 
+        /* Area ini yang akan di-convert jadi PDF */
         .receipt-container {
             max-width: 400px;
             margin: 40px auto;
@@ -30,29 +32,23 @@
             border-top: 2px dashed #cbd5e1;
             margin: 20px 0;
         }
-
-        /* Mode Cetak (Hanya elemen ini yang di-print) */
-        @media print {
-            body { background-color: #fff; margin: 0; padding: 0; }
-            .receipt-container { box-shadow: none; margin: 0 auto; max-width: 100%; width: 80mm; padding: 10px; }
-            .no-print { display: none !important; }
-        }
     </style>
 </head>
 <body>
 
-    {{-- Tombol Kembali & Manual Print (Hanya tampil di layar, tidak ikut ter-print) --}}
-    <div class="max-w-md mx-auto mt-6 flex justify-between no-print">
+    {{-- Tombol Kembali & Manual Download --}}
+    <div class="max-w-md mx-auto mt-6 flex justify-between px-4">
         <a href="/dashboard" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-all">
             <i class="fa-solid fa-arrow-left mr-2"></i> Kembali
         </a>
-        <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-500 transition-all">
-            <i class="fa-solid fa-print mr-2"></i> Cetak Ulang
+        
+        <button onclick="downloadPDF()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-500 transition-all">
+            <i class="fa-solid fa-download mr-2"></i> Download Ulang PDF
         </button>
     </div>
 
-    {{-- KERTAS STRUK --}}
-    <div class="receipt-container">
+    {{-- KERTAS STRUK (Berikan ID agar mudah ditarget oleh html2pdf) --}}
+    <div id="kertas-struk" class="receipt-container">
         
         {{-- HEADER STRUK --}}
         <div class="text-center mb-6">
@@ -129,17 +125,36 @@
         <div class="text-center text-xs mt-6">
             <p>Terima kasih atas kunjungan Anda.</p>
             <p>Semoga lekas sembuh!</p>
-            <p class="mt-4 opacity-50">Dicetak otomatis oleh sistem</p>
+            <p class="mt-4 opacity-50">Di-generate otomatis oleh sistem</p>
         </div>
 
     </div>
 
-    {{-- SCRIPT OTOMATIS CETAK SAAT HALAMAN DIBUKA --}}
+    {{-- SCRIPT OTOMATIS DOWNLOAD PDF --}}
     <script>
+        // Fungsi untuk mengubah elemen HTML menjadi PDF dan mendownloadnya
+        function downloadPDF() {
+            // Ambil elemen yang mau dijadikan PDF (hanya kotak putih struknya saja)
+            const element = document.getElementById('kertas-struk');
+            
+            // Konfigurasi PDF
+            const opt = {
+                margin:       0.5,
+                filename:     'Struk_{{ $pembayaran->payment_ref }}.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a5', orientation: 'portrait' }
+            };
+
+            // Proses Download
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Jalankan otomatis 0.5 detik setelah halaman terbuka
         window.onload = function() {
             setTimeout(function() {
-                window.print();
-            }, 500); // Jeda 0.5 detik memastikan CSS load sempurna sebelum pop-up print muncul
+                downloadPDF();
+            }, 500); 
         }
     </script>
 </body>
