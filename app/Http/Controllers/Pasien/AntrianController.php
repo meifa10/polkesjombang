@@ -13,43 +13,37 @@ class AntrianController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Ambil antrian aktif terbaru milik user ini (yang statusnya belum selesai)
+        // 1. Izinkan status 'menunggu_petugas' lolos masuk ke halaman ini
         $pendaftaran = PendaftaranPoli::where('nama_pasien', $user->name)
-            ->whereIn('status', ['menunggu', 'diproses_dokter'])
+            ->whereIn('status', ['menunggu', 'menunggu_petugas', 'diproses_dokter'])
             ->latest()
             ->first();
 
-        // Proteksi: Jika tidak ada antrian aktif, redirect ke dashboard
         if (!$pendaftaran) {
             return redirect()->route('dashboard')->with('error', 'Antrian aktif tidak ditemukan.');
         }
 
-        // 2. HITUNG ANTRIAN REAL-TIME DI DEPAN PASIEN (Hanya poli yang sama & hari yang sama)
-        // Pasien di depan adalah mereka yang mendaftar lebih dulu (ID lebih kecil) dan statusnya masih 'menunggu'
+        // 2. Sesuaikan hitungan orang di depan (hitung yang berstatus 'menunggu' ATAU 'menunggu_petugas')
         $antrianDiDepan = PendaftaranPoli::where('poli', $pendaftaran->poli)
-            ->where('status', 'menunggu')
+            ->whereIn('status', ['menunggu', 'menunggu_petugas'])
             ->where('id', '<', $pendaftaran->id)
             ->whereDate('created_at', Carbon::today())
             ->count();
 
-        // 3. CEK APAKAH ADA PASIEN YANG SEDANG DIPROSES DI DALAM POLI SEKARANG
+        // 3. Cek pasien yang sedang di dalam ruangan dokter
         $sedangDiPeriksa = PendaftaranPoli::where('poli', $pendaftaran->poli)
             ->where('status', 'diproses_dokter')
             ->whereDate('created_at', Carbon::today())
             ->exists();
 
-        // 4. LOGIKA ESTIMASI WAKTU REAL-TIME:
-        // Jika status pasien sendiri sudah 'diproses_dokter', artinya dia sedang dipanggil/diperiksa (0 menit tunggu)
+        // 4. Logika Waktu
         if ($pendaftaran->status === 'diproses_dokter') {
             $estimasiMenit = 0;
             $prediksiWaktu = "Sekarang";
         } else {
-            // Jika ada pasien lain di dalam poli yang sedang diperiksa, sisa waktunya kita asumsikan berjalan.
-            // Rumus: (Jumlah orang mengantre di depan * 15 menit) + 15 menit (untuk menyelesaikan pasien yang sedang di dalam ruangan)
             $tambahanWaktuSesi = $sedangDiPeriksa ? 15 : 0;
             $estimasiMenit = ($antrianDiDepan * 15) + $tambahanWaktuSesi;
             
-            // Jika estimasi 0 menit (karena tidak ada orang di depan dan poli kosong), dia akan langsung dilayani
             if ($estimasiMenit === 0) {
                 $prediksiWaktu = "Silahkan Menuju Poli";
             } else {
