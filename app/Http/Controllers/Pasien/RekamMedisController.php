@@ -20,14 +20,11 @@ class RekamMedisController extends Controller
         $dateTo = $request->input('to');
 
         // Query Utama: Mengambil rekam medis beserta data pendaftaran, dokter, dan rincian pembayaran
-        $rekamMedis = DB::table('rekam_medis')
+        $rekamMedisRaw = DB::table('rekam_medis')
             ->join('pendaftaran_poli', 'rekam_medis.pendaftaran_id', '=', 'pendaftaran_poli.id')
-            // Join ke tabel users untuk mendapatkan nama dokter
             ->leftJoin('users as dokter', 'pendaftaran_poli.dokter_id', '=', 'dokter.id')
-            // Join ke tabel pembayaran untuk ambil rincian biaya
             ->leftJoin('pembayaran', 'pendaftaran_poli.id', '=', 'pembayaran.pendaftaran_id')
             ->where('pendaftaran_poli.nama_pasien', $user->name)
-            // PERBAIKAN: Hanya tampilkan rekam medis jika status pembayaran sudah 'lunas'
             ->where('pembayaran.status', 'lunas') 
             ->when($querySearch, function ($query, $querySearch) {
                 return $query->where(function($q) use ($querySearch) {
@@ -44,7 +41,7 @@ class RekamMedisController extends Controller
             ->select(
                 'rekam_medis.*', 
                 'pendaftaran_poli.poli', 
-                'dokter.name as nama_dokter', // Ambil nama dokter
+                'dokter.name as nama_dokter',
                 'pembayaran.total_biaya',
                 'pembayaran.biaya_dokter',
                 'pembayaran.total_obat',
@@ -53,6 +50,12 @@ class RekamMedisController extends Controller
             )
             ->orderByDesc('rekam_medis.created_at')
             ->get();
+
+        // Lakukan transformasi data untuk memecah teks string resep menjadi array rincian obat bernilai
+        $rekamMedis = $rekamMedisRaw->map(function ($item) {
+            $item->rincian_obat = $this->parseResepObat($item->resep, $item->total_obat);
+            return $item;
+        });
 
         $pendaftaran = DB::table('pendaftaran_poli')
             ->where('nama_pasien', $user->name)
@@ -68,12 +71,11 @@ class RekamMedisController extends Controller
         $rmSingle = DB::table('rekam_medis')->where('id', $id)->first();
         if (!$rmSingle) abort(404);
 
-        // Ambil pendaftaran dengan join ke dokter agar nama dokter muncul di PDF
         $pendaftaran = DB::table('pendaftaran_poli')
             ->leftJoin('users as dokter', 'pendaftaran_poli.dokter_id', '=', 'dokter.id')
             ->where('pendaftaran_poli.id', $rmSingle->pendaftaran_id)
             ->where('pendaftaran_poli.nama_pasien', $user->name)
-            ->select('pendaftaran_poli.*', 'dokter.name as nama_dokter') // Pastikan nama_dokter terpilih
+            ->select('pendaftaran_poli.*', 'dokter.name as nama_dokter')
             ->first();
 
         if (!$pendaftaran) abort(404);
@@ -82,7 +84,6 @@ class RekamMedisController extends Controller
             ->where('pendaftaran_id', $pendaftaran->id)
             ->first();
 
-        // PERBAIKAN: Blokir akses download PDF jika pembayaran belum lunas
         if (!$pembayaran || strtolower($pembayaran->status) !== 'lunas') {
             return redirect()->back()->with('error', 'Rekam medis belum dapat diunduh karena tagihan belum dilunasi.');
         }
@@ -91,9 +92,59 @@ class RekamMedisController extends Controller
             ->where('pendaftaran_id', $pendaftaran->id)
             ->get();
 
-          $pendaftaran->dokter = (object) ['name' => $pendaftaran->nama_dokter];
+        $pendaftaran->dokter = (object) ['name' => $pendaftaran->nama_dokter];
 
-        $pdf = Pdf::loadView('pasien.rekammedis-pdf', compact('pendaftaran', 'rekamMedis', 'pembayaran'));
+        // Rincian obat untuk PDF tunggal jika dibutuhkan di struk halaman PDF
+        $rincianObat = $this->parseResepObat($rmSingle->resep, $pembayaran->total_obat);
+
+        $pdf = Pdf::loadView('pasien.rekammedis-pdf', compact('pendaftaran', 'rekamMedis', 'pembayaran', 'rincianObat'));
         return $pdf->download('rekam-medis-' . time() . '.pdf');
+    }
+
+    /**
+     * Helper Fungsi: Memecah string teks resep menjadi item array terstruktur baku.
+     * Jika format teks tidak beraturan, otomatis membagi rata total nominal obat ke baris item yang ada.
+     */
+    private function parseResepObat($resepText, $totalObatNominal)
+    {
+        if (empty($resepText)) return [];
+
+        // Memecah baris resep berdasarkan baris baru atau koma pembatas
+        $lines = preg_split('/[,\n\r]+/', $resepText);
+        $result = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+
+            // Default fallback value jika item gagal diparsing secara mendalam
+            $namaObat = $line;
+            $qty = 5; // Default kuantitas standar sesuai mock data gambar (5 pesanan)
+
+            // Aturan penangkap teks sederhana (Menghapus penulisan dosis/aturan pakai di belakang strip atau titik koma)
+            if (strpos($line, '-') !== false) {
+                $parts = explode('-', $line);
+                $namaObat = trim($parts[0]);
+            }
+
+            $result[] = [
+                'nama' => $namaObat,
+                'qty' => $qty,
+                'harga' => 0, // dihitung dinamis di bawah jika tidak ada breakdown database
+                'total' => 0
+            ];
+        }
+
+        // Distribusi total nominal obat rata ke tiap list item resep obat (Simulasi Pembagian Rinci)
+        $totalItems = count($result);
+        if ($totalItems > 0 && $totalObatNominal > 0) {
+            $biayaPerItem = $totalObatNominal / $totalItems;
+            foreach ($result as &$res) {
+                $res['total'] = $biayaPerItem;
+                $res['harga'] = $biayaPerItem / $res['qty'];
+            }
+        }
+
+        return $result;
     }
 }

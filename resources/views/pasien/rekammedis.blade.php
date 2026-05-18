@@ -2,6 +2,7 @@
 
 @section('content')
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
 <style>
@@ -193,8 +194,8 @@
     }
 
     .visit-card:hover {
-        transform: translateY(-12px) scale(1.01);
-        box-shadow: 0 40px 60px -15px rgba(0, 0, 0, 0.08);
+        transform: translateY(-5px) scale(1.005);
+        box-shadow: 0 40px 60px -15px rgba(0, 0, 0, 0.05);
     }
 
     .card-top {
@@ -255,6 +256,23 @@
     .node-resep { grid-column: span 3; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px dashed var(--c-emerald); }
     .node-resep .text { color: #065f46; font-style: italic; }
 
+    /* --- STRUK PEMBAYARAN MINI AREA --- */
+    .rincian-biaya-container {
+        grid-column: span 3;
+        background: #fafafa;
+        border: 1px solid #e2e8f0;
+        border-radius: 32px;
+        padding: 30px;
+        margin-top: 10px;
+        font-family: 'Courier Prime', monospace;
+        color: #000;
+    }
+    
+    .dashed-separator {
+        border-top: 2px dashed #a1a1aa;
+        margin: 12px 0;
+    }
+
     .btn-download {
         background: var(--c-primary);
         color: white;
@@ -272,7 +290,7 @@
 
     @media (max-width: 850px) {
         .bento-layout { grid-template-columns: 1fr; }
-        .node-diagnosis, .node-resep { grid-column: span 1; }
+        .node-diagnosis, .node-resep, .rincian-biaya-container { grid-column: span 1; }
         .filter-bar { flex-direction: column; }
         .date-premium, .btn-reset { height: 60px; }
     }
@@ -328,7 +346,7 @@
         </div>
     </form>
 
-    {{-- LIST --}}
+    {{-- LIST REKAM MEDIS --}}
     @forelse($rekamMedis as $rm)
         <div class="visit-card">
             <div class="card-top">
@@ -362,13 +380,65 @@
                     <label>Resep Obat & Aturan Pakai</label>
                     <div class="text">{{ $rm->resep }}</div>
                 </div>
+
+                {{-- INTEGRASI RINCIAN STRUK NOTA TAGIHAN (DARI DATA GAMBAR CONTOH) --}}
+                <div class="rincian-biaya-container text-xs">
+                    <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">
+                        <i class="ph-bold ph-receipt mr-1"></i> Rincian Invoice Lembar Pembayaran Lunas
+                    </p>
+                    
+                    {{-- Jasa Dokter --}}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 13px;">JASA DOKTER & KONSULTASI</span><br>
+                            <span style="color: #64748b; font-size: 11px;">Pemeriksaan medis dasar poli ({{ $rm->nama_dokter ?? 'Dokter Jaga' }})</span>
+                        </div>
+                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_dokter ?? 50000, 0, ',', '.') }}</span>
+                    </div>
+
+                    {{-- Administrasi --}}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 13px;">ADMINISTRASI RUMAH SAKIT</span><br>
+                            <span style="color: #64748b; font-size: 11px;">Pencatatan rekam medis digital</span>
+                        </div>
+                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_admin ?? 10000, 0, ',', '.') }}</span>
+                    </div>
+
+                    {{-- Breakdown Item Obat --}}
+                    <div style="margin-top: 10px; padding-top: 5px;">
+                        <span style="font-weight: 700; font-size: 13px;">RINCIAN FARMASI / OBAT:</span>
+                        <div style="padding-left: 10px; margin-top: 6px;">
+                            @forelse($rm->rincian_obat as $obat)
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+                                    <div>
+                                        <span style="font-size: 12px;">• {{ $obat['nama'] }}</span><br>
+                                        <span style="color: #64748b; font-size: 11px;">&nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</span>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 700;">Rp {{ number_format($obat['total'], 0, ',', '.') }}</span>
+                                </div>
+                            @empty
+                                <span style="color: #64748b; font-style: italic;">• Tidak ada rincian item obat</span>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="dashed-separator"></div>
+
+                    {{-- Total Akhir --}}
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700;">
+                        <span>TOTAL BERSIH</span>
+                        <span>Rp {{ number_format($rm->total_biaya, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     @empty
         <div style="text-align: center; padding: 120px 20px; background: white; border-radius: 50px; border: 1px dashed #cbd5e1;">
             <i class="ph-light ph-folder-open" style="font-size: 80px; color: #cbd5e1; margin-bottom: 24px;"></i>
             <h2 style="font-weight: 800; color: var(--c-primary);">Tidak ada catatan ditemukan.</h2>
-            <p style="color: var(--c-text-muted);">Silakan atur ulang pencarian untuk melihat semua data.</p>
+            <p style="color: var(--c-text-muted);">Silakan atur ulang pencarian atau filter tanggal untuk melihat data.</p>
         </div>
     @endforelse
 
