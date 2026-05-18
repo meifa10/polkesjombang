@@ -2,13 +2,14 @@
 
 @section('content')
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 
 <style>
     html, body {
         background-color: #0d121c !important; 
         margin: 0;
         padding: 0;
+        font-family: 'Inter', sans-serif;
     }
 
     .antrian-wrapper {
@@ -55,14 +56,16 @@
         font-size: 18px;
         color: #10b981 !important;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .ticket-display-number {
-        font-size: 100px;
+        font-size: 90px;
         font-weight: 900;
         color: #1e293b !important;
         line-height: 1;
-        margin: 10px 0;
+        margin: 15px 0;
+        letter-spacing: -2px;
     }
 
     .ticket-body {
@@ -73,8 +76,8 @@
     .details-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 20px;
+        gap: 20px 15px;
+        margin-bottom: 25px;
     }
 
     .detail-item label {
@@ -83,6 +86,8 @@
         font-weight: 800;
         color: #64748b !important;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
     }
 
     .detail-item span {
@@ -91,15 +96,29 @@
         color: #0f172a !important;
     }
 
-    /* Warna Hijau sesuai permintaan untuk status Menunggu */
     .status-badge {
         display: inline-block;
-        background: #d1fae5 !important;
-        color: #065f46 !important;
         padding: 4px 10px;
         border-radius: 6px;
         font-weight: 800;
         font-size: 11px;
+        text-transform: uppercase;
+    }
+    
+    .badge-menunggu {
+        background: #d1fae5 !important;
+        color: #065f46 !important;
+    }
+
+    .badge-proses {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
     }
 
     .btn-action {
@@ -114,17 +133,22 @@
         margin-bottom: 10px;
         border: none;
         cursor: pointer;
+        transition: all 0.2s;
     }
 
     .btn-save { background: #10b981; color: white; }
+    .btn-save:hover { background: #059669; }
     .btn-dashboard { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .btn-dashboard:hover { background: #e2e8f0; }
 
     .ticket-footer {
         text-align: center;
         font-size: 11px;
         color: #64748b !important;
-        margin-top: 15px;
-        line-height: 1.5;
+        margin-top: 20px;
+        line-height: 1.6;
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 15px;
     }
 </style>
 
@@ -132,7 +156,7 @@
     <div class="integrated-ticket" id="capture-zone">
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
-            <div style="color: #64748b; font-weight: 700; font-size: 12px; letter-spacing: 1px;">NOMOR ANTRIAN DIGITAL</div>
+            <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; mt-1">NOMOR ANTRIAN POLIKLINIK</div>
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
@@ -149,15 +173,27 @@
                 </div>
                 <div class="detail-item">
                     <label>Layanan Poli</label>
-                    <span>{{ $data->poli }}</span>
+                    <span class="text-emerald-600 font-extrabold">{{ $data->poli }}</span>
                 </div>
                 <div class="detail-item">
-                    <label>Estimasi Dilayani</label>
-                    <span style="color: #10b981 !important;">± {{ $prediksi }} WIB</span>
+                    <label>Sisa Antrean Di Depan</label>
+                    <span class="font-mono font-black text-lg text-slate-800">
+                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianDiDepan }} Orang
+                    </span>
                 </div>
                 <div class="detail-item">
-                    <label>Status</label>
-                    <div><span class="status-badge">{{ strtoupper($data->status) }}</span></div>
+                    <label>Status Berjalan</label>
+                    <div>
+                        @if($data->status === 'diproses_dokter')
+                            <span class="status-badge badge-proses">Dipanggil Dokter</span>
+                        @else
+                            <span class="status-badge badge-menunggu">Menunggu</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="detail-item col-span-2 border-t border-slate-100 pt-3" style="grid-column: span 2;">
+                    <label>Estimasi Pemanggilan</label>
+                    <span class="text-base font-extrabold text-emerald-600 tracking-wide">{{ $prediksi }}</span>
                 </div>
             </div>
 
@@ -171,8 +207,8 @@
             </div>
 
             <div class="ticket-footer">
-                Harap datang 15 menit sebelum estimasi.<br>
-                Tunjukkan tiket digital ini kepada petugas poli.
+                Silakan datang ke area tunggu 15 menit sebelum estimasi.<br>
+                Halaman ini dapat di-refresh berkala untuk melihat sisa antrean terbaru.
             </div>
         </div>
     </div>
@@ -184,7 +220,7 @@
         const zone = document.getElementById('capture-zone');
         const noShow = zone.querySelector('.no-screenshot');
         
-        noShow.style.visibility = 'hidden'; // Gunakan visibility agar layout tidak bergeser saat capture
+        noShow.style.visibility = 'hidden'; 
 
         html2canvas(zone, {
             scale: 3, 
@@ -193,8 +229,8 @@
         }).then(canvas => {
             noShow.style.visibility = 'visible';
             const link = document.createElement('a');
-            link.download = 'Tiket_Antrian_{{ $data->nomor_antrian }}.png';
-            link.href = canvas.toDataURL('image/png', 1.0);
+            link.download = 'Tiket_Antrian_{{ $data->poli }}_{{ $data->nomor_antrian }}.png';
+            link.href = canvas.toToDataURL('image/png', 1.0);
             link.click();
         });
     }
