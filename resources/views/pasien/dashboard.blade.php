@@ -281,13 +281,14 @@
 
 <div class="dashboard-wrapper">
 
+    {{-- PERBAIKAN DI SINI: Samakan status pencarian antrean aktif dengan Controller --}}
     @php
-        // Gunakan whereIn agar bisa mendeteksi berbagai variasi status 'menunggu'
         $antrianAktif = \App\Models\PendaftaranPoli::where('nama_pasien', Auth::user()->name)
-                        ->whereIn('status', ['menunggu', 'menunggu_petugas', 'menunggu_admin', 'diproses_dokter', 'menunggu_pembayaran', 'proses']) 
+                        ->whereIn('status', ['menunggu', 'diproses_dokter']) 
                         ->latest()
                         ->first();
     @endphp
+    
     <header class="welcome-banner">
         <p>
             Halo, 
@@ -332,7 +333,7 @@
             <p>Lihat diagnosa, resep obat, dan riwayat klinis.</p>
         </a>
 
-        {{-- MENU CEK ANTRIAN: AKTIF HANYA JIKA ADA ANTRIAN STATUS MENUNGGU --}}
+        {{-- MENU CEK ANTRIAN --}}
         @if($antrianAktif)
             <a href="{{ route('pasien.antrian') }}" class="menu-card">
                 <div class="icon-box bg-antrian">
@@ -351,7 +352,7 @@
             </div>
         @endif
 
-        {{-- MENU PEMBAYARAN: AKTIF HANYA JIKA ADA TAGIHAN PENDING/GAGAL --}}
+        {{-- MENU PEMBAYARAN --}}
         @if(isset($pembayaran) && $pembayaran)
             <a href="{{ route('payment.pay', $pembayaran->id) }}" class="menu-card">
                 <div class="icon-box bg-bayar">
@@ -430,19 +431,15 @@
                     </div>
                 </div>
                 
-                {{-- BAGIAN KANAN: TOMBOL CETAK STRUK & PANAH --}}
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    
                     @if($item->status == 'selesai' || $item->status == 'lunas')
                         @php 
-                            // Proteksi ID: Jika berelasi dengan tabel pembayaran, ambil ID pembayaran, kalau tidak ambil ID pendaftaran
                             $pembayaranId = isset($item->pembayaran) ? $item->pembayaran->id : $item->id; 
                         @endphp
                         <a href="/pembayaran/struk/{{ $pembayaranId }}" target="_blank" class="btn-struk" title="Cetak Bukti Pembayaran">
                             <i class="fa-solid fa-print"></i> Struk
                         </a>
                     @endif
-
                     <i class="fa-solid fa-chevron-right text-slate-300"></i>
                 </div>
                 
