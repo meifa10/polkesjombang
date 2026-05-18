@@ -101,7 +101,6 @@ class PaymentController extends Controller
         $pembayaran = Pembayaran::where('payment_ref', $orderId)->first();
 
         if ($pembayaran) {
-            // Kita lakukan update lagi di sini untuk jaga-jaga jika callback delay
             DB::transaction(function () use ($pembayaran) {
                 $pembayaran->update([
                     'status' => 'lunas',
@@ -121,19 +120,115 @@ class PaymentController extends Controller
     }
 
     /**
-     * Menampilkan halaman cetak struk pembayaran.
+     * Menampilkan halaman cetak struk pembayaran dengan rincian item obat ter-parse.
      */
     public function cetakStruk($id)
     {
-        // Ambil data pembayaran berdasarkan ID beserta data pendaftarannya
-        $pembayaran = Pembayaran::with('pendaftaran')->findOrFail($id);
+        // Ambil data pembayaran berdasarkan ID beserta data pendaftaran & rekam medisnya
+        $pembayaran = Pembayaran::with(['pendaftaran.rekamMedis'])->findOrFail($id);
 
         // Pastikan hanya yang sudah lunas yang bisa dicetak
         if ($pembayaran->status != 'lunas') {
             abort(403, 'Struk hanya dapat dicetak untuk pembayaran yang sudah lunas.');
         }
 
-        // ✅ UBAH DI SINI: Ganti 'pembayaran.struk' menjadi 'payment.struk'
-        return view('payment.struk', compact('pembayaran'));
+        // Memecah teks resep dari rekam medis menjadi bentuk rincian array harga detail
+        $resepString = $pembayaran->pendaftaran->rekamMedis->resep ?? '';
+        $totalHargaObat = (int) str_replace(['.', ','], '', $pembayaran->total_obat ?? 0);
+        $rincianObat = $this->parseResepPecahDetail($resepString, $totalHargaObat);
+
+        return view('payment.struk', compact('pembayaran', 'rincianObat'));
+    }
+
+    /**
+     * Fungsi Cerdas Parser: Memecah string resep menjadi item obat, qty, harga, dan subtotal.
+     */
+    private function parseResepPecahDetail($resepString, $totalHargaObat = 0)
+    {
+        $listObat = [];
+        if (empty(trim($resepString))) return $listObat;
+
+        $rows = preg_split('/[\n,]+/', $resepString);
+        $barisValid = [];
+
+        foreach ($rows as $row) {
+            $row = trim($row);
+            if (!empty($row)) {
+                $barisValid[] = $row;
+            }
+        }
+
+        $jumlahBaris = count($barisValid);
+        if ($jumlahBaris === 0) return $listObat;
+
+        foreach ($barisValid as $row) {
+            $namaObat = $row;
+            $qty = 1;
+            $hargaSatuan = 0;
+
+            // 1. Format Manual Kustom: "Nama Obat x Jumlah @ Harga"
+            if (str_contains($row, 'x') && str_contains($row, '@')) {
+                $partHarga = explode('@', $row);
+                $hargaSatuan = isset($partHarga[1]) ? (int)preg_replace('/[^0-9]/', '', $partHarga[1]) : 0;
+
+                $partNamaQty = explode('x', $partHarga[0]);
+                $namaObat = isset($partNamaQty[0]) ? trim($partNamaQty[0]) : trim($partHarga[0]);
+                $qty = isset($partNamaQty[1]) ? (int)preg_replace('/[^0-9]/', '', $partNamaQty[1]) : 1;
+            }
+            // 2. Format Resep Medis Bawaan Rumah Sakit: "Nama Obat (10 PCS)"
+            elseif (preg_match('/^(.*?)\s*\(((\d+)\s*[pP][cC][sS]|\d+)\)/', $row, $matches)) {
+                $namaObat = trim($matches[1]);
+                $qty = (int)$matches[3];
+                
+                if ($totalHargaObat > 0 && $qty > 0) {
+                    $hargaSatuan = (int)($totalHargaObat / $jumlahBaris / $qty);
+                }
+            }
+            // 3. Format Resep Tanda Hubung Strip: "Nama Obat (10 TAB) - Aturan Minum"
+            elseif (str_contains($row, '-')) {
+                $partStrip = explode('-', $row);
+                $namaObat = trim($partStrip[0]);
+                
+                if (preg_match('/\((\d+)\s*\w+\)/', $partStrip[0], $qtyMatches)) {
+                    $qty = (int)$qtyMatches[1];
+                }
+
+                if ($totalHargaObat > 0 && $qty > 0) {
+                    $hargaSatuan = (int)($totalHargaObat / $jumlahBaris / $qty);
+                }
+            }
+            // 4. Format Dasar Karakter Huruf x: "Nama Obat x10"
+            elseif (str_contains($row, 'x') || str_contains($row, 'X')) {
+                $delimiter = str_contains($row, 'x') ? 'x' : 'X';
+                $partNamaQty = explode($delimiter, $row);
+                $namaObat = trim($partNamaQty[0]);
+                $qty = isset($partNamaQty[1]) ? (int)preg_replace('/[^0-9]/', '', $partNamaQty[1]) : 1;
+
+                if ($totalHargaObat > 0 && $qty > 0) {
+                    $hargaSatuan = (int)($totalHargaObat / $jumlahBaris / $qty);
+                }
+            }
+            // Teks Polos Tanpa Pola
+            else {
+                if ($totalHargaObat > 0) {
+                    $hargaSatuan = (int)($totalHargaObat / $jumlahBaris);
+                }
+            }
+
+            // Bersihkan sisa tanda kurung aturan minum pada penulisan nama obat utama
+            if (str_contains($namaObat, '(')) {
+                $partClean = explode('(', $namaObat);
+                $namaObat = trim($partClean[0]);
+            }
+
+            $listObat[] = [
+                'nama'  => rtrim($namaObat, ' -:'),
+                'qty'   => $qty,
+                'harga' => $hargaSatuan,
+                'total' => $qty * $hargaSatuan
+            ];
+        }
+
+        return $listObat;
     }
 }

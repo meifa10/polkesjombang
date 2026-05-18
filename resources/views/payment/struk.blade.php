@@ -19,9 +19,9 @@
             background-color: #e2e8f0;
         }
 
-        /* Area ini yang akan di-convert jadi PDF */
+        /* Area cetak struk */
         .receipt-container {
-            max-width: 400px;
+            max-width: 420px;
             margin: 40px auto;
             background: #fff;
             padding: 30px;
@@ -29,128 +29,169 @@
         }
 
         .dashed-line {
-            border-top: 2px dashed #cbd5e1;
-            margin: 20px 0;
+            border-top: 2px dashed #000000;
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
 
-    {{-- Tombol Kembali & Manual Download --}}
+    {{-- Tombol Navigasi Kembali & Manual Download --}}
     <div class="max-w-md mx-auto mt-6 flex justify-between px-4">
         <a href="/dashboard" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-all">
             <i class="fa-solid fa-arrow-left mr-2"></i> Kembali
         </a>
         
-        <button onclick="downloadPDF()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-500 transition-all">
+        <button onclick="downloadPDF()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-500 transition-all cursor-pointer">
             <i class="fa-solid fa-download mr-2"></i> Download Ulang PDF
         </button>
     </div>
 
-    {{-- KERTAS STRUK (Berikan ID agar mudah ditarget oleh html2pdf) --}}
+    {{-- KERTAS STRUK --}}
     <div id="kertas-struk" class="receipt-container">
         
         {{-- HEADER STRUK --}}
-        <div class="text-center mb-6">
-            <h1 class="text-xl font-bold uppercase tracking-widest">POLKES 05.09.15 JOMBANG</h1>
-            <p class="text-sm mt-1">Jl. KH. Wahid Hasyim No.28 B<br>Jombang, Jawa Timur</p>
-            <p class="text-sm">Telp: (0877) 7723-5386</p>
+        <div class="text-center mb-4">
+            <h1 class="text-xl font-bold uppercase tracking-wide">POLKES 05.09.15 JOMBANG</h1>
+            <p class="text-xs mt-1">Jl. KH. Wahid Hasyim No.28 B<br>Jombang, Jawa Timur</p>
+            <p class="text-xs">Telp: (0877) 7723-5386</p>
         </div>
 
         <div class="dashed-line"></div>
 
         {{-- INFO TRANSAKSI --}}
-        <div class="text-sm space-y-2 mb-6">
+        <div class="text-xs space-y-1">
             <div class="flex justify-between">
                 <span>TANGGAL</span>
-                <span>{{ \Carbon\Carbon::parse($pembayaran->updated_at)->format('d/m/Y H:i') }}</span>
+                <span>{{ \Carbon\Carbon::parse($pembayaran->updated_at)->format('d/m/Y H:i') }} WIB</span>
             </div>
             <div class="flex justify-between">
                 <span>INVOICE</span>
                 <span>{{ $pembayaran->payment_ref }}</span>
             </div>
             <div class="flex justify-between">
-                <span>KASIR</span>
-                <span>Sistem (Midtrans)</span>
+                <span>METODE</span>
+                <span class="uppercase">{{ $pembayaran->metode }}</span>
             </div>
         </div>
 
         <div class="dashed-line"></div>
 
-        {{-- DETAIL PASIEN --}}
-        <div class="text-sm space-y-2 mb-6">
+        {{-- DETAIL DATA PASIEN --}}
+        <div class="text-xs space-y-1">
             <div class="flex justify-between">
-                <span>PASIEN</span>
-                <span class="font-bold text-right">{{ $pembayaran->pendaftaran->nama_pasien ?? '-' }}</span>
+                <span>PASIEN:</span>
+                <span class="font-bold text-right uppercase">{{ $pembayaran->pendaftaran->nama_pasien ?? '-' }}</span>
             </div>
             <div class="flex justify-between">
-                <span>POLI</span>
-                <span class="text-right">{{ $pembayaran->pendaftaran->poli ?? '-' }}</span>
+                <span>POLI:</span>
+                <span class="text-right uppercase">{{ $pembayaran->pendaftaran->poli ?? '-' }}</span>
             </div>
         </div>
 
         <div class="dashed-line"></div>
 
-        {{-- RINCIAN BIAYA --}}
-        <div class="text-sm space-y-2">
-            <div class="flex justify-between">
-                <span>Biaya Admin</span>
-                <span>Rp {{ number_format($pembayaran->biaya_admin ?? 10000, 0, ',', '.') }}</span>
-            </div>
-            <div class="flex justify-between">
-                <span>Biaya Dokter</span>
+        {{-- STRUKUTUR RINCIAN NOTA TARIF UTAMA --}}
+        <div class="text-xs space-y-3">
+            
+            {{-- Komponen Jasa Tindakan --}}
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-bold">JASA DOKTER & KONSULTASI</p>
+                    <p class="text-[10px] text-slate-500">Pemeriksaan medis dasar poli</p>
+                </div>
                 <span>Rp {{ number_format($pembayaran->biaya_dokter ?? 50000, 0, ',', '.') }}</span>
             </div>
-            <div class="flex justify-between">
-                <span>Biaya Obat</span>
-                <span>Rp {{ number_format($pembayaran->total_obat ?? 0, 0, ',', '.') }}</span>
+            
+            {{-- Komponen Administrasi --}}
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-bold">ADMINISTRASI RUMAH SAKIT</p>
+                    <p class="text-[10px] text-slate-500">Pencatatan rekam medis digital</p>
+                </div>
+                <span>Rp {{ number_format($pembayaran->biaya_admin ?? 10000, 0, ',', '.') }}</span>
             </div>
+
+            {{-- DAFTAR RINCIAN ITEM OBAT BREAKDOWN --}}
+            <div class="pt-1">
+                <p class="font-bold mb-1">RINCIAN FARMASI / OBAT:</p>
+                <div class="space-y-2 pl-2">
+                    @forelse($rincianObat as $obat)
+                        <div class="flex justify-between items-end">
+                            <div class="leading-tight">
+                                <p>• {{ $obat['nama'] }}</p>
+                                @if($obat['harga'] > 0)
+                                    <p class="text-[10px] text-slate-500">
+                                        &nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'], 0, ',', '.') }})
+                                    </p>
+                                @else
+                                    <p class="text-[10px] text-slate-500">&nbsp;&nbsp;(Jumlah: {{ $obat['qty'] }} item)</p>
+                                @endif
+                            </div>
+                            <span class="text-right">
+                                @if($obat['total'] > 0)
+                                    Rp {{ number_format($obat['total'], 0, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-slate-500 italic">• Tidak ada rincian item obat</p>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- Cadangan Biaya Paket Obat Gelondongan (Jika total item bernilai 0) --}}
+            @if(count($rincianObat) > 0 && collect($rincianObat)->sum('total') == 0)
+                <div class="flex justify-between font-bold border-t border-dotted border-slate-400 pt-2">
+                    <span>SUBTOTAL PAKET OBAT</span>
+                    <span>Rp {{ number_format($pembayaran->total_obat ?? 0, 0, ',', '.') }}</span>
+                </div>
+            @endif
+
         </div>
 
         <div class="dashed-line"></div>
 
-        {{-- TOTAL AKHIR --}}
-        <div class="flex justify-between items-center text-lg font-bold mb-6">
-            <span>TOTAL</span>
+        {{-- TOTAL AKHIR TAGIHAN --}}
+        <div class="flex justify-between items-center text-base font-bold">
+            <span>TOTAL BERSIH</span>
             <span>Rp {{ number_format($pembayaran->total_biaya, 0, ',', '.') }}</span>
         </div>
         
-        <div class="text-center text-sm font-bold mb-6">
-            STATUS: <span class="uppercase">LUNAS</span>
+        <div class="text-center text-xs font-bold mt-4">
+            STATUS PEMBAYARAN: <span class="border border-black px-2 py-0.5 bg-black text-white rounded uppercase">LUNAS</span>
         </div>
 
         <div class="dashed-line"></div>
 
-        {{-- FOOTER --}}
-        <div class="text-center text-xs mt-6">
+        {{-- FOOTER STRUK --}}
+        <div class="text-center text-[11px] space-y-1">
             <p>Terima kasih atas kunjungan Anda.</p>
-            <p>Semoga lekas sembuh!</p>
-            <p class="mt-4 opacity-50">Di-generate otomatis oleh sistem</p>
+            <p>Semoga Anda lekas sembuh!</p>
+            <p class="text-[9px] pt-3 opacity-40">Nota bukti sah diterbitkan oleh sistem cloud</p>
         </div>
 
     </div>
 
-    {{-- SCRIPT OTOMATIS DOWNLOAD PDF --}}
+    {{-- SCRIPT GENERATE & DOWNLOAD AUTOMATIC PDF --}}
     <script>
-        // Fungsi untuk mengubah elemen HTML menjadi PDF dan mendownloadnya
         function downloadPDF() {
-            // Ambil elemen yang mau dijadikan PDF (hanya kotak putih struknya saja)
             const element = document.getElementById('kertas-struk');
             
-            // Konfigurasi PDF
             const opt = {
-                margin:       0.5,
+                margin:       0.3,
                 filename:     'Struk_{{ $pembayaran->payment_ref }}.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'a5', orientation: 'portrait' }
+                html2canvas:  { scale: 2.5, logging: false },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // Proses Download
             html2pdf().set(opt).from(element).save();
         }
 
-        // Jalankan otomatis 0.5 detik setelah halaman terbuka
+        // Auto download berjalan setengah detik setelah struktur HTML ter-render sempurna
         window.onload = function() {
             setTimeout(function() {
                 downloadPDF();
