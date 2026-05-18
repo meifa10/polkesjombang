@@ -284,7 +284,7 @@
     {{-- PERBAIKAN DI SINI: Samakan status pencarian antrean aktif dengan Controller --}}
     @php
         $antrianAktif = \App\Models\PendaftaranPoli::where('nama_pasien', Auth::user()->name)
-                        ->whereIn('status', ['menunggu', 'diproses_dokter']) 
+                        ->whereIn('status', ['menunggu', 'menunggu_petugas', 'diproses_dokter']) 
                         ->latest()
                         ->first();
     @endphp
