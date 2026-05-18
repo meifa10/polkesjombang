@@ -27,6 +27,8 @@ class RekamMedisController extends Controller
             // Join ke tabel pembayaran untuk ambil rincian biaya
             ->leftJoin('pembayaran', 'pendaftaran_poli.id', '=', 'pembayaran.pendaftaran_id')
             ->where('pendaftaran_poli.nama_pasien', $user->name)
+            // PERBAIKAN: Hanya tampilkan rekam medis jika status pembayaran sudah 'lunas'
+            ->where('pembayaran.status', 'lunas') 
             ->when($querySearch, function ($query, $querySearch) {
                 return $query->where(function($q) use ($querySearch) {
                     $q->where('rekam_medis.diagnosis', 'like', '%' . $querySearch . '%')
@@ -76,17 +78,20 @@ class RekamMedisController extends Controller
 
         if (!$pendaftaran) abort(404);
 
-        $rekamMedis = DB::table('rekam_medis')
-            ->where('pendaftaran_id', $pendaftaran->id)
-            ->get();
-
         $pembayaran = DB::table('pembayaran')
             ->where('pendaftaran_id', $pendaftaran->id)
             ->first();
 
-        // Siapkan objek dokter manual agar kompatibel dengan template PDF Anda ($pendaftaran->dokter->name)
-        // Jika template PDF Anda menggunakan {{ $pendaftaran->nama_dokter }}, baris di bawah ini opsional.
-        $pendaftaran->dokter = (object) ['name' => $pendaftaran->nama_dokter];
+        // PERBAIKAN: Blokir akses download PDF jika pembayaran belum lunas
+        if (!$pembayaran || strtolower($pembayaran->status) !== 'lunas') {
+            return redirect()->back()->with('error', 'Rekam medis belum dapat diunduh karena tagihan belum dilunasi.');
+        }
+
+        $rekamMedis = DB::table('rekam_medis')
+            ->where('pendaftaran_id', $pendaftaran->id)
+            ->get();
+
+          $pendaftaran->dokter = (object) ['name' => $pendaftaran->nama_dokter];
 
         $pdf = Pdf::loadView('pasien.rekammedis-pdf', compact('pendaftaran', 'rekamMedis', 'pembayaran'));
         return $pdf->download('rekam-medis-' . time() . '.pdf');
