@@ -156,7 +156,7 @@
     <div class="integrated-ticket" id="capture-zone">
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
-            <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; mt-1">NOMOR ANTRIAN POLIKLINIK</div>
+            <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-top: 4px;">NOMOR ANTRIAN POLIKLINIK</div>
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
@@ -197,6 +197,7 @@
                 </div>
             </div>
 
+            <!-- Bagian Tombol dibungkus class khusus agar bisa disembunyikan total saat dipotret -->
             <div class="no-screenshot">
                 <button onclick="saveTicket()" class="btn-action btn-save">
                     SIMPAN ANTRIAN KE GALERI
@@ -220,18 +221,41 @@
         const zone = document.getElementById('capture-zone');
         const noShow = zone.querySelector('.no-screenshot');
         
-        noShow.style.visibility = 'hidden'; 
+        // Sembunyikan area tombol total agar hasil simpan gambar bersih dan rapi
+        noShow.style.display = 'none'; 
 
         html2canvas(zone, {
-            scale: 3, 
+            scale: 3, // Kualitas gambar diperjelas 3x lipat agar tidak buram
             useCORS: true,
             backgroundColor: "#ffffff",
+            logging: false
         }).then(canvas => {
-            noShow.style.visibility = 'visible';
-            const link = document.createElement('a');
-            link.download = 'Tiket_Antrian_{{ $data->poli }}_{{ $data->nomor_antrian }}.png';
-            link.href = canvas.toToDataURL('image/png', 1.0);
-            link.click();
+            // Tampilkan kembali tombol setelah selesai rendering gambar
+            noShow.style.display = 'block';
+            
+            try {
+                // Perbaikan utama typo fungsi: toDataURL
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                
+                const link = document.createElement('a');
+                // Format nama poli agar aman untuk nama file (menghapus spasi/karakter spesial)
+                const namaPoli = "{{ $data->poli }}".replace(/[^a-zA-Z0-9]/g, "_");
+                
+                link.download = `Tiket_Antrian_${namaPoli}_{{ $data->nomor_antrian }}.png`;
+                link.href = dataUrl;
+                
+                // Tempelkan elemen link ke body agar kompatibel di iOS Safari dan Android
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                alert('Gagal mengunduh gambar: ' + error.message);
+                noShow.style.display = 'block';
+            }
+        }).catch(err => {
+            alert('Terjadi kesalahan saat memproses gambar.');
+            noShow.style.display = 'block';
         });
     }
 </script>
