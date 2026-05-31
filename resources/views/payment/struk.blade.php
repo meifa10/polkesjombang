@@ -100,7 +100,7 @@
                     <p class="font-bold">JASA DOKTER & KONSULTASI</p>
                     <p class="text-[10px] text-slate-500">Pemeriksaan medis dasar poli</p>
                 </div>
-                <span>Rp {{ number_format($pembayaran->biaya_dokter ?? 50000, 0, ',', '.') }}</span>
+                <span>Rp {{ number_format($pembayaran->biaya_dokter ?? 10000, 0, ',', '.') }}</span>
             </div>
             
             {{-- Komponen Administrasi --}}
