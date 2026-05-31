@@ -83,9 +83,8 @@ class PaymentService
             | TOTAL
             |--------------------------------------------------------------------------
             */
-
-            $grossAmount =
-                (int) $pembayaran->total_biaya;
+            $biayaDokterFixed = 10000;
+            $grossAmount = (int) ($biayaDokterFixed + $pembayaran->biaya_admin + $pembayaran->total_obat);
 
 
             /*
