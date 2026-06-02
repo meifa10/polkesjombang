@@ -347,175 +347,112 @@
     </form>
 
     {{-- LIST REKAM MEDIS --}}
-    @forelse($rekamMedisGrouped as $bulan => $items)
-
-    <div class="month-folder" style="margin-bottom:25px;">
-        <button type="button" class="folder-toggle" style="width:100%;background:white;border:none;padding:24px 30px;border-radius:30px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;box-shadow:var(--card-shadow);font-weight:800;font-size:18px;color:var(--c-primary);">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <i class="ph-fill ph-folder" style="font-size:28px;color:#f59e0b;"></i>
-                <span>{{ ucfirst($bulan) }}</span>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:13px;color:var(--c-text-muted);">
-                    {{ count($items) }} Rekam Medis
-                </span>
-                <i class="ph-bold ph-caret-down"></i>
-            </div>
-        </button>
-
-        <div class="folder-content" style="display:block;padding-top:25px;">
-
-            @foreach($items as $rm)
-
-            <div class="visit-card">
-                <div class="card-top">
-                    <div>
-                        <div class="visit-tag">HASIL PEMERIKSAAN</div>
-                        <div class="visit-date">
-                            {{ \Carbon\Carbon::parse($rm->created_at)->locale('id')->isoFormat('DD MMMM YYYY') }}
-                        </div>
+    @forelse($rekamMedis as $rm)
+        <div class="visit-card">
+            <div class="card-top">
+                <div>
+                    <div class="visit-tag">HASIL PEMERIKSAAN</div>
+                    <div class="visit-date">
+                        {{ \Carbon\Carbon::parse($rm->created_at)->locale('id')->translatedFormat('d F Y') }}
                     </div>
+                </div>
+                <a href="{{ route('pasien.rekammedis.pdf', $rm->id) }}" target="_blank" class="btn-download">
+                    <i class="ph-bold ph-file-pdf"></i> Unduh Laporan
+                </a>
+            </div>
 
-                    <a href="{{ route('pasien.rekammedis.pdf', $rm->id) }}" target="_blank" class="btn-download">
-                        <i class="ph-bold ph-file-pdf"></i>
-                        Unduh Laporan
-                    </a>
+            <div class="bento-layout">
+                <div class="bento-node node-diagnosis">
+                    <label>Diagnosis Medis</label>
+                    <div class="text">{{ $rm->diagnosis }}</div>
+                </div>
+                <div class="bento-node">
+                    <label>Unit Layanan</label>
+                    <div class="text">{{ $rm->poli ?? 'Poli Umum' }}</div>
+                </div>
+                <div class="bento-node">
+                    <label>Keluhan Pasien</label>
+                    <div class="text">{{ $rm->keluhan }}</div>
+                </div>
+                <div class="bento-node">
+                    <label>Tindakan Dokter</label>
+                    <div class="text">{{ $rm->tindakan }}</div>
+                </div>
+                <div class="bento-node node-resep">
+                    <label>Resep Obat & Aturan Pakai</label>
+                    <div class="text">{{ $rm->resep }}</div>
                 </div>
 
-                <div class="bento-layout">
-
-                    <div class="bento-node node-diagnosis">
-                        <label>Diagnosis Medis</label>
-                        <div class="text">{{ $rm->diagnosis }}</div>
-                    </div>
-
-                    <div class="bento-node">
-                        <label>Unit Layanan</label>
-                        <div class="text">{{ $rm->poli ?? 'Poli Umum' }}</div>
-                    </div>
-
-                    <div class="bento-node">
-                        <label>Keluhan Pasien</label>
-                        <div class="text">{{ $rm->keluhan }}</div>
-                    </div>
-
-                    <div class="bento-node">
-                        <label>Tindakan Dokter</label>
-                        <div class="text">{{ $rm->tindakan }}</div>
-                    </div>
-
-                    <div class="bento-node node-resep">
-                        <label>Resep Obat & Aturan Pakai</label>
-                        <div class="text">{{ $rm->resep }}</div>
-                    </div>
-
-                    <div class="rincian-biaya-container text-xs">
-
-                        <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:800;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
-                            <i class="ph-bold ph-receipt mr-1"></i>
-                            Rincian Invoice Lembar Pembayaran Lunas
-                        </p>
-
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                            <div>
-                                <span style="font-weight:700;font-size:13px;">
-                                    JASA DOKTER & KONSULTASI
-                                </span><br>
-
-                                <span style="color:#64748b;font-size:11px;">
-                                    Pemeriksaan medis dasar poli ({{ $rm->nama_dokter ?? 'Dokter Jaga' }})
-                                </span>
-                            </div>
-
-                            <span style="font-size:13px;font-weight:700;">
-                                Rp {{ number_format($rm->biaya_dokter ?? 50000,0,',','.') }}
-                            </span>
+                {{-- INTEGRASI RINCIAN STRUK NOTA TAGIHAN (DARI DATA GAMBAR CONTOH) --}}
+                <div class="rincian-biaya-container text-xs">
+                    <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">
+                        <i class="ph-bold ph-receipt mr-1"></i> Rincian Invoice Lembar Pembayaran Lunas
+                    </p>
+                    
+                    {{-- Jasa Dokter --}}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 13px;">JASA DOKTER & KONSULTASI</span><br>
+                            <span style="color: #64748b; font-size: 11px;">Pemeriksaan medis dasar poli ({{ $rm->nama_dokter ?? 'Dokter Jaga' }})</span>
                         </div>
+                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_dokter ?? 50000, 0, ',', '.') }}</span>
+                    </div>
 
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-                            <div>
-                                <span style="font-weight:700;font-size:13px;">
-                                    ADMINISTRASI RUMAH SAKIT
-                                </span><br>
-
-                                <span style="color:#64748b;font-size:11px;">
-                                    Pencatatan rekam medis digital
-                                </span>
-                            </div>
-
-                            <span style="font-size:13px;font-weight:700;">
-                                Rp {{ number_format($rm->biaya_admin ?? 10000,0,',','.') }}
-                            </span>
+                    {{-- Administrasi --}}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 13px;">ADMINISTRASI RUMAH SAKIT</span><br>
+                            <span style="color: #64748b; font-size: 11px;">Pencatatan rekam medis digital</span>
                         </div>
+                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_admin ?? 10000, 0, ',', '.') }}</span>
+                    </div>
 
-                        <div style="margin-top:10px;padding-top:5px;">
-                            <span style="font-weight:700;font-size:13px;">
-                                RINCIAN FARMASI / OBAT:
-                            </span>
-
-                            <div style="padding-left:10px;margin-top:6px;">
-
-                                @forelse($rm->rincian_obat as $obat)
-
-                                <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
+                    {{-- Breakdown Item Obat --}}
+                    <div style="margin-top: 10px; padding-top: 5px;">
+                        <span style="font-weight: 700; font-size: 13px;">RINCIAN FARMASI / OBAT:</span>
+                        <div style="padding-left: 10px; margin-top: 6px;">
+                            @forelse($rm->rincian_obat as $obat)
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
                                     <div>
-                                        <span style="font-size:12px;">
-                                            • {{ $obat['nama'] }}
-                                        </span><br>
-
-                                        <span style="color:#64748b;font-size:11px;">
-                                            &nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'],0,',','.') }})
-                                        </span>
+                                        <span style="font-size: 12px;">• {{ $obat['nama'] }}</span><br>
+                                        <span style="color: #64748b; font-size: 11px;">&nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</span>
                                     </div>
-
-                                    <span style="font-size:12px;font-weight:700;">
-                                        Rp {{ number_format($obat['total'],0,',','.') }}
-                                    </span>
+                                    <span style="font-size: 12px; font-weight: 700;">Rp {{ number_format($obat['total'], 0, ',', '.') }}</span>
                                 </div>
-
-                                @empty
-
-                                <span style="color:#64748b;font-style:italic;">
-                                    • Tidak ada rincian item obat
-                                </span>
-
-                                @endforelse
-
-                            </div>
+                            @empty
+                                <span style="color: #64748b; font-style: italic;">• Tidak ada rincian item obat</span>
+                            @endforelse
                         </div>
-
-                        <div class="dashed-separator"></div>
-
-                        <div style="display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;">
-                            <span>TOTAL BERSIH</span>
-                            <span>
-                                Rp {{ number_format($rm->total_biaya,0,',','.') }}
-                            </span>
-                        </div>
-
                     </div>
 
+                    <div class="dashed-separator"></div>
+
+                    {{-- Total Akhir --}}
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700;">
+                        <span>TOTAL BERSIH</span>
+                        <span>Rp {{ number_format($rm->total_biaya, 0, ',', '.') }}</span>
+                    </div>
                 </div>
+
             </div>
-
-            @endforeach
-
         </div>
-    </div>
-
     @empty
-
-    <div style="text-align:center;padding:120px 20px;background:white;border-radius:50px;border:1px dashed #cbd5e1;">
-        <i class="ph-light ph-folder-open" style="font-size:80px;color:#cbd5e1;margin-bottom:24px;"></i>
-
-        <h2 style="font-weight:800;color:var(--c-primary);">
-            Tidak ada catatan ditemukan.
-        </h2>
-
-        <p style="color:var(--c-text-muted);">
-            Silakan atur ulang pencarian atau filter tanggal untuk melihat data.
-        </p>
-    </div>
-
+        <div style="text-align: center; padding: 120px 20px; background: white; border-radius: 50px; border: 1px dashed #cbd5e1;">
+            <i class="ph-light ph-folder-open" style="font-size: 80px; color: #cbd5e1; margin-bottom: 24px;"></i>
+            <h2 style="font-weight: 800; color: var(--c-primary);">Tidak ada catatan ditemukan.</h2>
+            <p style="color: var(--c-text-muted);">Silakan atur ulang pencarian atau filter tanggal untuk melihat data.</p>
+        </div>
     @endforelse
+
+</div>
+
+<script>
+    let timer;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            document.getElementById('filterForm').submit();
+        }, 1000); 
+    });
+</script>
+@endsection
