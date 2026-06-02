@@ -5,18 +5,33 @@
     <title>Rekam Medis - {{ $pendaftaran->nama_pasien }}</title>
     <style>
         @page { margin: 1.5cm; }
-        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; color: #334155; line-height: 1.5; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 11px; 
+            color: #334155; 
+            line-height: 1.5; 
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Header Section --- */
         .header-table { width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
         .hospital-name { font-size: 16px; font-weight: bold; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; }
         .hospital-info { font-size: 9px; color: #64748b; margin-top: 4px; }
+
+        /* --- Patient Info Box --- */
         .patient-info-table { width: 100%; background-color: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .info-label { color: #64748b; font-size: 8px; text-transform: uppercase; font-weight: bold; margin-bottom: 3px; }
         .info-value { font-size: 11px; font-weight: bold; color: #1e293b; }
+
+        /* --- Content Sections --- */
         .section-title { font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 12px; border-left: 4px solid #059669; padding-left: 10px; text-transform: uppercase; }
         .record-box { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; border-collapse: collapse; overflow: hidden; }
         .record-header { background-color: #f1f5f9; padding: 8px 12px; font-weight: bold; font-size: 10px; border-bottom: 1px solid #e2e8f0; }
         .record-body { padding: 12px; }
         .prescription-area { margin-top: 10px; padding: 10px; background-color: #f0fdf4; border-left: 3px solid #059669; border-radius: 4px; }
+
+        /* --- Billing Section --- */
         .billing-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         .billing-table td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         .item-obat-detail { margin-top: 6px; padding-left: 8px; border-left: 2px dashed #cbd5e1; }
@@ -28,11 +43,11 @@
 </head>
 <body>
 
+    {{-- LOGIKA PERHITUNGAN BARU --}}
     @php
-        // LOGIKA PERHITUNGAN ULANG (FIXED HARGA DOKTER 10.000)
         $biayaDokterBaru = 10000;
-        $biayaAdmin = (int)($pembayaran->biaya_admin ?? 10000);
-        $biayaObat = (int)($pembayaran->total_obat ?? 0);
+        $biayaAdmin = (int)$pembayaran->biaya_admin;
+        $biayaObat = (int)$pembayaran->total_obat;
         $totalBersihBaru = $biayaDokterBaru + $biayaAdmin + $biayaObat;
     @endphp
 
@@ -52,8 +67,8 @@
     <table class="patient-info-table" cellpadding="0" cellspacing="0">
         <tr>
             <td width="25%"><div class="info-label">Nama Pasien</div><div class="info-value">{{ strtoupper($pendaftaran->nama_pasien) }}</div></td>
-            <td width="25%"><div class="info-label">Unit Layanan</div><div class="info-value">{{ $pendaftaran->poli }}</div></td>
-            <td width="25%"><div class="info-label">Dokter</div><div class="info-value">{{ $pendaftaran->dokter->name ?? 'Belum Ditentukan' }}</div></td>
+            <td width="25%"><div class="info-label">Unit Layanan (Poli)</div><div class="info-value">{{ $pendaftaran->poli }}</div></td>
+            <td width="25%"><div class="info-label">Dokter Pemeriksa</div><div class="info-value">{{ $pendaftaran->dokter->name ?? 'Belum Ditentukan' }}</div></td>
             <td width="25%"><div class="info-label">Waktu Cetak</div><div class="info-value">{{ now()->translatedFormat('d M Y, H:i') }} WIB</div></td>
         </tr>
     </table>
@@ -61,21 +76,28 @@
     <div class="section-title">Hasil Pemeriksaan Klinis</div>
     @forelse($rekamMedis as $rm)
         <div class="record-box">
-            <div class="record-header">KUNJUNGAN: {{ \Carbon\Carbon::parse($rm->created_at)->translatedFormat('d F Y') }}</div>
+            <div class="record-header">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>KUNJUNGAN TANGGAL: {{ \Carbon\Carbon::parse($rm->created_at)->translatedFormat('d F Y') }}</td>
+                        <td style="text-align: right; font-weight: normal; font-size: 9px; color: #64748b;">DPJP: {{ $pendaftaran->dokter->name ?? '-' }}</td>
+                    </tr>
+                </table>
+            </div>
             <div class="record-body">
-                <table width="100%">
-                    <tr><td width="110"><strong>Keluhan</strong></td><td>: {{ $rm->keluhan }}</td></tr>
-                    <tr><td><strong>Diagnosis</strong></td><td>: <strong>{{ $rm->diagnosis }}</strong></td></tr>
-                    <tr><td><strong>Tindakan</strong></td><td>: {{ $rm->tindakan }}</td></tr>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td width="110" style="padding-bottom: 6px;"><strong>Keluhan Pasien</strong></td><td style="padding-bottom: 6px;">: {{ $rm->keluhan }}</td></tr>
+                    <tr><td style="padding-bottom: 6px;"><strong>Diagnosis Medis</strong></td><td style="padding-bottom: 6px;">: <strong>{{ $rm->diagnosis }}</strong></td></tr>
+                    <tr><td style="padding-bottom: 6px;"><strong>Tindakan Dokter</strong></td><td style="padding-bottom: 6px;">: {{ $rm->tindakan }}</td></tr>
                 </table>
                 <div class="prescription-area">
-                    <div style="color: #059669; font-weight:bold; font-size: 9px; margin-bottom: 3px;">Resep Obat:</div>
-                    <div style="font-style: italic; color: #1e293b; font-size: 10px;">{{ $rm->resep }}</div>
+                    <div class="info-label" style="color: #059669; margin-bottom: 3px;">Instruksi Resep / Terapi Obat:</div>
+                    <div style="font-style: italic; color: #1e293b; font-size: 10px;">{{ $rm->resep != '-' ? $rm->resep : 'Tidak ada resep obat untuk kunjungan ini.' }}</div>
                 </div>
             </div>
         </div>
     @empty
-        <p style="text-align: center; color: #94a3b8; padding: 20px;">Data tidak ditemukan.</p>
+        <p style="text-align: center; color: #94a3b8; padding: 20px;">Data rekam medis klinis tidak ditemukan.</p>
     @endforelse
 
     @if(isset($pembayaran))
@@ -84,41 +106,68 @@
         <table class="record-box billing-table">
             <thead>
                 <tr style="background-color: #f8fafc; font-weight: bold; font-size: 9px;">
-                    <td style="border-bottom: 1px solid #e2e8f0;">Deskripsi Layanan</td>
-                    <td style="text-align: right; border-bottom: 1px solid #e2e8f0;">Subtotal (IDR)</td>
+                    <td style="border-bottom: 1px solid #e2e8f0; width: 70%;">Deskripsi Komponen Layanan</td>
+                    <td style="border-bottom: 1px solid #e2e8f0; text-align: right; width: 30%;">Subtotal (IDR)</td>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>Jasa Konsultasi Dokter</strong><br><span style="font-size: 9px; color: #64748b;">Pemeriksaan poli oleh {{ $pendaftaran->dokter->name ?? 'Dokter' }}</span></td>
-                    <td style="text-align: right; font-weight: bold;">Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}</td>
+                    <td><strong>Jasa Konsultasi Dokter & Pemeriksaan Fisik</strong><br>
+                        <span style="font-size: 9px; color: #64748b;">Pemeriksaan klinis komprehensif poli oleh {{ $pendaftaran->dokter->name ?? 'Dokter Spesialis' }}</span>
+                    </td>
+                    <td style="text-align: right; font-weight: bold; padding-top: 14px;">
+                        Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}
+                    </td>
                 </tr>
                 <tr>
-                    <td><strong>Pengadaan Farmasi / Obat</strong><br><span style="font-size: 9px; color: #64748b;">Rincian:</span>
+                    <td><strong>Pengadaan Farmasi / Obat-obatan</strong><br>
+                        <span style="font-size: 9px; color: #64748b;">Apotek / rincian item obat yang diserahkan:</span>
                         <div class="item-obat-detail">
-                            @foreach($rincianObat as $obat)
-                                <table class="obat-row"><tr>
-                                    <td>• {{ $obat['nama'] }} <span class="obat-subtext">({{ $obat['qty'] }} x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</span></td>
-                                    <td style="text-align: right; font-weight: bold;">Rp {{ number_format($obat['total'], 0, ',', '.') }}</td>
-                                </tr></table>
-                            @endforeach
+                            @forelse($rincianObat as $obat)
+                                <table class="obat-row" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td style="padding: 2px 0; border: none;">
+                                            <span>• {{ $obat['nama'] }}</span><br>
+                                            <span class="obat-subtext">&nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</span>
+                                        </td>
+                                        <td style="text-align: right; padding: 2px 0; border: none; font-weight: bold; color: #1e293b;">
+                                            Rp {{ number_format($obat['total'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            @empty
+                                <div style="color: #64748b; font-style: italic; font-size: 9px; padding: 4px 0;">• Tidak ada rincian pecahan item obat</div>
+                            @endforelse
                         </div>
                     </td>
-                    <td style="text-align: right; font-weight: bold;">Rp {{ number_format($biayaObat, 0, ',', '.') }}</td>
+                    <td style="text-align: right; font-weight: bold; padding-top: 14px;">
+                        Rp {{ number_format($biayaObat, 0, ',', '.') }}
+                    </td>
                 </tr>
                 <tr>
-                    <td><strong>Biaya Administrasi</strong></td>
-                    <td style="text-align: right; font-weight: bold;">Rp {{ number_format($biayaAdmin, 0, ',', '.') }}</td>
+                    <td><strong>Biaya Administrasi & Registrasi Digital</strong><br>
+                        <span style="font-size: 9px; color: #64748b;">Pemeliharaan berkas rekam medis elektronik cloud</span>
+                    </td>
+                    <td style="text-align: right; font-weight: bold; padding-top: 14px;">
+                        Rp {{ number_format($biayaAdmin, 0, ',', '.') }}
+                    </td>
                 </tr>
             </tbody>
         </table>
 
-        <table width="100%" style="margin-top: 10px;">
+        <table width="100%" style="margin-top: 10px;" cellpadding="0" cellspacing="0">
             <tr>
-                <td width="55%" style="font-size: 9px; color: #64748b;"><strong>METODE:</strong> {{ strtoupper($pembayaran->metode ?? 'VA') }} | <strong>REF:</strong> {{ $pembayaran->payment_ref }}</td>
-                <td width="45%">
+                <td width="55%" style="font-size: 9px; color: #64748b; vertical-align: top; padding-left: 5px; line-height: 1.6;">
+                    <strong>METODE PEMBAYARAN :</strong> {{ strtoupper($pembayaran->metode ?? 'CASH / VA') }}<br>
+                    <strong>NOMOR REFERENSI   :</strong> {{ $pembayaran->payment_ref ?? '-' }}<br>
+                    <strong>STATUS TAGIHAN   :</strong> 
+                    <span style="font-weight: bold; color: #059669; background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-size: 8px;">
+                        {{ strtoupper($pembayaran->status ?? 'LUNAS') }}
+                    </span>
+                </td>
+                <td width="45%" style="vertical-align: top;">
                     <div class="total-box">
-                        <div style="font-size: 8px; opacity: 0.7;">TOTAL BERSIH</div>
+                        <div style="font-size: 8px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; letter-spacing: 0.5px;">Total Bersih Pembayaran</div>
                         <div style="font-size: 15px; font-weight: bold;">Rp {{ number_format($totalBersihBaru, 0, ',', '.') }}</div>
                     </div>
                 </td>
@@ -127,6 +176,24 @@
     </div>
     @endif
 
-    <div class="footer">Dicetak otomatis pada {{ now()->translatedFormat('d/m/Y H:i:s') }} WIB | ID Log: {{ bin2hex(random_bytes(4)) }}</div>
+    <table width="100%" style="margin-top: 50px; page-break-inside: avoid;" cellpadding="0" cellspacing="0">
+        <tr>
+            <td width="65%"></td>
+            <td width="35%" style="text-align: center;">
+                <p style="margin-bottom: 50px; font-size: 10px;">Dokter Pemeriksa,</p>
+                <p style="font-weight: bold; margin-bottom: 0; color: #0f172a;">{{ $pendaftaran->dokter->name ?? '(..........................)' }}</p>
+                <div style="border-bottom: 1.5px solid #334155; width: 150px; margin: 5px auto;"></div>
+                <p style="font-size: 7px; color: #64748b; margin-top: 4px; font-weight: bold; line-height: 1.3;">
+                    DIGITAL SIGNATURE VERIFIED<br>POLKES JOMBANG
+                </p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Dokumen ini sah, diakui secara hukum dan diterbitkan secara elektronik oleh Sistem Informasi Klinis Polkes Jombang.<br>
+        Dicetak otomatis pada {{ now()->translatedFormat('d/m/Y H:i:s') }} WIB | Keamanan ID Log: {{ bin2hex(random_bytes(4)) }}
+    </div>
+
 </body>
 </html>
