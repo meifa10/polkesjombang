@@ -337,7 +337,23 @@
     </form>
 
     @forelse($rekamMedis as $rm)
-        <div class="visit-card">
+
+    @php
+        $biayaDokter = 10000;
+        $biayaAdmin = $rm->biaya_admin ?? 0;
+
+        $totalObat = 0;
+
+        if (!empty($rm->rincian_obat)) {
+            foreach ($rm->rincian_obat as $obat) {
+                $totalObat += (int) ($obat['total'] ?? 0);
+            }
+        }
+
+        $totalBersih = $biayaDokter + $biayaAdmin + $totalObat;
+    @endphp
+
+    <div class="visit-card">
             <div class="card-top">
                 <div>
                     <div class="visit-tag">HASIL PEMERIKSAAN</div>
@@ -382,7 +398,9 @@
                             <span style="font-weight: 700; font-size: 13px;">JASA DOKTER & KONSULTASI</span><br>
                             <span style="color: #64748b; font-size: 11px;">Pemeriksaan medis dasar poli ({{ $rm->nama_dokter ?? 'Dokter Jaga' }})</span>
                         </div>
-                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_dokter ?? 10000, 0, ',', '.') }}</span>
+                        <span style="font-size: 13px; font-weight: 700;">
+                            Rp {{ number_format($biayaDokter, 0, ',', '.') }}
+                        </span>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
@@ -414,7 +432,7 @@
 
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700;">
                         <span>TOTAL BERSIH</span>
-                        <span>Rp {{ number_format($rm->total_biaya, 0, ',', '.') }}</span>
+                        <span>Rp {{ number_format($totalBersih, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
