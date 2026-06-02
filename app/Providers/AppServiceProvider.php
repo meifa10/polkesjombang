@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,10 +20,14 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-{
-    if (str_contains(request()->getHost(), 'ngrok')) {
-        URL::forceScheme('https');
-        URL::forceRootUrl('https://' . request()->getHost());
+    {
+        // Locale Indonesia untuk Carbon
+        Carbon::setLocale('id');
+
+        // Support ngrok
+        if (str_contains(request()->getHost(), 'ngrok')) {
+            URL::forceScheme('https');
+            URL::forceRootUrl('https://' . request()->getHost());
+        }
     }
-}
 }

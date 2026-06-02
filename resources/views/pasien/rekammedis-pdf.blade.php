@@ -191,7 +191,6 @@
     </table>
 
     <div class="footer">
-        Dokumen ini sah, diakui secara hukum dan diterbitkan secara elektronik oleh Sistem Informasi Klinis Polkes Jombang.<br>
         Dicetak otomatis pada {{ now()->translatedFormat('d/m/Y H:i:s') }} WIB | Keamanan ID Log: {{ bin2hex(random_bytes(4)) }}
     </div>
 

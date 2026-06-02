@@ -352,7 +352,9 @@
             <div class="card-top">
                 <div>
                     <div class="visit-tag">HASIL PEMERIKSAAN</div>
-                    <div class="visit-date">{{ \Carbon\Carbon::parse($rm->created_at)->translatedFormat('d F Y') }}</div>
+                    <div class="visit-date">
+                        {{ \Carbon\Carbon::parse($rm->created_at)->locale('id')->translatedFormat('d F Y') }}
+                    </div>
                 </div>
                 <a href="{{ route('pasien.rekammedis.pdf', $rm->id) }}" target="_blank" class="btn-download">
                     <i class="ph-bold ph-file-pdf"></i> Unduh Laporan
