@@ -364,7 +364,7 @@
             </div>
         </button>
 
-        <div class="folder-content" style="display:none;padding-top:25px;">
+        <div class="folder-content" style="display:block;padding-top:25px;">
 
             @foreach($items as $rm)
 
