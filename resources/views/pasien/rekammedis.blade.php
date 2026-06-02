@@ -32,7 +32,6 @@
         padding: 0 30px;
     }
 
-    /* --- HERO HEADER --- */
     .hero-section {
         display: flex;
         justify-content: space-between;
@@ -58,7 +57,6 @@
         margin-top: 12px;
     }
 
-    /* --- PROFILE CARD --- */
     .profile-glass {
         background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(20px);
@@ -110,7 +108,6 @@
         margin-top: 6px;
     }
 
-    /* --- FILTER BAR --- */
     .filter-bar {
         display: flex;
         gap: 15px;
@@ -161,7 +158,6 @@
         color: var(--c-text-main);
     }
 
-    /* --- RESET BUTTON --- */
     .btn-reset {
         display: flex;
         align-items: center;
@@ -183,7 +179,6 @@
         transform: translateY(-2px);
     }
 
-    /* --- VISIT CARD BENTO --- */
     .visit-card {
         background: var(--c-white);
         border-radius: 48px;
@@ -256,7 +251,6 @@
     .node-resep { grid-column: span 3; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px dashed var(--c-emerald); }
     .node-resep .text { color: #065f46; font-style: italic; }
 
-    /* --- STRUK PEMBAYARAN MINI AREA --- */
     .rincian-biaya-container {
         grid-column: span 3;
         background: #fafafa;
@@ -298,7 +292,6 @@
 
 <div class="container-wide">
 
-    {{-- TOPBAR --}}
     <div class="hero-section">
         <div class="hero-title">
             <h1>Rekam Medis.</h1>
@@ -309,7 +302,6 @@
         </a>
     </div>
 
-    {{-- PROFILE --}}
     <div class="profile-glass">
         <div class="user-flex">
             <div class="avatar-icon">
@@ -328,7 +320,6 @@
         </div>
     </div>
 
-    {{-- FILTER SEARCH --}}
     <form action="{{ route('pasien.rekammedis') }}" method="GET" id="filterForm">
         <div class="filter-bar">
             <div class="search-wrapper">
@@ -337,7 +328,6 @@
             </div>
             <input type="date" name="from" value="{{ request('from') }}" class="date-premium" onchange="this.form.submit()">
             
-            {{-- Tombol Reset Otomatis Muncul --}}
             @if(request('q') || request('from'))
                 <a href="{{ route('pasien.rekammedis') }}" class="btn-reset">
                     <i class="ph-bold ph-arrows-counter-clockwise mr-2"></i> Reset
@@ -346,7 +336,6 @@
         </div>
     </form>
 
-    {{-- LIST REKAM MEDIS --}}
     @forelse($rekamMedis as $rm)
         <div class="visit-card">
             <div class="card-top">
@@ -383,22 +372,19 @@
                     <div class="text">{{ $rm->resep }}</div>
                 </div>
 
-                {{-- INTEGRASI RINCIAN STRUK NOTA TAGIHAN (DARI DATA GAMBAR CONTOH) --}}
                 <div class="rincian-biaya-container text-xs">
                     <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">
                         <i class="ph-bold ph-receipt mr-1"></i> Rincian Invoice Lembar Pembayaran Lunas
                     </p>
                     
-                    {{-- Jasa Dokter --}}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <div>
                             <span style="font-weight: 700; font-size: 13px;">JASA DOKTER & KONSULTASI</span><br>
                             <span style="color: #64748b; font-size: 11px;">Pemeriksaan medis dasar poli ({{ $rm->nama_dokter ?? 'Dokter Jaga' }})</span>
                         </div>
-                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_dokter ?? 50000, 0, ',', '.') }}</span>
+                        <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_dokter ?? 10000, 0, ',', '.') }}</span>
                     </div>
 
-                    {{-- Administrasi --}}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                         <div>
                             <span style="font-weight: 700; font-size: 13px;">ADMINISTRASI RUMAH SAKIT</span><br>
@@ -407,7 +393,6 @@
                         <span style="font-size: 13px; font-weight: 700;">Rp {{ number_format($rm->biaya_admin ?? 10000, 0, ',', '.') }}</span>
                     </div>
 
-                    {{-- Breakdown Item Obat --}}
                     <div style="margin-top: 10px; padding-top: 5px;">
                         <span style="font-weight: 700; font-size: 13px;">RINCIAN FARMASI / OBAT:</span>
                         <div style="padding-left: 10px; margin-top: 6px;">
@@ -427,7 +412,6 @@
 
                     <div class="dashed-separator"></div>
 
-                    {{-- Total Akhir --}}
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700;">
                         <span>TOTAL BERSIH</span>
                         <span>Rp {{ number_format($rm->total_biaya, 0, ',', '.') }}</span>
