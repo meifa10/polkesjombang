@@ -28,15 +28,9 @@ class PendaftaranPoliController extends Controller
             'dokter_id' => 'required|exists:users,id'
         ]);
 
-        $dokter = User::find($request->dokter_id);
-        dd([
-            'ID_Dokter_Yang_Dipilih_Pasien' => $request->dokter_id,
-            'Nama_Dokter_Di_Tabel_Users' => $dokter ? $dokter->name : 'DOKTER TIDAK DITEMUKAN!'
-        ]);
-
         $today = Carbon::today();
 
-        // 1. AMBIL NAMA DOKTER ASLI DARI DATABASE USERS
+        // 1. Ambil data nama dokter asli dari tabel users berdasarkan ID pilihan form
         $dokter = User::find($request->dokter_id);
         $namaDokterAsli = $dokter ? $dokter->name : 'Dokter Tidak Diketahui';
 
@@ -47,7 +41,7 @@ class PendaftaranPoliController extends Controller
 
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
-        // 2. SIMPAN DATA SEUTUHNYA (SINKRON ANTARA ID DAN NAMA)
+        // 2. Simpan secara utuh (dokter_id dan nama_dokter wajib terisi)
         PendaftaranPoli::create([
             'user_id'       => Auth::id(),
             'jenis_pasien'  => 'UMUM',
@@ -56,7 +50,7 @@ class PendaftaranPoliController extends Controller
             'tanggal_lahir' => Auth::user()->tanggal_lahir,
             'poli'          => $request->poli,
             'dokter_id'     => $request->dokter_id, 
-            'nama_dokter'   => $namaDokterAsli, // 🔹 BARIS INI KUNCINYA! Sekarang nama dokter resmi tersimpan.
+            'nama_dokter'   => $namaDokterAsli, // Mengunci Teks "dr. Ferry Eko Santoso" ke database
             'nomor_antrian' => $nomorAntrian,
             'status'        => 'menunggu_petugas'
         ]);
