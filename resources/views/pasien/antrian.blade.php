@@ -16,6 +16,7 @@
         width: 100%;
         min-height: 100vh; 
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         background: radial-gradient(circle at top left, #064e3b 0%, #0d121c 100%);
@@ -152,48 +153,78 @@
     }
 </style>
 
-{{-- LOGIKA PEMETAAN JADWAL DOKTER BERDASARKAN WAKTU DAFTAR --}}
-@php
-    $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
-    $jamMenitDaftar = $waktuDaftar->format('H:i');
+<div class="antrian-wrapper">
     
-    $namaDokter = 'Dokter Tidak Diketahui';
-    $jamPraktek = '-';
-    $catatanEdukasi = null;
-    
-    $poliClean = strtolower($data->poli);
+    {{-- TAB PILIHAN POLI (Hanya muncul jika pasien daftar > 1 antrean) --}}
+    @if(count($daftarAntrian) > 1)
+    <div class="flex bg-slate-800/60 p-1.5 rounded-2xl mb-6 gap-2 w-full max-w-[420px] border border-slate-700">
+        @foreach($daftarAntrian as $index => $item)
+            <button onclick="switchPoliTab({{ $index }})" 
+                    id="btn-tab-{{ $index }}"
+                    class="tab-selector flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 {{ $index === 0 ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white' }}">
+                {{ $item['pendaftaran']->poli }}
+            </button>
+        @endforeach
+    </div>
+    @endif
 
-    if (str_contains($poliClean, 'gigi')) {
-        $namaDokter = 'drg. Affrida Wahyu K.D';
-        $jamPraktek = '08.00 – 12.00';
-        if ($jamMenitDaftar < '08:00') {
-            $catatanEdukasi = 'Anda mendaftar sebelum poli buka. Mohon menunggu, drg. Affrida mulai melayani pukul 08.00 WIB.';
-        }
-    } elseif (str_contains($poliClean, 'kia') || str_contains($poliClean, 'kb')) {
-        if ($jamMenitDaftar < '11:30') {
-            $namaDokter = 'Dita Sevi A, S.Tr. Keb';
-            $jamPraktek = '07.00 – 11.30';
-        } else {
-            $namaDokter = 'Nailis A, S.Tr. Keb., Bdn';
-            $jamPraktek = '11.30 – 15.30';
-        }
-    } else {
-        // Default Poli Umum
-        if ($jamMenitDaftar < '11:30') {
-            $namaDokter = 'dr. Ahmad Syaikudin';
-            $jamPraktek = '07.00 – 11.30';
-        } else {
-            $namaDokter = 'dr. Ferry Eko Santoso';
-            $jamPraktek = '11.30 – 15.30';
+    {{-- KONTEN UTAMA TIKET KARTU ANTRIAN --}}
+    @foreach($daftarAntrian as $index => $item)
+    @php
+        $data = $item['pendaftaran'];
+        $antrianDiDepan = $item['antrianDiDepan'];
+        $prediksi = $item['prediksi'];
+
+        $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
+        $jamMenitDaftar = $waktuDaftar->format('H:i');
+        $waktuSekarang = \Carbon\Carbon::now();
+        
+        $namaDokter = 'Dokter Tidak Diketahui';
+        $jamPraktek = '-';
+        $catatanEdukasi = null;
+        $poliClean = strtolower($data->poli);
+
+        if (str_contains($poliClean, 'gigi')) {
+            $namaDokter = 'drg. Affrida Wahyu K.D';
+            $jamPraktek = '08.00 – 12.00';
+            $jamSelesai = '12:00';
+            if ($waktuSekarang->format('H:i') > $jamSelesai) {
+                $catatanEdukasi = 'Poli Gigi sudah tutup untuk pelayanan sesi hari ini. Silakan datang kembali esok hari sesuai jam praktik.';
+            } elseif ($waktuSekarang->format('H:i') < '08:00') {
+                $catatanEdukasi = 'Anda membuka tiket sebelum poli buka. Mohon menunggu, drg. Affrida mulai melayani pukul 08.00 WIB.';
+            }
+        } elseif (str_contains($poliClean, 'kia') || str_contains($poliClean, 'kb')) {
             if ($jamMenitDaftar < '11:30') {
-                $catatanEdukasi = 'Anda mendapatkan antrean untuk sesi siang. dr. Ferry Eko masuk pukul 11.30 WIB, silakan kembali ke ruang tunggu pada jam tersebut.';
+                $namaDokter = 'Dita Sevi A, S.Tr. Keb';
+                $jamPraktek = '07.00 – 11.30';
+                $jamSelesai = '11:30';
+            } else {
+                $namaDokter = 'Nailis A, S.Tr. Keb., Bdn';
+                $jamPraktek = '11.30 – 15.30';
+                $jamSelesai = '15:30';
+            }
+            if ($waktuSekarang->format('H:i') > $jamSelesai) {
+                $catatanEdukasi = 'Poli KIA & KB sudah tutup untuk pelayanan sesi hari ini. Silakan berkonsultasi kembali esok hari.';
+            }
+        } else {
+            if ($jamMenitDaftar < '11:30') {
+                $namaDokter = 'dr. Ahmad Syaikudin';
+                $jamPraktek = '07.00 – 11.30';
+                $jamSelesai = '11:30';
+            } else {
+                $namaDokter = 'dr. Ferry Eko Santoso';
+                $jamPraktek = '11.30 – 15.30';
+                $jamSelesai = '15:30';
+            }
+            if ($waktuSekarang->format('H:i') > $jamSelesai) {
+                $catatanEdukasi = 'Poli Umum telah menyelesaikan jam operasional praktik dokter hari ini. Loket pemeriksaan akan dibuka kembali besok pagi.';
+            } elseif ($jamMenitDaftar >= '11:30' && $waktuSekarang->format('H:i') < '11:30') {
+                $catatanEdukasi = 'Anda terdaftar untuk sesi siang dengan dr. Ferry Eko (Masuk pukul 11.30 WIB). Harap kembali ke ruang tunggu saat jam praktik dimulai.';
             }
         }
-    }
-@endphp
+    @endphp
 
-<div class="antrian-wrapper">
-    <div class="integrated-ticket" id="capture-zone">
+    <div class="integrated-ticket ticket-card-item {{ $index === 0 ? '' : 'hidden' }}" id="capture-zone-{{ $index }}">
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
             <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-top: 4px;">NOMOR ANTRIAN DOKTER</div>
@@ -243,7 +274,7 @@
                 
                 <div class="detail-item">
                     <label>Waktu Daftar</label>
-                    <span class="font-mono text-slate-700 font-bold">{{ $jamMenitDaftar }} WIB</span>
+                    <span class="font-mono text-slate-700 font-bold">{{ $waktuDaftar->format('H:i') }} WIB</span>
                 </div>
 
                 <div class="detail-item col-span-2 bg-emerald-50 p-3 rounded-xl border border-emerald-100" style="grid-column: span 2;">
@@ -251,22 +282,16 @@
                     <span class="text-base font-black text-emerald-700 tracking-wide block">{{ $prediksi }}</span>
                 </div>
 
-                {{-- NOTIFIKASI EDUKASI JIKA PASIEN DAFTAR TERLALU AWAL DARI JAM MASUK DOKTER --}}
                 @if($catatanEdukasi)
                 <div class="detail-item col-span-2 bg-amber-50 p-3 rounded-xl border border-amber-200" style="grid-column: span 2;">
-                    <label class="text-amber-800 font-black flex items-center gap-1">
-                        ⚠️ INFO JAM LAYANAN
-                    </label>
-                    <p class="text-xs text-amber-900 font-medium leading-relaxed mt-1">
-                        {{ $catatanEdukasi }}
-                    </p>
+                    <label class="text-amber-800 font-black flex items-center gap-1">⚠️ KETERANGAN OPERASIONAL</label>
+                    <p class="text-xs text-amber-900 font-medium leading-relaxed mt-1">{{ $catatanEdukasi }}</p>
                 </div>
                 @endif
             </div>
 
-            <!-- Bagian Tombol dibungkus class khusus agar bisa disembunyikan total saat dipotret -->
             <div class="no-screenshot">
-                <button onclick="saveTicket()" class="btn-action btn-save">
+                <button onclick="saveTicket({{ $index }}, '{{ $namaDokter }}', '{{ $data->nomor_antrian }}')" class="btn-action btn-save">
                     SIMPAN ANTRIAN KE GALERI
                 </button>
                 <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">
@@ -280,40 +305,56 @@
             </div>
         </div>
     </div>
+    @endforeach
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-    function saveTicket() {
-        const zone = document.getElementById('capture-zone');
+    // JS Fungsi Pengendali Switch Tab Selektor Poli
+    function switchPoliTab(activeIndex) {
+        // Sembunyikan semua tiket card
+        document.querySelectorAll('.ticket-card-item').forEach(card => {
+            card.classList.add('hidden');
+        });
+        // Tampilkan tiket card yang dipilih
+        document.getElementById('capture-zone-' + activeIndex).classList.remove('hidden');
+
+        // Reset gaya CSS tombol tab
+        document.querySelectorAll('.tab-selector').forEach(btn => {
+            btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+            btn.classList.add('text-slate-400');
+        });
+        // Set gaya aktif ke tombol tab pilihan
+        const activeBtn = document.getElementById('btn-tab-' + activeIndex);
+        activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+        activeBtn.classList.remove('text-slate-400');
+    }
+
+    // JS Fungsi Pemotret Gambar Screenshot
+    function saveTicket(index, namaDokter, nomorAntrian) {
+        const zone = document.getElementById('capture-zone-' + index);
         const noShow = zone.querySelector('.no-screenshot');
         
-        // Sembunyikan area tombol total agar hasil simpan gambar bersih dan rapi
         noShow.style.display = 'none'; 
 
         html2canvas(zone, {
-            scale: 3, // Kualitas gambar diperjelas 3x lipat agar tidak buram
+            scale: 3, 
             useCORS: true,
             backgroundColor: "#ffffff",
             logging: false
         }).then(canvas => {
-            // Tampilkan kembali tombol setelah selesai rendering gambar
             noShow.style.display = 'block';
-            
             try {
                 const dataUrl = canvas.toDataURL('image/png', 1.0);
                 const link = document.createElement('a');
+                const namaFileDokter = namaDokter.replace(/[^a-zA-Z0-9]/g, "_");
                 
-                // Ambil nama dokter untuk penamaan file unduhan agar unik
-                const namaFileDokter = "{{ $namaDokter }}".replace(/[^a-zA-Z0-9]/g, "_");
-                
-                link.download = `Antrian_${namaFileDokter}_{{ $data->nomor_antrian }}.png`;
+                link.download = `Antrian_${namaFileDokter}_${nomorAntrian}.png`;
                 link.href = dataUrl;
                 
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
             } catch (error) {
                 alert('Gagal mengunduh gambar: ' + error.message);
                 noShow.style.display = 'block';
