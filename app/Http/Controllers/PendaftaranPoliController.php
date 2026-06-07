@@ -30,14 +30,18 @@ class PendaftaranPoliController extends Controller
 
         $today = Carbon::today();
 
+        // 1. AMBIL NAMA DOKTER ASLI DARI DATABASE USERS
+        $dokter = User::find($request->dokter_id);
+        $namaDokterAsli = $dokter ? $dokter->name : 'Dokter Tidak Diketahui';
+
         // Hitung nomor antrian real-time berdasarkan poli hari ini
-        // Menggunakan lockForUpdate() disarankan jika traffic sangat tinggi
         $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
             ->where('poli', $request->poli)
             ->max('nomor_antrian');
 
         $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
 
+        // 2. SIMPAN DATA SEUTUHNYA (SINKRON ANTARA ID DAN NAMA)
         PendaftaranPoli::create([
             'user_id'       => Auth::id(),
             'jenis_pasien'  => 'UMUM',
@@ -46,6 +50,7 @@ class PendaftaranPoliController extends Controller
             'tanggal_lahir' => Auth::user()->tanggal_lahir,
             'poli'          => $request->poli,
             'dokter_id'     => $request->dokter_id, 
+            'nama_dokter'   => $namaDokterAsli, // 🔹 BARIS INI KUNCINYA! Sekarang nama dokter resmi tersimpan.
             'nomor_antrian' => $nomorAntrian,
             'status'        => 'menunggu_petugas'
         ]);
