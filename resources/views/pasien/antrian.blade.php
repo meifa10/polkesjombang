@@ -16,6 +16,7 @@
         width: 100%;
         min-height: 100vh; 
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         background: radial-gradient(circle at top left, #064e3b 0%, #0d121c 100%);
@@ -38,7 +39,7 @@
         position: relative;
     }
 
-    /* Garis putus-putus robekan tiket */
+    /* Garis putus-putus robekan tiket resmi */
     .ticket-tear-line {
         border-top: 2px dashed #cbd5e1;
         position: relative;
@@ -160,25 +161,22 @@
 
 <div class="antrian-wrapper">
     
-    {{-- WIDGET UTAMA TIKET --}}
+    {{-- MENU TOMBOL PILIHAN DI ATAS TIKET (Hanya muncul kalau daftar > 1 poli) --}}
+    @if(count($daftarAntrian) > 1)
+    <div class="flex bg-slate-800/80 p-1.5 rounded-2xl mb-5 gap-2 w-full max-w-[420px] border border-slate-700">
+        @foreach($daftarAntrian as $index => $item)
+            <button onclick="pilihSesiAntrian({{ $index }})" 
+                    id="btn-tab-{{ $index }}"
+                    class="tab-selector flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 {{ $index === 0 ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white' }}">
+                {{ $item['pendaftaran']->poli }}
+            </button>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- KARTU TIKET TUNGGAL --}}
     <div class="integrated-ticket" id="capture-zone">
         
-        {{-- MENU PILIHAN ANTRIAN (Hanya muncul jika pasien mendaftar lebih dari 1 poli) --}}
-        @if(count($daftarAntrian) > 1)
-        <div class="px-6 pt-6 bg-white">
-            <div class="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 gap-1.5">
-                @foreach($daftarAntrian as $index => $item)
-                    <button onclick="switchPoliAntrian({{ $index }})" 
-                            id="btn-tab-{{ $index }}"
-                            class="tab-selector flex-1 py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 {{ $index === 0 ? 'bg-white text-emerald-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-700' }}">
-                        {{ $item['pendaftaran']->poli }}
-                    </button>
-                @endforeach
-            </div>
-        </div>
-        @endif
-
-        {{-- AREA DATA DINAMIS YANG BERGANTI SAAT DIKLIK --}}
         @foreach($daftarAntrian as $index => $item)
         @php
             $data = $item['pendaftaran'];
@@ -234,7 +232,8 @@
             }
         @endphp
 
-        <div class="poli-view-block {{ $index === 0 ? '' : 'hidden' }}" id="poli-view-{{ $index }}" data-dokter="{{ $namaDokter }}" data-nomor="{{ $data->nomor_antrian }}">
+        {{-- BLOK AREA DATA YANG AKAN DI-KONTROL OLEH TAB (HANYA INDEKS 0 YANG MUNCUL PERTAMA) --}}
+        <div class="poli-card-content {{ $index === 0 ? '' : 'hidden' }}" id="poli-view-{{ $index }}" data-dokter="{{ $namaDokter }}" data-nomor="{{ $data->nomor_antrian }}">
             
             {{-- Bagian Atas Tiket --}}
             <div class="ticket-header-section">
@@ -248,7 +247,7 @@
                 </div>
             </div>
 
-            {{-- Robekan Garis Tengah Tiket --}}
+            {{-- Garis Putus Gunting Tiket --}}
             <div class="ticket-tear-line"></div>
 
             {{-- Bagian Bawah Tiket --}}
@@ -310,10 +309,10 @@
         </div>
         @endforeach
 
-        {{-- NAVIGASI TOMBOL AKSI UTAMA (TIDAK BERULANG - PERMANEN DI BAWAH KARTU) --}}
+        {{-- FOOTER AKSI UTAMA (TIDAK IKUT BERULANG, TETAP DI BAWAH TIKET) --}}
         <div class="px-8 pb-8 bg-white">
             <div class="no-screenshot">
-                <button onclick="processScreenshot()" class="btn-action btn-save shadow-md">
+                <button onclick="tangkapGambarTiket()" class="btn-action btn-save shadow-md">
                     SIMPAN ANTRIAN KE GALERI
                 </button>
                 <a href="{{ route('dashboard') }}" class="btn-action btn-dashboard">
@@ -332,46 +331,45 @@
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-    // Menyimpan index tab aktif global
-    let activeTabIdx = 0;
+    // Menyimpan posisi tab index aktif global
+    let indexTabAktif = 0;
 
-    // Fungsi untuk memindahkan tab pilihan poli secara smooth
-    function switchPoliAntrian(targetIdx) {
-        activeTabIdx = targetIdx;
+    // Fungsi Pengendali Switch Tab Pilihan Antrean
+    function pilihSesiAntrian(targetIdx) {
+        indexTabAktif = targetIdx;
 
-        // Sembunyikan seluruh blok pandangan poli
-        document.querySelectorAll('.poli-view-block').forEach(block => {
+        // Sembunyikan seluruh data kontainer poli
+        document.querySelectorAll('.poli-card-content').forEach(block => {
             block.classList.add('hidden');
         });
-        // Tampilkan hanya satu blok yang dipilih dokter/user
+        // Tampilkan hanya 1 kontainer data poli yang aktif diklik
         document.getElementById('poli-view-' + targetIdx).classList.remove('hidden');
 
-        // Kembalikan style seluruh tombol tab ke default
+        // Kembalikan seluruh tombol tab menu ke warna standar abu-abu
         document.querySelectorAll('.tab-selector').forEach(btn => {
-            btn.classList.remove('bg-white', 'text-emerald-600', 'shadow-sm', 'border', 'border-slate-200');
+            btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
             btn.classList.add('text-slate-400');
         });
-        // Aktifkan style tombol tab pilihan
-        const activeBtn = document.getElementById('btn-tab-' + targetIdx);
-        activeBtn.classList.add('bg-white', 'text-emerald-600', 'shadow-sm', 'border', 'border-slate-200');
-        activeBtn.classList.remove('text-slate-400');
+        // Aktifkan warna hijau mencolok khusus untuk tombol yang diklik
+        const tombolAktif = document.getElementById('btn-tab-' + targetIdx);
+        tombolAktif.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+        tombolAktif.classList.remove('text-slate-400');
     }
 
-    // Fungsi jembatan pendeteksi metadata screenshot gambar
-    function processScreenshot() {
-        const activeBlock = document.getElementById('poli-view-' + activeTabIdx);
-        const dokterName = activeBlock.getAttribute('data-dokter');
-        const antrianNum = activeBlock.getAttribute('data-nomor');
+    // Fungsi jembatan pendeteksi nama file screenshot data aktif
+    function tangkapGambarTiket() {
+        const blokAktif = document.getElementById('poli-view-' + indexTabAktif);
+        const namaDokter = blokAktif.getAttribute('data-dokter');
+        const nomorAntrian = blokAktif.getAttribute('data-nomor');
         
-        executeCapture(dokterName, antrianNum);
+        eksekusiSimpanGaleri(namaDokter, nomorAntrian);
     }
 
-    // Eksekutor html2canvas untuk mencetak satu kartu rapi
-    function executeCapture(namaDokter, nomorAntrian) {
+    // Fungsi pemotret kartu tunggal bersih
+    function eksekusiSimpanGaleri(namaDokter, nomorAntrian) {
         const zone = document.getElementById('capture-zone');
         const noShow = zone.querySelector('.no-screenshot');
         
-        // Sembunyikan baris tombol agar hasil jernih bersih
         noShow.style.display = 'none'; 
 
         html2canvas(zone, {
@@ -384,9 +382,9 @@
             try {
                 const dataUrl = canvas.toDataURL('image/png', 1.0);
                 const link = document.createElement('a');
-                const cleanDokterName = namaDokter.replace(/[^a-zA-Z0-9]/g, "_");
+                const namaFileClean = namaDokter.replace(/[^a-zA-Z0-9]/g, "_");
                 
-                link.download = `Antrian_${cleanDokterName}_${nomorAntrian}.png`;
+                link.download = `Antrian_${namaFileClean}_${nomorAntrian}.png`;
                 link.href = dataUrl;
                 
                 document.body.appendChild(link);
