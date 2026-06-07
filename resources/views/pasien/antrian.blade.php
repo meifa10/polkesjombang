@@ -2,7 +2,7 @@
 
 @section('content')
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;700;800;900&display=swap" rel="stylesheet">
 
 <style>
     html, body {
@@ -60,11 +60,11 @@
     }
 
     .ticket-display-number {
-        font-size: 90px;
+        font-size: 80px;
         font-weight: 900;
         color: #1e293b !important;
         line-height: 1;
-        margin: 15px 0;
+        margin: 12px 0;
         letter-spacing: -2px;
     }
 
@@ -76,7 +76,7 @@
     .details-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px 15px;
+        gap: 16px 15px;
         margin-bottom: 25px;
     }
 
@@ -152,49 +152,116 @@
     }
 </style>
 
+{{-- LOGIKA PEMETAAN JADWAL DOKTER BERDASARKAN WAKTU DAFTAR --}}
+@php
+    $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
+    $jamMenitDaftar = $waktuDaftar->format('H:i');
+    
+    $namaDokter = 'Dokter Tidak Diketahui';
+    $jamPraktek = '-';
+    $catatanEdukasi = null;
+    
+    $poliClean = strtolower($data->poli);
+
+    if (str_contains($poliClean, 'gigi')) {
+        $namaDokter = 'drg. Affrida Wahyu K.D';
+        $jamPraktek = '08.00 – 12.00';
+        if ($jamMenitDaftar < '08:00') {
+            $catatanEdukasi = 'Anda mendaftar sebelum poli buka. Mohon menunggu, drg. Affrida mulai melayani pukul 08.00 WIB.';
+        }
+    } elseif (str_contains($poliClean, 'kia') || str_contains($poliClean, 'kb')) {
+        if ($jamMenitDaftar < '11:30') {
+            $namaDokter = 'Dita Sevi A, S.Tr. Keb';
+            $jamPraktek = '07.00 – 11.30';
+        } else {
+            $namaDokter = 'Nailis A, S.Tr. Keb., Bdn';
+            $jamPraktek = '11.30 – 15.30';
+        }
+    } else {
+        // Default Poli Umum
+        if ($jamMenitDaftar < '11:30') {
+            $namaDokter = 'dr. Ahmad Syaikudin';
+            $jamPraktek = '07.00 – 11.30';
+        } else {
+            $namaDokter = 'dr. Ferry Eko Santoso';
+            $jamPraktek = '11.30 – 15.30';
+            if ($jamMenitDaftar < '11:30') {
+                $catatanEdukasi = 'Anda mendapatkan antrean untuk sesi siang. dr. Ferry Eko masuk pukul 11.30 WIB, silakan kembali ke ruang tunggu pada jam tersebut.';
+            }
+        }
+    }
+@endphp
+
 <div class="antrian-wrapper">
     <div class="integrated-ticket" id="capture-zone">
         <div class="ticket-header">
             <div class="hospital-identity">POLKES JOMBANG</div>
-            <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-top: 4px;">NOMOR ANTRIAN POLIKLINIK</div>
+            <div style="color: #64748b; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-top: 4px;">NOMOR ANTRIAN DOKTER</div>
             <div class="ticket-display-number">
                 {{ str_pad($data->nomor_antrian, 2, '0', STR_PAD_LEFT) }}
             </div>
             <div style="color: #334155; font-weight: 600; font-size: 14px;">
-                {{ \Carbon\Carbon::parse($data->created_at)->translatedFormat('l, d F Y') }}
+                {{ $waktuDaftar->translatedFormat('l, d F Y') }}
             </div>
         </div>
 
         <div class="ticket-body">
             <div class="details-grid">
-                <div class="detail-item">
+                <div class="detail-item col-span-2" style="grid-column: span 2;">
                     <label>Nama Pasien</label>
-                    <span>{{ $data->nama_pasien }}</span>
+                    <span class="text-base font-extrabold">{{ $data->nama_pasien }}</span>
                 </div>
+                
                 <div class="detail-item">
-                    <label>Layanan Poli</label>
+                    <label>Layanan Unit</label>
                     <span class="text-emerald-600 font-extrabold">{{ $data->poli }}</span>
                 </div>
+
                 <div class="detail-item">
-                    <label>Sisa Antrean Di Depan</label>
-                    <span class="font-mono font-black text-lg text-slate-800">
-                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianDiDepan }} Orang
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <label>Status Berjalan</label>
+                    <label>Status</label>
                     <div>
                         @if($data->status === 'diproses_dokter')
-                            <span class="status-badge badge-proses">Dipanggil Dokter</span>
+                            <span class="status-badge badge-proses">Dipanggil</span>
                         @else
                             <span class="status-badge badge-menunggu">Menunggu</span>
                         @endif
                     </div>
                 </div>
-                <div class="detail-item col-span-2 border-t border-slate-100 pt-3" style="grid-column: span 2;">
-                    <label>Estimasi Pemanggilan</label>
-                    <span class="text-base font-extrabold text-emerald-600 tracking-wide">{{ $prediksi }}</span>
+
+                <div class="detail-item col-span-2 border-t border-b border-slate-100 py-2.5" style="grid-column: span 2;">
+                    <label>Dokter / Pemeriksa</label>
+                    <span class="text-slate-900 font-black block text-base">{{ $namaDokter }}</span>
+                    <span class="text-xs text-slate-500 font-semibold block mt-0.5">Jam Kerja Sesi: {{ $jamPraktek }} WIB</span>
                 </div>
+
+                <div class="detail-item">
+                    <label>Antrean Se-Dokter</label>
+                    <span class="font-mono font-black text-slate-800">
+                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianDiDepan }} Orang Lagi
+                    </span>
+                </div>
+                
+                <div class="detail-item">
+                    <label>Waktu Daftar</label>
+                    <span class="font-mono text-slate-700 font-bold">{{ $jamMenitDaftar }} WIB</span>
+                </div>
+
+                <div class="detail-item col-span-2 bg-emerald-50 p-3 rounded-xl border border-emerald-100" style="grid-column: span 2;">
+                    <label class="text-emerald-800">Estimasi Dilayani</label>
+                    <span class="text-base font-black text-emerald-700 tracking-wide block">{{ $prediksi }}</span>
+                </div>
+
+                {{-- NOTIFIKASI EDUKASI JIKA PASIEN DAFTAR TERLALU AWAL DARI JAM MASUK DOKTER --}}
+                @if($catatanEdukasi)
+                <div class="detail-item col-span-2 bg-amber-50 p-3 rounded-xl border border-amber-200" style="grid-column: span 2;">
+                    <label class="text-amber-800 font-black flex items-center gap-1">
+                        ⚠️ INFO JAM LAYANAN
+                    </label>
+                    <p class="text-xs text-amber-900 font-medium leading-relaxed mt-1">
+                        {{ $catatanEdukasi }}
+                    </p>
+                </div>
+                @endif
             </div>
 
             <!-- Bagian Tombol dibungkus class khusus agar bisa disembunyikan total saat dipotret -->
@@ -208,8 +275,8 @@
             </div>
 
             <div class="ticket-footer">
-                Silakan datang ke area tunggu 15 menit sebelum estimasi.<br>
-                Halaman ini dapat di-refresh berkala untuk melihat sisa antrean terbaru.
+                Silakan datang ke area tunggu klinik 15 menit sebelum waktu estimasi.<br>
+                Halaman dapat di-refresh berkala untuk pembaharuan sisa antrean.
             </div>
         </div>
     </div>
@@ -234,17 +301,15 @@
             noShow.style.display = 'block';
             
             try {
-                // Perbaikan utama typo fungsi: toDataURL
                 const dataUrl = canvas.toDataURL('image/png', 1.0);
-                
                 const link = document.createElement('a');
-                // Format nama poli agar aman untuk nama file (menghapus spasi/karakter spesial)
-                const namaPoli = "{{ $data->poli }}".replace(/[^a-zA-Z0-9]/g, "_");
                 
-                link.download = `Tiket_Antrian_${namaPoli}_{{ $data->nomor_antrian }}.png`;
+                // Ambil nama dokter untuk penamaan file unduhan agar unik
+                const namaFileDokter = "{{ $namaDokter }}".replace(/[^a-zA-Z0-9]/g, "_");
+                
+                link.download = `Antrian_${namaFileDokter}_{{ $data->nomor_antrian }}.png`;
                 link.href = dataUrl;
                 
-                // Tempelkan elemen link ke body agar kompatibel di iOS Safari dan Android
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
