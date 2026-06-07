@@ -23,44 +23,45 @@ class AntrianController extends Controller
             return redirect()->route('dashboard')->with('error', 'Antrian aktif tidak ditemukan.');
         }
 
-        // 2. LOGIKA PENENTUAN SESI JADWAL DOKTER BERDASARKAN WAKTU DAFTAR
+        // 2. LOGIKA PENENTUAN SESI BERDASARKAN DOKTER YANG TERDAFTAR DI DATABASE PASIEN
         $waktuDaftar = Carbon::parse($pendaftaran->created_at);
-        $jamMenitDaftar = $waktuDaftar->format('H:i');
+        $waktuSekarang = Carbon::now();
+        $jamSekarang = $waktuSekarang->format('H:i');
         $poliClean = strtolower($pendaftaran->poli);
         
-        $namaDokter = 'Dokter Tidak Diketahui';
+        // Ambil data dokter langsung dari record database pendaftaran
+        $namaDokter = $pendaftaran->nama_dokter ?? 'Dokter Tidak Diketahui';
+        
+        // Atur default jam praktek operasional
         $jamMulaiPraktek = '07:00';
         $jamSelesaiPraktek = '11:30'; 
 
-        if (str_contains($poliClean, 'gigi')) {
+        // Sesuaikan jam operasional berdasarkan string nama dokter asli dari DB
+        if (str_contains(strtolower($namaDokter), 'affrida') || str_contains($poliClean, 'gigi')) {
             $namaDokter = 'drg. Affrida Wahyu K.D';
             $jamMulaiPraktek = '08:00';
             $jamSelesaiPraktek = '12:00';
-        } elseif (str_contains($poliClean, 'kia') || str_contains($poliClean, 'kb')) {
-            if ($jamMenitDaftar < '11:30') {
-                $namaDokter = 'Dita Sevi A, S.Tr. Keb';
-                $jamMulaiPraktek = '07:00';
-                $jamSelesaiPraktek = '11:30';
-            } else {
-                $namaDokter = 'Nailis A, S.Tr. Keb., Bdn';
-                $jamMulaiPraktek = '11:30';
-                $jamSelesaiPraktek = '15:30';
-            }
+        } elseif (str_contains(strtolower($namaDokter), 'dita')) {
+            $namaDokter = 'Dita Sevi A, S.Tr. Keb';
+            $jamMulaiPraktek = '07:00';
+            $jamSelesaiPraktek = '11:30';
+        } elseif (str_contains(strtolower($namaDokter), 'nailis')) {
+            $namaDokter = 'Nailis A, S.Tr. Keb., Bdn';
+            $jamMulaiPraktek = '11:30';
+            $jamSelesaiPraktek = '15:30';
+        } elseif (str_contains(strtolower($namaDokter), 'ferry')) {
+            $namaDokter = 'dr. Ferry Eko Santoso';
+            $jamMulaiPraktek = '11:30';
+            $jamSelesaiPraktek = '15:30';
         } else {
-            // Default Poli Umum
-            if ($jamMenitDaftar < '11:30') {
-                $namaDokter = 'dr. Ahmad Syaikudin';
-                $jamMulaiPraktek = '07:00';
-                $jamSelesaiPraktek = '11:30';
-            } else {
-                $namaDokter = 'dr. Ferry Eko Santoso';
-                $jamMulaiPraktek = '11:30';
-                $jamSelesaiPraktek = '15:30';
-            }
+            // Default jika pasien memilih Ahmad Syaikudin atau belum terpetakan
+            $namaDokter = 'dr. Ahmad Syaikudin';
+            $jamMulaiPraktek = '07:00';
+            $jamSelesaiPraktek = '11:30';
         }
 
-        // 3. HITUNG SISA ANTREAN DI DEPAN (PER DOKTER AKTIF)
-        $antrianDiDepan = PendaftaranPoli::whereDate('created_at', Carbon::today())
+        // 3. HITUNG SISA ANTREAN DI DEPAN (PER DOKTER PILIHAN YANG SINKRON)
+        $antrianDiDepan = PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
             ->whereIn('status', ['menunggu', 'menunggu_petugas'])
             ->where('id', '<', $pendaftaran->id)
             ->where(function($query) use ($namaDokter, $pendaftaran) {
@@ -72,7 +73,7 @@ class AntrianController extends Controller
             ->count();
 
         // 4. CEK APAKAH ADA PASIEN YANG SEDANG DI DALAM RUANGAN DOKTER TERSEBUT
-        $sedangDiPeriksa = PendaftaranPoli::whereDate('created_at', Carbon::today())
+        $sedangDiPeriksa = PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
             ->where('status', 'diproses_dokter')
             ->where(function($query) use ($namaDokter, $pendaftaran) {
                 $query->where('nama_dokter', $namaDokter)
@@ -89,17 +90,16 @@ class AntrianController extends Controller
             $tambahanWaktuSesi = $sedangDiPeriksa ? 15 : 0;
             $totalMenitTunggu = ($antrianDiDepan * 15) + $tambahanWaktuSesi;
 
-            $waktuSekarang = Carbon::now();
-            $waktuMulaiTarget = Carbon::today()->setTimeFromTimeString($jamMulaiPraktek);
-            $waktuSelesaiTarget = Carbon::today()->setTimeFromTimeString($jamSelesaiPraktek);
+            $waktuMulaiTarget = Carbon::parse($pendaftaran->created_at)->setTimeFromTimeString($jamMulaiPraktek);
+            $waktuSelesaiTarget = Carbon::parse($pendaftaran->created_at)->setTimeFromTimeString($jamSelesaiPraktek);
 
             if ($waktuSekarang->lt($waktuMulaiTarget)) {
-                // Kasus 1: Masih terlalu pagi (sebelum jam praktik dimulai)
+                // Kasus 1: Mengakses tiket sebelum jam praktik dokter tersebut dimulai
                 $waktuEstimasiPanggil = $waktuMulaiTarget->addMinutes($totalMenitTunggu);
                 $prediksiWaktu = '± ' . $waktuEstimasiPanggil->format('H:i') . ' WIB';
-            } elseif ($waktuSekarang->gt($waktuSelesaiTarget)) {
-                // Kasus 2: Sudah melewati jam selesai praktik (kemalaman seperti jam 23.46 saat ini)
-                $prediksiWaktu = "Besok jam " . $jamMulaiPraktek . " WIB (Poli Sudah Tutup)";
+            } elseif ($waktuSekarang->gt($waktuSelesaiTarget) && $waktuDaftar->isToday()) {
+                // Kasus 2: Jam praktik sesi dokter hari ini sudah berakhir
+                $prediksiWaktu = "Sesi Praktik Selesai";
             } else {
                 // Kasus 3: Berada di dalam rentang jam praktik dokter aktif
                 $waktuEstimasiPanggil = $waktuSekarang->addMinutes($totalMenitTunggu);
