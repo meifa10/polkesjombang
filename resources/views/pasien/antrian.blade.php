@@ -200,14 +200,13 @@
         }
     }
 
-    // 2. Logika Edukasi Bahasa Ramah Non-Kaku (Adaptif Sistem 24 Jam)
+    // 2. Logika Edukasi Inti (Singkat & To The Point)
     if ($jamSekarang > $jamSelesai) {
-        $catatanEdukasi = "<b>Jam Praktik Sesi Hari Ini Selesai</b> 🌙<br>Jam pelayanan tatap muka bersama <b>{$namaDokter}</b> untuk hari ini telah berakhir. Antrean online Anda otomatis dijadwalkan untuk dilayani pada sesi besok mulai pukul <b>{$jamMulai} WIB</b>.";
+        $catatanEdukasi = "<b>Sesi Praktik Hari Ini Selesai</b><br>Jam kerja tatap muka {$namaDokter} telah berakhir. Antrean Anda akan dilayani esok hari mulai pukul <b>{$jamMulai} WIB</b>.";
     } elseif ($jamSekarang < $jamMulai) {
-        $catatanEdukasi = "<b>Selamat Pagi, {$data->nama_pasien}!</b> 👋<br>Pendaftaran Anda berhasil. Saat ini <b>jam praktik tatap muka {$namaDokter}</b> baru akan dimulai pukul <b>{$jamMulai} WIB</b>.<br><br><b>Tips Nyaman:</b> Anda bisa bersantai sejenak di ruang tunggu atau melengkapi berkas administrasi terlebih dahulu.";
+        $catatanEdukasi = "<b>Menunggu Jam Masuk Dokter</b><br>Jam praktik tatap muka bersama {$namaDokter} baru akan dimulai pukul <b>{$jamMulai} WIB</b>.";
     } elseif ($jamMenitDaftar >= '11:30' && $jamSekarang < '11:30') {
-        // Kasus khusus pasien daftar sesi siang tapi iseng ngeceknya waktu pagi
-        $catatanEdukasi = "Halo <b>{$data->nama_pasien}</b>, Anda terdaftar untuk sesi siang bersama <b>{$namaDokter}</b> (Jam kerja: {$jamPraktek} WIB). Harap kembali ke ruang tunggu saat jam praktik dokter dimulai ya!";
+        $catatanEdukasi = "<b>Informasi Sesi Siang</b><br>Anda terdaftar untuk sesi siang. Jam praktik {$namaDokter} baru akan dimulai pukul <b>11.30 WIB</b>.";
     }
 @endphp
 
