@@ -13,20 +13,20 @@ class AntrianController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Ambil SEMUA pendaftaran aktif milik pasien hari ini (bukan cuma satu poli)
+        // 1. AMBIL SEMUA PENDAFTARAN AKTIF (DILEPAS DARI HARI INI AGAR DATA TIDAK REJECT/KEMBALI KE DASHBOARD)
         $daftarPendaftaran = PendaftaranPoli::where('nama_pasien', $user->name)
             ->whereIn('status', ['menunggu', 'menunggu_petugas', 'diproses_dokter'])
-            ->whereDate('created_at', Carbon::today())
             ->latest()
             ->get();
 
+        // Jika benar-benar tidak ada pendaftaran yang berstatus aktif, baru kembalikan ke dashboard
         if ($daftarPendaftaran->isEmpty()) {
-            return redirect()->route('dashboard')->with('error', 'Antrian aktif tidak ditemukan.');
+            return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki antrian aktif saat ini.');
         }
 
         $antrianData = [];
 
-        // 2. Loop semua paket antrean untuk menghitung data pendukung per masing-masing dokter sesi
+        // 2. Loop semua paket antrean aktif untuk menghitung sisa orang di depan per dokter sesi
         foreach ($daftarPendaftaran as $pendaftaran) {
             $waktuDaftar = Carbon::parse($pendaftaran->created_at);
             $jamMenitDaftar = $waktuDaftar->format('H:i');
@@ -63,8 +63,8 @@ class AntrianController extends Controller
                 }
             }
 
-            // Hitung sisa antrean di depan khusus dokter ini
-            $antrianDiDepan = PendaftaranPoli::whereDate('created_at', Carbon::today())
+            // Hitung sisa antrean di depan khusus pada hari pendaftaran tersebut dibuat ($waktuDaftar)
+            $antrianDiDepan = PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
                 ->whereIn('status', ['menunggu', 'menunggu_petugas'])
                 ->where('id', '<', $pendaftaran->id)
                 ->where(function($query) use ($namaDokter, $pendaftaran) {
@@ -75,8 +75,8 @@ class AntrianController extends Controller
                 })
                 ->count();
 
-            // Cek pasien dalam ruangan
-            $sedangDiPeriksa = PendaftaranPoli::whereDate('created_at', Carbon::today())
+            // Cek pasien dalam ruangan pada hari pendaftaran bersangkutan
+            $sedangDiPeriksa = PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
                 ->where('status', 'diproses_dokter')
                 ->where(function($query) use ($namaDokter, $pendaftaran) {
                     $query->where('nama_dokter', $namaDokter)
@@ -86,7 +86,7 @@ class AntrianController extends Controller
                 })
                 ->exists();
 
-            // Logika Estimasi Waktu Kerja
+            // Logika Estimasi Waktu Kerja Real-time
             if ($pendaftaran->status === 'diproses_dokter') {
                 $prediksiWaktu = "Silahkan Masuk Ruangan";
             } else {
@@ -94,13 +94,15 @@ class AntrianController extends Controller
                 $totalMenitTunggu = ($antrianDiDepan * 15) + $tambahanWaktuSesi;
 
                 $waktuSekarang = Carbon::now();
-                $waktuMulaiTarget = Carbon::today()->setTimeFromTimeString($jamMulaiPraktek);
-                $waktuSelesaiTarget = Carbon::today()->setTimeFromTimeString($jamSelesaiPraktek);
+                
+                // Sinkronkan target jam operasional berdasarkan tanggal tiket dibuat
+                $waktuMulaiTarget = Carbon::parse($pendaftaran->created_at)->setTimeFromTimeString($jamMulaiPraktek);
+                $waktuSelesaiTarget = Carbon::parse($pendaftaran->created_at)->setTimeFromTimeString($jamSelesaiPraktek);
 
                 if ($waktuSekarang->lt($waktuMulaiTarget)) {
                     $waktuEstimasiPanggil = $waktuMulaiTarget->addMinutes($totalMenitTunggu);
                     $prediksiWaktu = '± ' . $waktuEstimasiPanggil->format('H:i') . ' WIB';
-                } elseif ($waktuSekarang->gt($waktuSelesaiTarget)) {
+                } elseif ($waktuSekarang->gt($waktuSelesaiTarget) && $waktuDaftar->isToday()) {
                     $prediksiWaktu = "Besok jam " . $jamMulaiPraktek . " WIB (Poli Tutup)";
                 } else {
                     $waktuEstimasiPanggil = $waktuSekarang->addMinutes($totalMenitTunggu);
@@ -108,7 +110,7 @@ class AntrianController extends Controller
                 }
             }
 
-            // Ikat paket data ke dalam array koleksi hasil
+            // Masukkan data paket antrean ke dalam array hasil
             $antrianData[] = [
                 'pendaftaran' => $pendaftaran,
                 'antrianDiDepan' => $antrianDiDepan,
