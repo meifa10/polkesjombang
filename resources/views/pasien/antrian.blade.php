@@ -152,7 +152,7 @@
     }
 </style>
 
-{{-- LOGIKA PEMETAAN JADWAL AUTOMATIS SELURUH DOKTER AKTIF --}}
+{{-- LOGIKA PEMETAAN JADWAL DAN RESET TOTAL ANTREAN PER DOKTER --}}
 @php
     $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
     $jamMenitDaftar = $waktuDaftar->format('H:i');
@@ -167,7 +167,7 @@
     
     $poliClean = strtolower($data->poli);
 
-    // 1. Pemetaan Dokter & Jam Kerja
+    // 1. Pemetaan Sesi Dokter Berdasarkan Jam Tiket Dibuat
     if (str_contains($poliClean, 'gigi')) {
         $namaDokter = 'drg. Affrida Wahyu K.D';
         $jamPraktek = '08.00 – 12.00';
@@ -200,7 +200,19 @@
         }
     }
 
-    // 2. Logika Edukasi Inti (Singkat & To The Point)
+    // 2. Hitung Sisa Antrean Spesifik Hanya Untuk Dokter Ini Saja (Reset antar dokter)
+    $antrianSpesifikDokter = \App\Models\PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
+        ->whereIn('status', ['menunggu', 'menunggu_petugas'])
+        ->where('id', '<', $data->id)
+        ->where(function($query) use ($namaDokter, $data) {
+            $query->where('nama_dokter', $namaDokter)
+                  ->orWhere(function($sub) use ($data) {
+                      $sub->whereNull('nama_dokter')->where('poli', $data->poli);
+                  });
+        })
+        ->count();
+
+    // 3. Logika Notifikasi Jika Mengakses di Luar Jam Praktik Dokter Terkait
     if ($jamSekarang > $jamSelesai) {
         $catatanEdukasi = "<b>Sesi Praktik Hari Ini Selesai</b><br>Jam kerja tatap muka {$namaDokter} telah berakhir. Antrean Anda akan dilayani esok hari mulai pukul <b>{$jamMulai} WIB</b>.";
     } elseif ($jamSekarang < $jamMulai) {
@@ -255,7 +267,7 @@
                 <div class="detail-item">
                     <label>Antrean Se-Dokter</label>
                     <span class="font-mono font-black text-slate-800">
-                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianDiDepan }} Orang Lagi
+                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianSpesifikDokter }} Orang Lagi
                     </span>
                 </div>
                 
@@ -269,7 +281,6 @@
                     <span class="text-base font-black text-emerald-700 tracking-wide block">{{ $prediksi }}</span>
                 </div>
 
-                {{-- NOTIFIKASI TAMPIL CLEAN MENGIKUTI DOKTER AKTIF --}}
                 @if($catatanEdukasi)
                 <div class="detail-item col-span-2 bg-amber-50 p-3 rounded-xl border border-amber-200" style="grid-column: span 2;">
                     <label class="text-amber-800 font-black flex items-center gap-1">
