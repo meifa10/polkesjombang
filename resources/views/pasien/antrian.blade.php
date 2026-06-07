@@ -152,16 +152,15 @@
     }
 </style>
 
-{{-- LOGIKA PEMETAAN JADWAL BERDASARKAN PILIHAN DOKTER DI DATABASE --}}
+{{-- LOGIKA PEMETAAN JADWAL AUTOMATIS AMAN BERBAGAI KONDISI JAM --}}
 @php
     $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
     $jamMenitDaftar = $waktuDaftar->format('H:i');
     $waktuSekarang = \Carbon\Carbon::now();
     $jamSekarang = $waktuSekarang->format('H:i');
     
-    // Ambil nama dokter langsung dari data pendaftaran di database
-    // Jika kolom di database Anda namanya berbeda (misal: dokter_id atau nama_pemeriksa), silakan sesuaikan
-    $dokterTerpilih = $data->nama_dokter; 
+    $dokterTerpilih = $data->nama_dokter ? strtolower($data->nama_dokter) : '';
+    $dokterId = $data->dokter_id ?? $data->id_dokter ?? null; 
     
     $namaDokter = 'Dokter Tidak Diketahui';
     $jamPraktek = '-';
@@ -171,15 +170,14 @@
     
     $poliClean = strtolower($data->poli);
 
-    // 1. Pemetaan Jadwal Berdasarkan Dokter yang Disimpan saat Pasien Klik Daftar
-    if (str_contains($poliClean, 'gigi') || str_contains(strtolower($dokterTerpilih), 'affrida')) {
+    // 1. Pemetaan Dokter & Jam Kerja Mendukung ID Relasi dan Teks String
+    if (str_contains($poliClean, 'gigi') || str_contains($dokterTerpilih, 'affrida') || $dokterId == 3) {
         $namaDokter = 'drg. Affrida Wahyu K.D';
         $jamPraktek = '08.00 – 12.00';
         $jamMulai = '08:00';
         $jamSelesai = '12:00';
     } elseif (str_contains($poliClean, 'kia') || str_contains($poliClean, 'kb')) {
-        // Cek nama dokter/bidan yang tersimpan di rekam pendaftaran
-        if (str_contains(strtolower($dokterTerpilih), 'dita')) {
+        if (str_contains($dokterTerpilih, 'dita') || $dokterId == 4) {
             $namaDokter = 'Dita Sevi A, S.Tr. Keb';
             $jamPraktek = '07.00 – 11.30';
             $jamMulai = '07:00';
@@ -191,8 +189,10 @@
             $jamSelesai = '15:30';
         }
     } else {
-        // Poli Umum: Cek apakah nama dokter di database mengandung kata 'ferry' atau 'ahmad'
-        if (str_contains(strtolower($dokterTerpilih), 'ferry')) {
+        // Skenario Poli Umum (Ferry vs Ahmad)
+        // Jika eksplisit memilih Ferry, ATAU mendaftar menggunakan tombol kuota sesi siang (di atas 11:30 siang)
+        // Ditambahkan toleransi: Jika mendaftar dini hari (00:00 - 06:00) asumsikan sistem diarahkan sesuai penanganan input form.
+        if (str_contains($dokterTerpilih, 'ferry') || $dokterId == 2 || ($dokterTerpilih == '' && $jamMenitDaftar >= '11:30')) {
             $namaDokter = 'dr. Ferry Eko Santoso';
             $jamPraktek = '11.30 – 15.30';
             $jamMulai = '11:30';
@@ -205,19 +205,20 @@
         }
     }
 
-    // 2. Hitung Sisa Antrean Spesifik Hanya Untuk Dokter Ini
+    // 2. Hitung Sisa Antrean Berdasarkan Dokter Hasil Validasi Akhir
     $antrianSpesifikDokter = \App\Models\PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
         ->whereIn('status', ['menunggu', 'menunggu_petugas'])
         ->where('id', '<', $data->id)
-        ->where(function($query) use ($namaDokter, $data) {
+        ->where(function($query) use ($namaDokter, $data, $dokterId) {
             $query->where('nama_dokter', $namaDokter)
+                  ->orWhere('dokter_id', $dokterId)
                   ->orWhere(function($sub) use ($data) {
                       $sub->whereNull('nama_dokter')->where('poli', $data->poli);
                   });
         })
         ->count();
 
-    // 3. Logika Edukasi Inti Sesuai Jam Kerja Dokter Terpilih
+    // 3. Logika Peringatan Operasional Jam Praktik Tatap Muka
     if ($jamSekarang > $jamSelesai) {
         $catatanEdukasi = "<b>Sesi Praktik Hari Ini Selesai</b><br>Jam kerja tatap muka {$namaDokter} telah berakhir. Antrean Anda akan dilayani esok hari mulai pukul <b>{$jamMulai} WIB</b>.";
     } elseif ($jamSekarang < $jamMulai) {
