@@ -28,6 +28,12 @@ class PendaftaranPoliController extends Controller
             'dokter_id' => 'required|exists:users,id'
         ]);
 
+        $dokter = User::find($request->dokter_id);
+        dd([
+            'ID_Dokter_Yang_Dipilih_Pasien' => $request->dokter_id,
+            'Nama_Dokter_Di_Tabel_Users' => $dokter ? $dokter->name : 'DOKTER TIDAK DITEMUKAN!'
+        ]);
+
         $today = Carbon::today();
 
         // 1. AMBIL NAMA DOKTER ASLI DARI DATABASE USERS
