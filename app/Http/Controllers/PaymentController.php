@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Pembayaran;
 use App\Models\PendaftaranPoli;
-use App\Models\MasterTarif;
+// use App\Models\MasterTarif;
 use App\Services\PaymentService;
 
 class PaymentController extends Controller
