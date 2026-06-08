@@ -8,16 +8,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Pembayaran;
 use App\Models\PendaftaranPoli;
-use App\Models\Pengaturan; // <--- WAJIB ADA INI
 use App\Services\PaymentService;
 
 class PaymentController extends Controller
 {
     public function pay($id, PaymentService $paymentService)
     {
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
+        if (!Auth::check()) return redirect('/login');
 
         $user = Auth::user();
         $pembayaran = Pembayaran::with('pendaftaran')
@@ -26,27 +23,17 @@ class PaymentController extends Controller
                 $q->where('nama_pasien', $user->name);
             })->first();
 
-        if (!$pembayaran) {
-            return redirect('/dashboard')->with('error', 'Pembayaran tidak ditemukan');
+        if (!$pembayaran || $pembayaran->status == 'lunas') {
+            return redirect('/dashboard')->with('error', 'Pembayaran tidak ditemukan/sudah lunas.');
         }
 
-        if ($pembayaran->status == 'lunas') {
-            return redirect('/dashboard')->with('success', 'Pembayaran sudah lunas');
-        }
-
-        $tarifDokter = DB::table('pengaturans')
-                        ->where('key', 'tarif_dokter')
-                        ->value('value') ?? 10000;
-
-        $tarifAdmin = DB::table('pengaturans')
-                        ->where('key', 'tarif_admin')
-                        ->value('value') ?? 10000;
+        // AMBIL DARI DATABASE PETUGAS
+        $tarifDokter = DB::connection('mysql_petugas')->table('pengaturans')->where('key', 'tarif_dokter')->value('value') ?? 10000;
+        $tarifAdmin = DB::connection('mysql_petugas')->table('pengaturans')->where('key', 'tarif_admin')->value('value') ?? 10000;
         $totalFix = $tarifDokter + $tarifAdmin + ($pembayaran->total_obat ?? 0);
 
         try {
             $result = $paymentService->createTransaction($pembayaran, $tarifDokter, $tarifAdmin, $totalFix);
-            session(['last_order_id' => $pembayaran->payment_ref]);
-
             return view('payment.pay', compact('pembayaran', 'tarifDokter', 'tarifAdmin', 'totalFix', 'result'));
         } catch (\Exception $e) {
             Log::error('Midtrans Error: ' . $e->getMessage());
@@ -57,47 +44,27 @@ class PaymentController extends Controller
     public function cetakStruk($id)
     {
         $pembayaran = Pembayaran::with(['pendaftaran.rekamMedis'])->findOrFail($id);
+        if ($pembayaran->status != 'lunas') abort(403);
 
-        if ($pembayaran->status != 'lunas') {
-            abort(403, 'Struk hanya dapat dicetak untuk pembayaran yang sudah lunas.');
-        }
-
-        // AMBIL TARIF DARI MODEL PENGATURAN
-        $biayaDokter = Pengaturan::where('key', 'tarif_dokter')->value('value') ?? $pembayaran->biaya_dokter;
-        $biayaAdmin = Pengaturan::where('key', 'tarif_admin')->value('value') ?? $pembayaran->biaya_admin;
+        // AMBIL DARI DATABASE PETUGAS
+        $biayaDokter = DB::connection('mysql_petugas')->table('pengaturans')->where('key', 'tarif_dokter')->value('value') ?? $pembayaran->biaya_dokter;
+        $biayaAdmin = DB::connection('mysql_petugas')->table('pengaturans')->where('key', 'tarif_admin')->value('value') ?? $pembayaran->biaya_admin;
 
         $resepString = $pembayaran->pendaftaran->rekamMedis->resep ?? '';
-        $totalHargaObat = (int) str_replace(['.', ','], '', $pembayaran->total_obat ?? 0);
-        $rincianObat = $this->parseResepPecahDetail($resepString, $totalHargaObat);
-
+        $rincianObat = $this->parseResepPecahDetail($resepString, (int)($pembayaran->total_obat ?? 0));
+        
         return view('payment.struk', compact('pembayaran', 'rincianObat', 'biayaDokter', 'biayaAdmin'));
     }
 
-    private function parseResepPecahDetail($resepString, $totalHargaObat = 0)
+    private function parseResepPecahDetail($resepString, $totalHargaObat)
     {
         $listObat = [];
         if (empty(trim($resepString))) return $listObat;
-
-        $rows = preg_split('/[\n,]+/', $resepString);
-        $barisValid = [];
+        $rows = array_filter(preg_split('/[\n,]+/', $resepString));
+        $count = count($rows);
         foreach ($rows as $row) {
-            $row = trim($row);
-            if (!empty($row)) $barisValid[] = $row;
-        }
-
-        $jumlahBaris = count($barisValid);
-        foreach ($barisValid as $row) {
-            $listObat[] = [
-                'nama'  => $row,
-                'qty'   => 1,
-                'harga' => $totalHargaObat > 0 ? (int)($totalHargaObat / $jumlahBaris) : 0,
-                'total' => $totalHargaObat > 0 ? (int)($totalHargaObat / $jumlahBaris) : 0
-            ];
+            $listObat[] = ['nama' => trim($row), 'qty' => 1, 'harga' => $totalHargaObat/$count, 'total' => $totalHargaObat/$count];
         }
         return $listObat;
     }
-
-    // ... method callback dan finish tetap sama seperti sebelumnya ...
-    public function callback(Request $request) { /* isi sama */ }
-    public function finish(Request $request) { /* isi sama */ }
 }
