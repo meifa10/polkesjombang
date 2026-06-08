@@ -200,18 +200,6 @@
         }
     }
 
-    $antrianSpesifikDokter = \App\Models\PendaftaranPoli::whereDate('created_at', $waktuDaftar->toDateString())
-        ->whereIn('status', ['menunggu', 'menunggu_petugas'])
-        ->where('id', '<', $data->id)
-        ->where(function($query) use ($namaDokter, $data, $dokterId) {
-            $query->where('nama_dokter', $namaDokter)
-                  ->orWhere('dokter_id', $dokterId)
-                  ->orWhere(function($sub) use ($data) {
-                      $sub->whereNull('nama_dokter')->where('poli', $data->poli);
-                  });
-        })
-        ->count();
-
     if ($jamSekarang > $jamSelesai) {
         $catatanEdukasi = "<b>Sesi Praktik Hari Ini Selesai</b><br>Jam kerja tatap muka {$namaDokter} telah berakhir. Antrean Anda akan dilayani esok hari mulai pukul <b>{$jamMulai} WIB</b>.";
     } elseif ($jamSekarang < $jamMulai) {
@@ -264,7 +252,7 @@
                 <div class="detail-item">
                     <label>Antrean Se-Dokter</label>
                     <span class="font-mono font-black text-slate-800">
-                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianSpesifikDokter }} Orang Lagi
+                        {{ $data->status === 'diproses_dokter' ? '0' : $antrianDiDepan }} Orang Lagi
                     </span>
                 </div>
                 
