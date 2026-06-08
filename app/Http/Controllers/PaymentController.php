@@ -34,9 +34,13 @@ class PaymentController extends Controller
             return redirect('/dashboard')->with('success', 'Pembayaran sudah lunas');
         }
 
-        // AMBIL TARIF DARI MODEL PENGATURAN
-        $tarifDokter = Pengaturan::where('key', 'tarif_dokter')->value('value') ?? 10000;
-        $tarifAdmin = Pengaturan::where('key', 'tarif_admin')->value('value') ?? 10000;
+        $tarifDokter = DB::table('pengaturans')
+                        ->where('key', 'tarif_dokter')
+                        ->value('value') ?? 10000;
+
+        $tarifAdmin = DB::table('pengaturans')
+                        ->where('key', 'tarif_admin')
+                        ->value('value') ?? 10000;
         $totalFix = $tarifDokter + $tarifAdmin + ($pembayaran->total_obat ?? 0);
 
         try {
