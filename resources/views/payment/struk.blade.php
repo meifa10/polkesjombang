@@ -119,7 +119,6 @@
 
         <div class="flex justify-between items-center text-base font-bold">
             <span>TOTAL BERSIH</span>
-            <!-- @php $totalFinal = $biayaDokterBaru + $biayaAdmin + $biayaObat; @endphp -->
             <span>Rp {{ number_format($totalFinal, 0, ',', '.') }}</span>
         </div>
         
