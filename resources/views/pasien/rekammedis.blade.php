@@ -39,7 +39,32 @@
     .node-resep { grid-column: span 3; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px dashed var(--c-emerald); }
     .rincian-biaya-container { grid-column: span 3; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 32px; padding: 30px; margin-top: 10px; font-family: 'Courier Prime', monospace; color: #000; }
     .dashed-separator { border-top: 2px dashed #a1a1aa; margin: 12px 0; }
-    .btn-download { background: var(--c-primary); color: white; padding: 16px 28px; border-radius: 22px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: 0.3s; }
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+    }
+
+    .btn-download {
+        background: var(--c-primary);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 16px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.3s;
+        flex-shrink: 0;
+        width: fit-content;
+        white-space: nowrap;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-2px);
+    }
 </style>
 
 <div class="container-wide">
