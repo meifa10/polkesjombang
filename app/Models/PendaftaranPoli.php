@@ -18,7 +18,8 @@ class PendaftaranPoli extends Model
         'no_identitas',
         'tanggal_lahir',
         'poli',
-        'dokter_id', // Tambahkan ini
+        'dokter_id',
+        'nama_dokter',
         'nomor_antrian',
         'status',
         'token_akses'
@@ -26,7 +27,6 @@ class PendaftaranPoli extends Model
 
     public $timestamps = true;
 
-    // Relasi untuk mendapatkan data dokter
     public function dokter()
     {
         return $this->belongsTo(User::class, 'dokter_id');
