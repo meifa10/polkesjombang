@@ -17,18 +17,16 @@ class PaymentService
         Config::$is3ds = true;
     }
 
-    /**
-     * @param $pembayaran
-     * @param int $tarifDokter (Tarif terbaru dari DB)
-     * @param int $tarifAdmin (Tarif terbaru dari DB)
-     * @param int $total (Total terbaru dari DB)
-     */
     public function createTransaction($pembayaran, $tarifDokter, $tarifAdmin, $total)
     {
         try {
+            // Jika Anda ingin harga selalu update, jangan gunakan token lama jika sudah ada.
+            // Hapus atau beri komentar bagian ini jika ingin harga selalu fresh setiap buka halaman:
+            /*
             if (!empty($pembayaran->snap_token)) {
                 return ['snap_token' => $pembayaran->snap_token];
             }
+            */
 
             $orderId = $pembayaran->payment_ref ?? ('INV-' . time() . '-' . $pembayaran->id);
 
@@ -76,7 +74,7 @@ class PaymentService
 
         } catch (\Exception $e) {
             Log::error('MIDTRANS ERROR: ' . $e->getMessage());
-            throw new \Exception('Gagal membuat transaksi Midtrans');
+            throw new \Exception('Gagal membuat transaksi Midtrans: ' . $e->getMessage());
         }
     }
 }
