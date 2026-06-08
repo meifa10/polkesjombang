@@ -12,22 +12,26 @@
 
 <body class="bg-slate-100 min-h-screen">
 
+    {{-- LOGIKA PERHITUNGAN PAKSA: Mengabaikan data total_biaya di DB yang lama --}}
     @php
-        $biayaDokter = $pembayaran->biaya_dokter ?? 10000;
+        $biayaDokterBaru = 10000;
         $biayaAdmin = $pembayaran->biaya_admin ?? 10000;
         $biayaObat = $pembayaran->total_obat ?? 0;
-        $totalFix = $biayaDokter + $biayaAdmin + $biayaObat;
+        $totalFix = $biayaDokterBaru + $biayaAdmin + $biayaObat;
     @endphp
 
     <div class="min-h-screen flex items-center justify-center p-6 my-6">
         <div class="w-full max-w-xl">
 
+            {{-- BACK --}}
             <a href="/dashboard" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-emerald-600 font-bold mb-5 transition-all">
                 <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
             </a>
 
+            {{-- CARD --}}
             <div class="bg-white rounded-[35px] overflow-hidden border border-slate-200 shadow-2xl">
 
+                {{-- HEADER --}}
                 <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 p-8 text-white relative overflow-hidden">
                     <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10"></div>
                     <div class="relative z-10">
@@ -41,8 +45,10 @@
                     </div>
                 </div>
 
+                {{-- BODY --}}
                 <div class="p-8 space-y-6">
                     
+                    {{-- STATUS & REF --}}
                     <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                         <div>
                             <p class="text-xs uppercase font-black tracking-widest text-slate-400">Status</p>
@@ -56,6 +62,7 @@
                         </div>
                     </div>
 
+                    {{-- INFORMASI PASIEN --}}
                     <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4 border border-slate-200 text-sm">
                         <div>
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nama Pasien</p>
@@ -67,6 +74,7 @@
                         </div>
                     </div>
 
+                    {{-- STRUK / RINCIAN TARIF --}}
                     <div>
                         <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-3">Rincian Komponen Struk</p>
                         <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
@@ -78,13 +86,15 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                    {{-- Jasa Dokter --}}
                                     <tr>
                                         <td class="py-3 px-4">
                                             <p class="font-bold text-slate-800">Jasa Dokter & Konsultasi</p>
                                             <p class="text-xs text-slate-400">Pemeriksaan medis dasar klinis poli</p>
                                         </td>
-                                        <td class="py-3 px-4 text-right font-bold text-slate-900">Rp {{ number_format($biayaDokter, 0, ',', '.') }}</td>
+                                        <td class="py-3 px-4 text-right font-bold text-slate-900">Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}</td>
                                     </tr>
+                                    {{-- Administrasi --}}
                                     <tr>
                                         <td class="py-3 px-4">
                                             <p class="font-bold text-slate-800">Administrasi</p>
@@ -92,6 +102,7 @@
                                         </td>
                                         <td class="py-3 px-4 text-right font-bold text-slate-900">Rp {{ number_format($biayaAdmin, 0, ',', '.') }}</td>
                                     </tr>
+                                    {{-- Resep Farmasi --}}
                                     <tr>
                                         <td class="py-3 px-4">
                                             <p class="font-bold text-slate-800">Obat & Farmasi</p>
@@ -104,6 +115,7 @@
                         </div>
                     </div>
 
+                    {{-- TOTAL DISPLAY --}}
                     <div class="bg-emerald-50/60 rounded-3xl p-6 border-2 border-emerald-500/20">
                         <div class="flex justify-between items-center">
                             <p class="text-xs uppercase tracking-[0.2em] font-black text-slate-500">Total Tagihan Bersih</p>
@@ -113,6 +125,7 @@
                         </div>
                     </div>
 
+                    {{-- ACTION BUTTON --}}
                     <div class="pt-2">
                         @if($pembayaran->status != 'lunas')
                             <button id="pay-button" class="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-200 active:scale-95">
