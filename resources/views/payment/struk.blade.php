@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
-    {{-- LIBRARY UNTUK CONVERT HTML KE PDF --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -20,6 +18,13 @@
 </head>
 <body>
 
+    @php 
+        $biayaDokter = $pembayaran->biaya_dokter ?? 0; 
+        $biayaAdmin = $pembayaran->biaya_admin ?? 0;
+        $biayaObat = $pembayaran->total_obat ?? 0;
+        $totalFinal = $biayaDokter + $biayaAdmin + $biayaObat;
+    @endphp
+
     <div class="max-w-md mx-auto mt-6 flex justify-between px-4">
         <a href="/dashboard" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-all">
             <i class="fa-solid fa-arrow-left mr-2"></i> Kembali
@@ -29,7 +34,6 @@
         </button>
     </div>
 
-    {{-- KERTAS STRUK --}}
     <div id="kertas-struk" class="receipt-container">
         
         <div class="text-center mb-4">
@@ -71,18 +75,12 @@
         <div class="dashed-line"></div>
 
         <div class="text-xs space-y-3">
-            @php 
-                $biayaDokterBaru = 10000; 
-                $biayaAdmin = $pembayaran->biaya_admin ?? 10000;
-                $biayaObat = $pembayaran->total_obat ?? 0;
-            @endphp
-            
             <div class="flex justify-between items-start">
                 <div>
                     <p class="font-bold">JASA DOKTER & KONSULTASI</p>
                     <p class="text-[10px] text-slate-500">Pemeriksaan medis dasar poli</p>
                 </div>
-                <span>Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}</span>
+                <span>Rp {{ number_format($biayaDokter, 0, ',', '.') }}</span>
             </div>
             
             <div class="flex justify-between items-start">
@@ -101,7 +99,7 @@
                             <div class="leading-tight">
                                 <p>• {{ $obat['nama'] }}</p>
                                 @if($obat['harga'] > 0)
-                                    <p class="text-[10px] text-slate-500">&nbsp;&nbsp;({{ $obat['qty'] }} pesanan x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</p>
+                                    <p class="text-[10px] text-slate-500">&nbsp;&nbsp;({{ $obat['qty'] }} x Rp {{ number_format($obat['harga'], 0, ',', '.') }})</p>
                                 @endif
                             </div>
                             <span class="text-right">Rp {{ number_format($obat['total'], 0, ',', '.') }}</span>
@@ -117,7 +115,6 @@
 
         <div class="flex justify-between items-center text-base font-bold">
             <span>TOTAL BERSIH</span>
-            @php $totalFinal = $biayaDokterBaru + $biayaAdmin + $biayaObat; @endphp
             <span>Rp {{ number_format($totalFinal, 0, ',', '.') }}</span>
         </div>
         

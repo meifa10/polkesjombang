@@ -14,24 +14,20 @@
             padding: 0;
         }
 
-        /* --- Header Section --- */
         .header-table { width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
         .hospital-name { font-size: 16px; font-weight: bold; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; }
         .hospital-info { font-size: 9px; color: #64748b; margin-top: 4px; }
 
-        /* --- Patient Info Box --- */
         .patient-info-table { width: 100%; background-color: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .info-label { color: #64748b; font-size: 8px; text-transform: uppercase; font-weight: bold; margin-bottom: 3px; }
         .info-value { font-size: 11px; font-weight: bold; color: #1e293b; }
 
-        /* --- Content Sections --- */
         .section-title { font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 12px; border-left: 4px solid #059669; padding-left: 10px; text-transform: uppercase; }
         .record-box { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; border-collapse: collapse; overflow: hidden; }
         .record-header { background-color: #f1f5f9; padding: 8px 12px; font-weight: bold; font-size: 10px; border-bottom: 1px solid #e2e8f0; }
         .record-body { padding: 12px; }
         .prescription-area { margin-top: 10px; padding: 10px; background-color: #f0fdf4; border-left: 3px solid #059669; border-radius: 4px; }
 
-        /* --- Billing Section --- */
         .billing-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         .billing-table td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         .item-obat-detail { margin-top: 6px; padding-left: 8px; border-left: 2px dashed #cbd5e1; }
@@ -43,12 +39,11 @@
 </head>
 <body>
 
-    {{-- LOGIKA PERHITUNGAN BARU --}}
     @php
-        $biayaDokterBaru = 10000;
-        $biayaAdmin = (int)$pembayaran->biaya_admin;
-        $biayaObat = (int)$pembayaran->total_obat;
-        $totalBersihBaru = $biayaDokterBaru + $biayaAdmin + $biayaObat;
+        $biayaDokter = (int)($pembayaran->biaya_dokter ?? 0);
+        $biayaAdmin = (int)($pembayaran->biaya_admin ?? 0);
+        $biayaObat = (int)($pembayaran->total_obat ?? 0);
+        $totalBersih = $biayaDokter + $biayaAdmin + $biayaObat;
     @endphp
 
     <table class="header-table">
@@ -113,10 +108,10 @@
             <tbody>
                 <tr>
                     <td><strong>Jasa Konsultasi Dokter & Pemeriksaan Fisik</strong><br>
-                        <span style="font-size: 9px; color: #64748b;">Pemeriksaan klinis komprehensif poli oleh {{ $pendaftaran->dokter->name ?? 'Dokter Spesialis' }}</span>
+                        <span style="font-size: 9px; color: #64748b;">Pemeriksaan klinis komprehensif poli</span>
                     </td>
                     <td style="text-align: right; font-weight: bold; padding-top: 14px;">
-                        Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}
+                        Rp {{ number_format($biayaDokter, 0, ',', '.') }}
                     </td>
                 </tr>
                 <tr>
@@ -168,7 +163,7 @@
                 <td width="45%" style="vertical-align: top;">
                     <div class="total-box">
                         <div style="font-size: 8px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; letter-spacing: 0.5px;">Total Bersih Pembayaran</div>
-                        <div style="font-size: 15px; font-weight: bold;">Rp {{ number_format($totalBersihBaru, 0, ',', '.') }}</div>
+                        <div style="font-size: 15px; font-weight: bold;">Rp {{ number_format($totalBersih, 0, ',', '.') }}</div>
                     </div>
                 </td>
             </tr>
