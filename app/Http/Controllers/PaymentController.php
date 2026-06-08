@@ -8,14 +8,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Pembayaran;
 use App\Models\PendaftaranPoli;
-use App\Models\Pengaturan; // Gunakan model Pengaturan
+use App\Models\Pengaturan; // <--- WAJIB ADA INI
 use App\Services\PaymentService;
 
 class PaymentController extends Controller
 {
     public function pay($id, PaymentService $paymentService)
     {
-        if (!Auth::check()) return redirect('/login');
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
 
         $user = Auth::user();
         $pembayaran = Pembayaran::with('pendaftaran')
@@ -24,8 +26,12 @@ class PaymentController extends Controller
                 $q->where('nama_pasien', $user->name);
             })->first();
 
-        if (!$pembayaran || $pembayaran->status == 'lunas') {
-            return redirect('/dashboard')->with('error', 'Pembayaran tidak ditemukan atau sudah lunas.');
+        if (!$pembayaran) {
+            return redirect('/dashboard')->with('error', 'Pembayaran tidak ditemukan');
+        }
+
+        if ($pembayaran->status == 'lunas') {
+            return redirect('/dashboard')->with('success', 'Pembayaran sudah lunas');
         }
 
         // AMBIL TARIF DARI MODEL PENGATURAN
@@ -47,30 +53,47 @@ class PaymentController extends Controller
     public function cetakStruk($id)
     {
         $pembayaran = Pembayaran::with(['pendaftaran.rekamMedis'])->findOrFail($id);
-        if ($pembayaran->status != 'lunas') abort(403);
+
+        if ($pembayaran->status != 'lunas') {
+            abort(403, 'Struk hanya dapat dicetak untuk pembayaran yang sudah lunas.');
+        }
 
         // AMBIL TARIF DARI MODEL PENGATURAN
         $biayaDokter = Pengaturan::where('key', 'tarif_dokter')->value('value') ?? $pembayaran->biaya_dokter;
         $biayaAdmin = Pengaturan::where('key', 'tarif_admin')->value('value') ?? $pembayaran->biaya_admin;
 
-        $rincianObat = $this->parseResepPecahDetail($pembayaran->pendaftaran->rekamMedis->resep ?? '', (int)($pembayaran->total_obat ?? 0));
+        $resepString = $pembayaran->pendaftaran->rekamMedis->resep ?? '';
+        $totalHargaObat = (int) str_replace(['.', ','], '', $pembayaran->total_obat ?? 0);
+        $rincianObat = $this->parseResepPecahDetail($resepString, $totalHargaObat);
+
         return view('payment.struk', compact('pembayaran', 'rincianObat', 'biayaDokter', 'biayaAdmin'));
     }
 
-    private function parseResepPecahDetail($resepString, $totalHargaObat)
+    private function parseResepPecahDetail($resepString, $totalHargaObat = 0)
     {
         $listObat = [];
         if (empty(trim($resepString))) return $listObat;
+
         $rows = preg_split('/[\n,]+/', $resepString);
+        $barisValid = [];
         foreach ($rows as $row) {
-            if (!empty(trim($row))) {
-                $listObat[] = ['nama' => trim($row), 'qty' => 1, 'harga' => $totalHargaObat/count($rows), 'total' => $totalHargaObat/count($rows)];
-            }
+            $row = trim($row);
+            if (!empty($row)) $barisValid[] = $row;
+        }
+
+        $jumlahBaris = count($barisValid);
+        foreach ($barisValid as $row) {
+            $listObat[] = [
+                'nama'  => $row,
+                'qty'   => 1,
+                'harga' => $totalHargaObat > 0 ? (int)($totalHargaObat / $jumlahBaris) : 0,
+                'total' => $totalHargaObat > 0 ? (int)($totalHargaObat / $jumlahBaris) : 0
+            ];
         }
         return $listObat;
     }
 
-    // Callback dan Finish tetap sama ...
-    public function callback(Request $request) { /* ... */ }
-    public function finish(Request $request) { /* ... */ }
+    // ... method callback dan finish tetap sama seperti sebelumnya ...
+    public function callback(Request $request) { /* isi sama */ }
+    public function finish(Request $request) { /* isi sama */ }
 }
