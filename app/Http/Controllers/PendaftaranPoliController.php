@@ -10,17 +10,14 @@ use Carbon\Carbon;
 
 class PendaftaranPoliController extends Controller
 {
-    // Tampilkan Form Pendaftaran
     public function pendaftaranUmum()
     {
-        // Ambil data dokter dengan kolom tambahan jam & hari kerja
         $dokters = User::where('role', 'dokter')
             ->get(['id', 'name', 'poli', 'jam_kerja', 'hari_kerja']);
             
         return view('pasien.pendaftaran-umum', compact('dokters'));
     }
 
-    // Simpan Pendaftaran
     public function storeUmum(Request $request)
     {
         $request->validate([
@@ -30,18 +27,24 @@ class PendaftaranPoliController extends Controller
 
         $today = Carbon::today();
 
-        // 1. Ambil data nama dokter asli dari tabel users berdasarkan ID pilihan form
         $dokter = User::find($request->dokter_id);
         $namaDokterAsli = $dokter ? $dokter->name : 'Dokter Tidak Diketahui';
 
-        // Hitung nomor antrian real-time berdasarkan poli hari ini
-        $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
-            ->where('poli', $request->poli)
-            ->max('nomor_antrian');
+        $antrianAktif = PendaftaranPoli::whereDate('created_at', $today)
+            ->where('dokter_id', $request->dokter_id)
+            ->whereIn('status', ['menunggu', 'menunggu_petugas', 'diproses_dokter'])
+            ->exists();
 
-        $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
+        if (!$antrianAktif) {
+            $nomorAntrian = 1;
+        } else {
+            $lastQueue = PendaftaranPoli::whereDate('created_at', $today)
+                ->where('dokter_id', $request->dokter_id)
+                ->max('nomor_antrian');
 
-        // 2. Simpan secara utuh (dokter_id dan nama_dokter wajib terisi)
+            $nomorAntrian = $lastQueue ? $lastQueue + 1 : 1;
+        }
+
         PendaftaranPoli::create([
             'user_id'       => Auth::id(),
             'jenis_pasien'  => 'UMUM',
@@ -50,12 +53,12 @@ class PendaftaranPoliController extends Controller
             'tanggal_lahir' => Auth::user()->tanggal_lahir,
             'poli'          => $request->poli,
             'dokter_id'     => $request->dokter_id, 
-            'nama_dokter'   => $namaDokterAsli, // Mengunci Teks "dr. Ferry Eko Santoso" ke database
+            'nama_dokter'   => $namaDokterAsli, 
             'nomor_antrian' => $nomorAntrian,
             'status'        => 'menunggu_petugas'
         ]);
 
         return redirect()->route('pasien.antrian')
-            ->with('success', "Pendaftaran berhasil! Nomor antrian Anda di {$request->poli} adalah: {$nomorAntrian}");
+            ->with('success', "Pendaftaran berhasil! Nomor antrian Anda di {$namaDokterAsli} adalah: {$nomorAntrian}");
     }
 }
