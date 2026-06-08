@@ -38,7 +38,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
                     
-                    {{-- NAMA PASIEN (Data User) --}}
                     <div class="md:col-span-2 group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Nama Pasien</label>
                         <div class="relative">
@@ -50,7 +49,6 @@
                         </div>
                     </div>
 
-                    {{-- NOMOR IDENTITAS --}}
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Nomor Identitas (KTP)</label>
                         <div class="relative">
@@ -62,7 +60,6 @@
                         </div>
                     </div>
 
-                    {{-- TANGGAL LAHIR --}}
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Tanggal Lahir</label>
                         <div class="relative">
@@ -74,7 +71,6 @@
                         </div>
                     </div>
 
-                    {{-- POLI TUJUAN --}}
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Poliklinik Tujuan</label>
                         <div class="relative">
@@ -91,7 +87,6 @@
                         </div>
                     </div>
 
-                    {{-- PILIH DOKTER (Dinamis dari Database) --}}
                     <div class="group">
                         <label class="block text-xs font-black text-black mb-2 ml-1 uppercase tracking-widest">Pilih Dokter</label>
                         <div class="relative">
@@ -106,7 +101,6 @@
                     </div>
                 </div>
 
-                {{-- ACTION BUTTONS --}}
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-8 mt-12 pt-8 border-t border-slate-100">
                     <a href="{{ route('dashboard') }}" 
                         class="text-xs font-[800] text-slate-400 hover:text-rose-600 transition-all tracking-[0.2em] uppercase flex items-center gap-2 group order-2 sm:order-1">
@@ -126,26 +120,31 @@
 </div>
 
 <script>
-    // dbDokters berisi: id, name, poli, jam_kerja dari database
     const dbDokters = @json($dokters);
 
     function filterDokter() {
         const selectedPoli = document.getElementById('poli_select').value;
         const dokterSelect = document.getElementById('dokter_select');
 
-        // Bersihkan dropdown dokter
         dokterSelect.innerHTML = '<option value="">-- Pilih Dokter --</option>';
 
         if (selectedPoli) {
-            // Ambil dokter yang sesuai dengan poli yang dipilih
-            const filtered = dbDokters.filter(d => d.poli === selectedPoli);
+            const filtered = dbDokters.filter(d => {
+                const dbPoliClean = d.poli ? d.poli.toLowerCase().trim() : '';
+                const selectedPoliClean = selectedPoli.toLowerCase().trim();
+                
+                if (selectedPoliClean === 'poli kia & kb') {
+                    return dbPoliClean === 'poli kia' || dbPoliClean === 'poli kia & kb' || dbPoliClean === 'kia';
+                }
+                
+                return dbPoliClean === selectedPoliClean;
+            });
             
             if(filtered.length > 0) {
                 filtered.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.id;
                     
-                    // Gunakan d.jam_kerja langsung dari database
                     const jadwal = d.jam_kerja ? ` (${d.jam_kerja})` : "";
                     opt.text = `${d.name}${jadwal}`;
                     
