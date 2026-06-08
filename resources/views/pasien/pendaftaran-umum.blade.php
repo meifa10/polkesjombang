@@ -133,8 +133,8 @@
                 const dbPoliClean = d.poli ? d.poli.toLowerCase().trim() : '';
                 const selectedPoliClean = selectedPoli.toLowerCase().trim();
                 
-                if (selectedPoliClean === 'poli kia & kb') {
-                    return dbPoliClean === 'poli kia' || dbPoliClean === 'poli kia & kb' || dbPoliClean === 'kia';
+                if (selectedPoliClean.includes('kia') || selectedPoliClean.includes('kb')) {
+                    return dbPoliClean.includes('kia') || dbPoliClean.includes('kb');
                 }
                 
                 return dbPoliClean === selectedPoliClean;
@@ -144,10 +144,8 @@
                 filtered.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.id;
-                    
                     const jadwal = d.jam_kerja ? ` (${d.jam_kerja})` : "";
                     opt.text = `${d.name}${jadwal}`;
-                    
                     dokterSelect.appendChild(opt);
                 });
             } else {
