@@ -155,8 +155,7 @@
 @php
     $waktuDaftar = \Carbon\Carbon::parse($data->created_at);
     $jamMenitDaftar = $waktuDaftar->format('H:i');
-    $waktuSekarang = \Carbon\Carbon::now();
-    $jamSekarang = $waktuSekarang->format('H:i');
+    $jamSekarang = \Carbon\Carbon::now()->format('H:i');
     
     $dokterTerpilih = $data->nama_dokter ? strtolower($data->nama_dokter) : '';
     $dokterId = $data->dokter_id ?? $data->id_dokter ?? null; 
