@@ -132,6 +132,11 @@
             const filtered = dbDokters.filter(d => {
                 const dbPoliClean = d.poli ? d.poli.toLowerCase().trim() : '';
                 const selectedPoliClean = selectedPoli.toLowerCase().trim();
+                const doctorName = d.name ? d.name.toLowerCase() : '';
+                
+                if (doctorName.includes('super')) {
+                    return false;
+                }
                 
                 if (selectedPoliClean.includes('kia') || selectedPoliClean.includes('kb')) {
                     return dbPoliClean.includes('kia') || dbPoliClean.includes('kb');
