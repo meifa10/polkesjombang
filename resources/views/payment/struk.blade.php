@@ -71,10 +71,12 @@
         <div class="dashed-line"></div>
 
         <div class="text-xs space-y-3">
-            @php 
-                $biayaDokterBaru = 10000; 
-                $biayaAdmin = $pembayaran->biaya_admin ?? 10000;
-                $biayaObat = $pembayaran->total_obat ?? 0;
+            @php
+                $biayaDokter = (int) ($pembayaran->biaya_dokter ?? 0);
+                $biayaAdmin  = (int) ($pembayaran->biaya_admin ?? 0);
+                $biayaObat   = (int) ($pembayaran->total_obat ?? 0);
+
+                $totalFinal = $biayaDokter + $biayaAdmin + $biayaObat;
             @endphp
             
             <div class="flex justify-between items-start">
@@ -82,7 +84,7 @@
                     <p class="font-bold">JASA DOKTER & KONSULTASI</p>
                     <p class="text-[10px] text-slate-500">Pemeriksaan medis dasar poli</p>
                 </div>
-                <span>Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}</span>
+                <span>Rp {{ number_format($biayaDokter, 0, ',', '.') }}</span>
             </div>
             
             <div class="flex justify-between items-start">
@@ -117,7 +119,7 @@
 
         <div class="flex justify-between items-center text-base font-bold">
             <span>TOTAL BERSIH</span>
-            @php $totalFinal = $biayaDokterBaru + $biayaAdmin + $biayaObat; @endphp
+            <!-- @php $totalFinal = $biayaDokterBaru + $biayaAdmin + $biayaObat; @endphp -->
             <span>Rp {{ number_format($totalFinal, 0, ',', '.') }}</span>
         </div>
         

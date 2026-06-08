@@ -14,10 +14,11 @@
 
     {{-- LOGIKA PERHITUNGAN PAKSA: Mengabaikan data total_biaya di DB yang lama --}}
     @php
-        $biayaDokterBaru = 10000;
-        $biayaAdmin = $pembayaran->biaya_admin ?? 10000;
-        $biayaObat = $pembayaran->total_obat ?? 0;
-        $totalFix = $biayaDokterBaru + $biayaAdmin + $biayaObat;
+        $biayaDokter = (int) ($pembayaran->biaya_dokter ?? 0);
+        $biayaAdmin  = (int) ($pembayaran->biaya_admin ?? 0);
+        $biayaObat   = (int) ($pembayaran->total_obat ?? 0);
+
+        $totalFix = $biayaDokter + $biayaAdmin + $biayaObat;
     @endphp
 
     <div class="min-h-screen flex items-center justify-center p-6 my-6">
@@ -92,7 +93,9 @@
                                             <p class="font-bold text-slate-800">Jasa Dokter & Konsultasi</p>
                                             <p class="text-xs text-slate-400">Pemeriksaan medis dasar klinis poli</p>
                                         </td>
-                                        <td class="py-3 px-4 text-right font-bold text-slate-900">Rp {{ number_format($biayaDokterBaru, 0, ',', '.') }}</td>
+                                        <td class="py-3 px-4 text-right font-bold text-slate-900">
+                                            Rp {{ number_format($biayaDokter, 0, ',', '.') }}
+                                        </td>
                                     </tr>
                                     {{-- Administrasi --}}
                                     <tr>
